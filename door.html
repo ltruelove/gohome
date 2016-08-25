@@ -1,0 +1,22 @@
+<html>
+<head>
+<title>{{.Title}}</title>
+<link href="/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="/bootstrap-3.3.7-dist/js/jquery-3.1.0.js"></script>
+<script src="/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+
+</head>
+
+<body>
+<div id="bodyDiv">
+<div><span>PIN</span> <input type="password" pattern="[0-9]*" inputmode="numeric" data-bind="value: pinCode" /></div>
+    <br/>
+    <br/>
+<button data-bind="click: pinValidate">Click Door Button</button>
+
+</div>
+
+<script src="/bootstrap-3.3.7-dist/js/knockout-3.4.0.js"></script>
+<script src="/bootstrap-3.3.7-dist/js/door.js"></script>
+</body>
+</html>
