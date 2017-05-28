@@ -1,16 +1,17 @@
 package main
 
 import (
-	"database/sql"
+	//"database/sql"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
-	_ "github.com/mattn/go-sqlite3"
+	//_ "github.com/mattn/go-sqlite3"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"log"
 )
 
 type Page struct {
@@ -30,6 +31,7 @@ func main() {
 	doorIp = flag.String("doorIp", "", "IP address of the garage door module")
 	flag.Parse()
 
+	/*
 	db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
 	checkErr(sqlErr)
 
@@ -44,6 +46,7 @@ func main() {
 		sqlErr = rows.Scan(&uid, &username, &password, &isDisabled)
 		checkErr(sqlErr)
 	}
+	*/
 
 	router := mux.NewRouter()
 	router.HandleFunc("/", HomeHandler)
@@ -52,8 +55,8 @@ func main() {
 	router.HandleFunc("/pinValid", PinValid).Methods("POST")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
 	http.Handle("/", router)
-	err := http.ListenAndServe(":8080", nil)
-	fmt.Println(err.Error())
+	log.Fatal(http.ListenAndServe(":8080", nil))
+	//fmt.Println(err.Error())
 }
 
 func HomeHandler(writer http.ResponseWriter, request *http.Request) {
