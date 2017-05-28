@@ -10,6 +10,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -22,12 +23,18 @@ type IpAddress struct {
 	Ip string `json:"ip"`
 }
 
+type Garden struct {
+	SoilReading int `json:"soilReading"`
+}
+
 var pin *string
 var doorIp *string
+var gardenIp *string
 
 func main() {
 	pin = flag.String("pin", "", "PIN for entering the garage door")
 	doorIp = flag.String("doorIp", "", "IP address of the garage door module")
+	gardenIp = flag.String("gardenIp", "", "IP address of the garden soil sensor module")
 	flag.Parse()
 
 	db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
@@ -50,6 +57,7 @@ func main() {
 	router.HandleFunc("/door", DoorHandler)
 	router.HandleFunc("/lightIp", LightIpHandler)
 	router.HandleFunc("/pinValid", PinValid).Methods("POST")
+	router.HandleFunc("/soil", SoilHandle).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
 	http.Handle("/", router)
 	err := http.ListenAndServe(":8080", nil)
@@ -76,6 +84,31 @@ type validator struct {
 	IsValid bool
 }
 
+func SoilHandle(writer http.ResponseWriter, request *http.Request) {
+	address := fmt.Sprintf("http://%s/status", *gardenIp)
+	resp, err := http.Get(address)
+	if err != nil {
+		// handle error
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	jsonString := string(body)
+
+	//clear out that annoying line ending
+	re := regexp.MustCompile(`\r?\n`)
+	jsonString = re.ReplaceAllString(jsonString, " ")
+
+	soilResponse := &Garden{}
+	if err := json.Unmarshal(body, &soilResponse); err != nil {
+		errorResponse := "Probably got a bad reading"
+		writer.Write([]byte(errorResponse))
+		fmt.Println(errorResponse)
+	} else {
+		reading := fmt.Sprintf("%d", soilResponse.SoilReading)
+		writer.Write([]byte(reading))
+	}
+}
+
 func PinValid(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
 	var t pinRequest
@@ -97,8 +130,8 @@ func PinValid(writer http.ResponseWriter, request *http.Request) {
 		http.Get(address)
 	}
 
-	pinResponse, _ := json.Marshal(v)
-	writer.Write(pinResponse)
+	pinresponse, _ := json.Marshal(v)
+	writer.Write(pinresponse)
 }
 
 func LightIpHandler(writer http.ResponseWriter, request *http.Request) {
