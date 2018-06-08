@@ -9,10 +9,11 @@ import (
 	//_ "github.com/mattn/go-sqlite3"
 	"html/template"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
-	"log"
+	"time"
 )
 
 type Page struct {
@@ -31,28 +32,30 @@ type Garden struct {
 var pin *string
 var doorIp *string
 var gardenIp *string
+var waterIp *string
 
 func main() {
 	pin = flag.String("pin", "", "PIN for entering the garage door")
 	doorIp = flag.String("doorIp", "", "IP address of the garage door module")
 	gardenIp = flag.String("gardenIp", "", "IP address of the garden soil sensor module")
+	waterIp = flag.String("waterIp", "", "IP address of the water solenoid")
 	flag.Parse()
 
 	/*
-	db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
-	checkErr(sqlErr)
-
-	rows, sqlErr := db.Query("SELECT * FROM user;")
-	checkErr(sqlErr)
-
-	for rows.Next() {
-		var uid int
-		var username string
-		var password string
-		var isDisabled string
-		sqlErr = rows.Scan(&uid, &username, &password, &isDisabled)
+		db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
 		checkErr(sqlErr)
-	}
+
+		rows, sqlErr := db.Query("SELECT * FROM user;")
+		checkErr(sqlErr)
+
+		for rows.Next() {
+			var uid int
+			var username string
+			var password string
+			var isDisabled string
+			sqlErr = rows.Scan(&uid, &username, &password, &isDisabled)
+			checkErr(sqlErr)
+		}
 	*/
 
 	router := mux.NewRouter()
@@ -65,6 +68,38 @@ func main() {
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//fmt.Println(err.Error())
+
+	ticker := time.NewTicker(time.Minute * 5)
+
+	go func() {
+		for range ticker.C {
+			GetSoilReading()
+		}
+	}()
+}
+
+func GetSoilReading() {
+	address := fmt.Sprintf("http://%s/status", *gardenIp)
+	resp, err := http.Get(address)
+	if err != nil {
+		// handle error
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	jsonString := string(body)
+
+	//clear out that annoying line ending
+	re := regexp.MustCompile(`\r?\n`)
+	jsonString = re.ReplaceAllString(jsonString, " ")
+
+	soilResponse := &Garden{}
+	if err := json.Unmarshal(body, &soilResponse); err != nil {
+		errorResponse := "Probably got a bad reading"
+		fmt.Println(errorResponse)
+	} else {
+		reading := fmt.Sprintf("Soil Reading: %d\r\n", soilResponse.SoilReading)
+		fmt.Println(reading)
+	}
 }
 
 func HomeHandler(writer http.ResponseWriter, request *http.Request) {
