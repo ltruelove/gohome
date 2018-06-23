@@ -1,14 +1,14 @@
 function SoilViewModel(){
     var self = this;
     this.pinCode = ko.observable();
-    this.soilLevel = 0;
+    this.soilLevel = ko.observable(0);
     this.waterStatus = 'Off';
 
     this.doorStatus = function() {}
 
     $.get('/soil', function(response){
         console.log(response);
-        this.soilLevel = response;
+        self.soilLevel(response);
     });
 
     this.turnWaterOn = function() {

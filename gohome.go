@@ -61,6 +61,7 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/", HomeHandler)
 	router.HandleFunc("/door", DoorHandler)
+	router.HandleFunc("/garden", GardenHandler)
 	router.HandleFunc("/lightIp", LightIpHandler)
 	router.HandleFunc("/pinValid", PinValid).Methods("POST")
 	router.HandleFunc("/waterOn", WaterOn).Methods("POST")
@@ -118,7 +119,7 @@ func DoorHandler(writer http.ResponseWriter, request *http.Request) {
 	t.Execute(writer, p)
 }
 
-func DoorHandler(writer http.ResponseWriter, request *http.Request) {
+func GardenHandler(writer http.ResponseWriter, request *http.Request) {
 	p := &Page{Title: "This is the GoHome Garden Page"}
 	t, _ := template.ParseFiles("garden.html")
 	t.Execute(writer, p)
