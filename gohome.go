@@ -29,6 +29,10 @@ type Garden struct {
 	SoilReading int `json:"soilReading"`
 }
 
+type Water struct {
+	Status string `json:"status"`
+}
+
 var pin *string
 var doorIp *string
 var gardenIp *string
@@ -67,6 +71,7 @@ func main() {
 	router.HandleFunc("/waterOn", WaterOn).Methods("POST")
 	router.HandleFunc("/waterOff", WaterOff).Methods("POST")
 	router.HandleFunc("/soil", SoilHandle).Methods("GET")
+	router.HandleFunc("/waterStatus", WaterStatus).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -156,6 +161,33 @@ func SoilHandle(writer http.ResponseWriter, request *http.Request) {
 		fmt.Println(errorResponse)
 	} else {
 		reading := fmt.Sprintf("%d", soilResponse.SoilReading)
+		writer.Write([]byte(reading))
+	}
+}
+
+func WaterStatus(writer http.ResponseWriter, request *http.Request) {
+	address := fmt.Sprintf("http://%s/status", *waterIp)
+	resp, err := http.Get(address)
+	if err != nil {
+		// handle error
+		writer.Write([]byte("Timeout?"))
+		return
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	jsonString := string(body)
+
+	//clear out that annoying line ending
+	re := regexp.MustCompile(`\r?\n`)
+	jsonString = re.ReplaceAllString(jsonString, " ")
+
+	waterResponse := &Water{}
+	if err := json.Unmarshal(body, &waterResponse); err != nil {
+		errorResponse := "Probably got a bad reading"
+		writer.Write([]byte(errorResponse))
+		fmt.Println(errorResponse)
+	} else {
+		reading := fmt.Sprintf("%d", waterResponse.Status)
 		writer.Write([]byte(reading))
 	}
 }
