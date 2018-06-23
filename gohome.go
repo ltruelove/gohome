@@ -3,7 +3,6 @@ package main
 import (
 	//"database/sql"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	//_ "github.com/mattn/go-sqlite3"
@@ -11,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -33,17 +33,27 @@ type Water struct {
 	Status string `json:"status"`
 }
 
-var pin *string
-var doorIp *string
-var gardenIp *string
-var waterIp *string
+type Configuration struct {
+	Pin      string `json:"pin"`
+	DoorIp   string `json:"doorIp"`
+	GardenIp string `json:"gardenIp"`
+	WaterIp  string `json:"waterIp"`
+}
+
+var config Configuration
 
 func main() {
-	pin = flag.String("pin", "", "PIN for entering the garage door")
-	doorIp = flag.String("doorIp", "", "IP address of the garage door module")
-	gardenIp = flag.String("gardenIp", "", "IP address of the garden soil sensor module")
-	waterIp = flag.String("waterIp", "", "IP address of the water solenoid")
-	flag.Parse()
+	file, err := os.Open("config.json")
+	if err != nil {
+		panic(err)
+	}
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(&config)
+
+	if err != nil {
+		panic(err)
+	}
 
 	/*
 		db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
@@ -87,7 +97,7 @@ func main() {
 }
 
 func GetSoilReading() {
-	address := fmt.Sprintf("http://%s/status", *gardenIp)
+	address := fmt.Sprintf("http://%s/status", config.GardenIp)
 	resp, err := http.Get(address)
 	if err != nil {
 		// handle error
@@ -103,7 +113,8 @@ func GetSoilReading() {
 	jsonString = re.ReplaceAllString(jsonString, " ")
 
 	soilResponse := &Garden{}
-	if err := json.Unmarshal(body, &soilResponse); err != nil {
+	soilErr := json.Unmarshal(body, &soilResponse)
+	if soilErr != nil {
 		errorResponse := "Probably got a bad reading"
 		fmt.Println(errorResponse)
 	} else {
@@ -139,7 +150,7 @@ type validator struct {
 }
 
 func SoilHandle(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s/status", *gardenIp)
+	address := fmt.Sprintf("http://%s/status", config.GardenIp)
 	resp, err := http.Get(address)
 	if err != nil {
 		// handle error
@@ -166,7 +177,7 @@ func SoilHandle(writer http.ResponseWriter, request *http.Request) {
 }
 
 func WaterStatus(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s/status", *waterIp)
+	address := fmt.Sprintf("http://%s/status", config.WaterIp)
 	resp, err := http.Get(address)
 	if err != nil {
 		// handle error
@@ -202,14 +213,14 @@ func PinValid(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var v = new(validator)
-	if strings.Compare(t.PinCode, *pin) == 0 {
+	if strings.Compare(t.PinCode, config.Pin) == 0 {
 		v.IsValid = true
 	}
 
 	// Moved the click functionality to here so the IP of the module wouldn't be publicly
 	// available
 	if v.IsValid {
-		address := fmt.Sprintf("http://%s/click", *doorIp)
+		address := fmt.Sprintf("http://%s/click", config.DoorIp)
 		http.Get(address)
 	}
 
@@ -227,14 +238,14 @@ func WaterOn(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var v = new(validator)
-	if strings.Compare(t.PinCode, *pin) == 0 {
+	if strings.Compare(t.PinCode, config.Pin) == 0 {
 		v.IsValid = true
 	}
 
 	// Moved the click functionality to here so the IP of the module wouldn't be publicly
 	// available
 	if v.IsValid {
-		address := fmt.Sprintf("http://%s/on", *waterIp)
+		address := fmt.Sprintf("http://%s/on", config.WaterIp)
 		http.Get(address)
 	}
 
@@ -252,14 +263,14 @@ func WaterOff(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var v = new(validator)
-	if strings.Compare(t.PinCode, *pin) == 0 {
+	if strings.Compare(t.PinCode, config.Pin) == 0 {
 		v.IsValid = true
 	}
 
 	// Moved the click functionality to here so the IP of the module wouldn't be publicly
 	// available
 	if v.IsValid {
-		address := fmt.Sprintf("http://%s/off", *waterIp)
+		address := fmt.Sprintf("http://%s/off", config.WaterIp)
 		http.Get(address)
 	}
 
