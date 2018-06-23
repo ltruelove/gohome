@@ -83,6 +83,8 @@ func GetSoilReading() {
 	resp, err := http.Get(address)
 	if err != nil {
 		// handle error
+		fmt.Println("Timeout?")
+		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -97,7 +99,7 @@ func GetSoilReading() {
 		errorResponse := "Probably got a bad reading"
 		fmt.Println(errorResponse)
 	} else {
-		reading := fmt.Sprintf("Soil Reading: %d\r\n", soilResponse.SoilReading)
+		reading := fmt.Sprintf("Soil Reading: %d", soilResponse.SoilReading)
 		fmt.Println(reading)
 	}
 }
@@ -127,6 +129,8 @@ func SoilHandle(writer http.ResponseWriter, request *http.Request) {
 	resp, err := http.Get(address)
 	if err != nil {
 		// handle error
+		writer.Write([]byte("Timeout?"))
+		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
