@@ -34,10 +34,11 @@ type Water struct {
 }
 
 type Configuration struct {
-	Pin      string `json:"pin"`
-	DoorIp   string `json:"doorIp"`
-	GardenIp string `json:"gardenIp"`
-	WaterIp  string `json:"waterIp"`
+	Pin           string `json:"pin"`
+	DoorIp        string `json:"doorIp"`
+	GardenIp      string `json:"gardenIp"`
+	WaterIp       string `json:"waterIp"`
+	SoilThreshold int    `json:"soilThreshold"`
 }
 
 var config Configuration
@@ -72,6 +73,14 @@ func main() {
 		}
 	*/
 
+	go func() {
+		ticker := time.NewTicker(time.Minute * 5)
+		for range ticker.C {
+			fmt.Println("Ticker ticked")
+			GetSoilReading()
+		}
+	}()
+
 	router := mux.NewRouter()
 	router.HandleFunc("/", HomeHandler)
 	router.HandleFunc("/door", DoorHandler)
@@ -87,13 +96,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	//fmt.Println(err.Error())
 
-	ticker := time.NewTicker(time.Minute * 5)
-
-	go func() {
-		for range ticker.C {
-			GetSoilReading()
-		}
-	}()
 }
 
 func GetSoilReading() {
@@ -117,9 +119,73 @@ func GetSoilReading() {
 	if soilErr != nil {
 		errorResponse := "Probably got a bad reading"
 		fmt.Println(errorResponse)
-	} else {
-		reading := fmt.Sprintf("Soil Reading: %d", soilResponse.SoilReading)
-		fmt.Println(reading)
+		return
+	}
+
+	reading := fmt.Sprintf("Soil Reading: %d", soilResponse.SoilReading)
+	fmt.Println(reading)
+
+	if soilResponse.SoilReading < config.SoilThreshold {
+		StartWater()
+	}
+}
+
+func StartWater() {
+	waterStatusAddress := fmt.Sprintf("http://%s/status", config.WaterIp)
+	waterResp, waterErr := http.Get(waterStatusAddress)
+	if waterErr != nil {
+		// handle error
+		fmt.Println("Timeout?")
+		return
+	}
+
+	defer waterResp.Body.Close()
+	waterBody, waterErr := ioutil.ReadAll(waterResp.Body)
+	waterString := string(waterBody)
+
+	//clear out that annoying line ending
+	re := regexp.MustCompile(`\r?\n`)
+	waterString = re.ReplaceAllString(waterString, " ")
+
+	waterResponse := &Water{}
+	if err := json.Unmarshal(waterBody, &waterResponse); err != nil {
+		fmt.Println("Probably got a bad reading")
+		return
+	}
+
+	if waterResponse.Status == "on" {
+		return
+	}
+
+	waterOnAddress := fmt.Sprintf("http://%s/on", config.WaterIp)
+	_, waterOnErr := http.Get(waterOnAddress)
+	if waterOnErr != nil {
+		// handle error
+		fmt.Println("Water On Timeout?")
+		return
+	}
+
+	timeChan := time.NewTimer(time.Minute * 5).C
+	for {
+		select {
+		case <-timeChan:
+			fmt.Println("Timer expired")
+			waterOffAddress := fmt.Sprintf("http://%s/off", config.WaterIp)
+			_, waterOffErr := http.Get(waterOffAddress)
+			if waterOffErr != nil {
+				// handle error
+				fmt.Println("Water Off Timeout?")
+				return
+			}
+
+			waitChan := time.NewTimer(time.Minute * 5).C
+			for {
+				select {
+				case <-waitChan:
+					return
+				}
+			}
+		}
 	}
 }
 
