@@ -10,25 +10,27 @@ function SoilViewModel(){
         self.soilLevel(response);
     });
 
-    $.get('/waterStatus', function(response){
-        self.waterStatus(response);
-    });
+    self.getStatus = function(){
+        $.get('/waterStatus', function(response){
+            self.waterStatus(response);
+        });
+    }
+
+    self.getStatus();
 
     this.turnWaterOn = function() {
         var code = self.pinCode();
         $.post('/waterOn', JSON.stringify({pinCode: code}), function(response){
-            if(response.IsValid){
-                // Check door status
-            }
+            console.log(response);
+            self.getStatus();
         }, 'json');
     }
 
     this.turnWaterOff = function(){
         var code = self.pinCode();
         $.post('/waterOff', JSON.stringify({pinCode: code}), function(response){
-            if(response.IsValid){
-                // Check door status
-            }
+            console.log(response);
+            self.getStatus();
         }, 'json');
     }
 }

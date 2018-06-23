@@ -187,7 +187,7 @@ func WaterStatus(writer http.ResponseWriter, request *http.Request) {
 		writer.Write([]byte(errorResponse))
 		fmt.Println(errorResponse)
 	} else {
-		reading := fmt.Sprintf("%d", waterResponse.Status)
+		reading := fmt.Sprintf("%s", waterResponse.Status)
 		writer.Write([]byte(reading))
 	}
 }
