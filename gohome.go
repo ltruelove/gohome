@@ -63,6 +63,8 @@ func main() {
 	router.HandleFunc("/door", DoorHandler)
 	router.HandleFunc("/lightIp", LightIpHandler)
 	router.HandleFunc("/pinValid", PinValid).Methods("POST")
+	router.HandleFunc("/waterOn", WaterOn).Methods("POST")
+	router.HandleFunc("/waterOff", WaterOff).Methods("POST")
 	router.HandleFunc("/soil", SoilHandle).Methods("GET")
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./")))
 	http.Handle("/", router)
@@ -113,6 +115,12 @@ func HomeHandler(writer http.ResponseWriter, request *http.Request) {
 func DoorHandler(writer http.ResponseWriter, request *http.Request) {
 	p := &Page{Title: "This is the GoHome Door Page"}
 	t, _ := template.ParseFiles("door.html")
+	t.Execute(writer, p)
+}
+
+func DoorHandler(writer http.ResponseWriter, request *http.Request) {
+	p := &Page{Title: "This is the GoHome Garden Page"}
+	t, _ := template.ParseFiles("garden.html")
 	t.Execute(writer, p)
 }
 
@@ -169,6 +177,56 @@ func PinValid(writer http.ResponseWriter, request *http.Request) {
 	// available
 	if v.IsValid {
 		address := fmt.Sprintf("http://%s/click", *doorIp)
+		http.Get(address)
+	}
+
+	pinresponse, _ := json.Marshal(v)
+	writer.Write(pinresponse)
+}
+
+func WaterOn(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var t pinRequest
+
+	err := decoder.Decode(&t)
+	if err != nil {
+		panic(err)
+	}
+
+	var v = new(validator)
+	if strings.Compare(t.PinCode, *pin) == 0 {
+		v.IsValid = true
+	}
+
+	// Moved the click functionality to here so the IP of the module wouldn't be publicly
+	// available
+	if v.IsValid {
+		address := fmt.Sprintf("http://%s/on", *waterIp)
+		http.Get(address)
+	}
+
+	pinresponse, _ := json.Marshal(v)
+	writer.Write(pinresponse)
+}
+
+func WaterOff(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var t pinRequest
+
+	err := decoder.Decode(&t)
+	if err != nil {
+		panic(err)
+	}
+
+	var v = new(validator)
+	if strings.Compare(t.PinCode, *pin) == 0 {
+		v.IsValid = true
+	}
+
+	// Moved the click functionality to here so the IP of the module wouldn't be publicly
+	// available
+	if v.IsValid {
+		address := fmt.Sprintf("http://%s/off", *waterIp)
 		http.Get(address)
 	}
 
