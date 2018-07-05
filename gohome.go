@@ -76,7 +76,8 @@ func main() {
 	go func() {
 		ticker := time.NewTicker(time.Minute * 5)
 		for range ticker.C {
-			fmt.Println("Ticker ticked")
+			t := time.Now()
+			fmt.Println(t.Format("2006-01-02 15:04:05"), "Ticker ticked")
 			GetSoilReading()
 		}
 	}()
@@ -313,6 +314,7 @@ func WaterOn(writer http.ResponseWriter, request *http.Request) {
 	if v.IsValid {
 		address := fmt.Sprintf("http://%s/on", config.WaterIp)
 		http.Get(address)
+		fmt.Println("Water started remotely")
 	}
 
 	pinresponse, _ := json.Marshal(v)
@@ -338,6 +340,7 @@ func WaterOff(writer http.ResponseWriter, request *http.Request) {
 	if v.IsValid {
 		address := fmt.Sprintf("http://%s/off", config.WaterIp)
 		http.Get(address)
+		fmt.Println("Water stopped remotely")
 	}
 
 	pinresponse, _ := json.Marshal(v)
