@@ -284,7 +284,7 @@ func PinValid(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	// Moved the click functionality to here so the IP of the module wouldn't be publicly
-	// available
+	//available
 	if v.IsValid {
 		address := fmt.Sprintf("http://%s/click", config.DoorIp)
 		http.Get(address)
