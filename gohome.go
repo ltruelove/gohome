@@ -4,8 +4,7 @@ import (
 	//"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	//_ "github.com/mattn/go-sqlite3"
+	"github.com/gorilla/mux" //_ "github.com/mattn/go-sqlite3"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -16,16 +15,16 @@ import (
 	"time"
 )
 
-type Page struct {
+type page struct {
 	Title string
 	Body  []byte
 }
 
-type IpAddress struct {
-	Ip string `json:"ip"`
+type ipAddress struct {
+	IP string `json:"ip"`
 }
 
-type Garden struct {
+type garden struct {
 	SoilReading int `json:"soilReading"`
 }
 
@@ -190,14 +189,14 @@ func StartWater() {
 	}
 }
 
-func HomeHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &Page{Title: "This is the GoHome Home Page"}
+func homeHandler(writer http.ResponseWriter, request *http.Request) {
+	p := &page{Title: "This is the GoHome Home Page"}
 	t, _ := template.ParseFiles("home.html")
 	t.Execute(writer, p)
 }
 
-func DoorHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &Page{Title: "This is the GoHome Door Page"}
+func doorHandler(writer http.ResponseWriter, request *http.Request) {
+	p := &page{Title: "This is the GoHome Door Page"}
 	t, _ := template.ParseFiles("door.html")
 	t.Execute(writer, p)
 }
@@ -232,7 +231,7 @@ func SoilHandle(writer http.ResponseWriter, request *http.Request) {
 	re := regexp.MustCompile(`\r?\n`)
 	jsonString = re.ReplaceAllString(jsonString, " ")
 
-	soilResponse := &Garden{}
+	soilResponse := &garden{}
 	if err := json.Unmarshal(body, &soilResponse); err != nil {
 		errorResponse := "Probably got a bad reading"
 		writer.Write([]byte(errorResponse))
@@ -347,21 +346,21 @@ func WaterOff(writer http.ResponseWriter, request *http.Request) {
 	writer.Write(pinresponse)
 }
 
-func LightIpHandler(writer http.ResponseWriter, request *http.Request) {
-	ip := &IpAddress{}
-	ip.Ip = "127.0.0.1"
+func lightIPHandler(writer http.ResponseWriter, request *http.Request) {
+	ip := &ipAddress{}
+	ip.IP = "127.0.0.1"
 
 	response, _ := json.Marshal(ip)
 	fmt.Fprintf(writer, "%s", string(response[:]))
 }
 
-func loadPage(title string) (*Page, error) {
+func loadPage(title string) (*page, error) {
 	filename := title + ".txt"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body}, nil
+	return &page{Title: title, Body: body}, nil
 }
 
 func checkErr(err error) {
