@@ -1,7 +1,0 @@
-{
-    "pin":"9999",
-    "doorIp":"127.0.0.1",
-    "gardenIp":"127.0.0.1",
-    "waterIp":"127.0.0.1",
-    "soilThreshold":100
-}
