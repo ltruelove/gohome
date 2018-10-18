@@ -7,4 +7,5 @@ type Configuration struct {
 	WaterIp       string `json:"waterIp"`
 	SoilThreshold int    `json:"soilThreshold"`
 	TickerActive  bool   `json:"tickerActive"`
+	WebDir        string `json:"webDir"`
 }

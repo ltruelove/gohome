@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/config"
+	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 var Config config.Configuration
@@ -20,9 +20,9 @@ type Validator struct {
 	IsValid bool
 }
 
-func RegisterHandlers(router *mux.Router, mainConfig config.Configuration) {
+func RegisterHandlers(mainConfig config.Configuration) {
 	Config = mainConfig
-	router.HandleFunc("/pinValid", PinValid).Methods("POST")
+	routing.AddRouteWithMethod("/pinValid", "POST", PinValid)
 }
 
 func PinValid(writer http.ResponseWriter, request *http.Request) {

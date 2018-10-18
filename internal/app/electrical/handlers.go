@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type ipAddress struct {
 	IP string `json:"ip"`
 }
 
-func RegisterHandlers(router *mux.Router) {
-	router.HandleFunc("/lightIp", LightIPHandler)
+func RegisterHandlers() {
+	routing.AddGenericRoute("/lightIp", LightIPHandler)
 }
 
 func LightIPHandler(writer http.ResponseWriter, request *http.Request) {

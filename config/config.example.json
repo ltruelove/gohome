@@ -4,5 +4,6 @@
     "gardenIp":"127.0.0.1",
     "waterIp":"127.0.0.1",
     "soilThreshold":100,
-    "tickerActive":false
+    "tickerActive":false,
+    "webDir":"web"
 }

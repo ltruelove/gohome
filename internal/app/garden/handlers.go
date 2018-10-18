@@ -9,28 +9,29 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/page"
-	"github.com/ltruelove/gohome/internal/pin"
+	"github.com/ltruelove/gohome/internal/app/page"
+	"github.com/ltruelove/gohome/internal/app/pin"
+	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
-func RegisterHandlers(router *mux.Router, mainConfig config.Configuration) {
+func RegisterHandlers(mainConfig config.Configuration) {
 	Config = mainConfig
 
 	if Config.TickerActive {
 		Init()
 	}
-	router.HandleFunc("/garden", GardenHandler)
-	router.HandleFunc("/waterOn", WaterOn).Methods("POST")
-	router.HandleFunc("/waterOff", WaterOff).Methods("POST")
-	router.HandleFunc("/soil", SoilHandle).Methods("GET")
-	router.HandleFunc("/waterStatus", WaterStatus).Methods("GET")
+
+	routing.AddGenericRoute("/garden", GardenHandler)
+	routing.AddRouteWithMethod("/waterOn", "POST", WaterOn)
+	routing.AddRouteWithMethod("/waterOff", "POST", WaterOff)
+	routing.AddRouteWithMethod("/soil", "GET", SoilHandle)
+	routing.AddRouteWithMethod("/waterStatus", "GET", WaterStatus)
 }
 
 func GardenHandler(writer http.ResponseWriter, request *http.Request) {
 	p := &page.Page{Title: "This is the GoHome Garden Page"}
-	t, _ := template.ParseFiles("web/html/garden.html")
+	t, _ := template.ParseFiles(Config.WebDir + "/html/garden.html")
 	t.Execute(writer, p)
 }
 
