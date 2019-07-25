@@ -6,7 +6,7 @@ function DoorViewModel(){
 
     this.pinValidate = function() {
         var code = self.pinCode();
-        $.post('/pinValid', JSON.stringify({pinCode: code}), function(response){
+        $.post('/clickGarageDoorButton', JSON.stringify({pinCode: code}), function(response){
             if(response.IsValid){
                 // Check door status
             }

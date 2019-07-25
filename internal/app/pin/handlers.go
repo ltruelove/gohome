@@ -2,10 +2,7 @@ package pin
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strings"
-
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -35,15 +32,11 @@ func PinValid(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var v = new(Validator)
-	if strings.Compare(t.PinCode, Config.Pin) == 0 {
-		v.IsValid = true
-	}
+	v.IsValid = Config.ValidatePin(t.PinCode)
 
-	// Moved the click functionality to here so the IP of the module wouldn't be publicly
-	//available
-	if v.IsValid {
-		address := fmt.Sprintf("http://%s/click", Config.DoorIp)
-		http.Get(address)
+	if !v.IsValid {
+		http.Error(writer, "Not valid", 401)
+		return
 	}
 
 	pinresponse, _ := json.Marshal(v)

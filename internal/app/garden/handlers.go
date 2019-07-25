@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strings"
-
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/page"
 	"github.com/ltruelove/gohome/internal/app/pin"
@@ -99,9 +97,7 @@ func WaterOn(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var v = new(pin.Validator)
-	if strings.Compare(t.PinCode, Config.Pin) == 0 {
-		v.IsValid = true
-	}
+	v.IsValid = Config.ValidatePin(t.PinCode)
 
 	// Moved the click functionality to here so the IP of the module wouldn't be publicly
 	// available
@@ -125,9 +121,7 @@ func WaterOff(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	var v = new(pin.Validator)
-	if strings.Compare(t.PinCode, Config.Pin) == 0 {
-		v.IsValid = true
-	}
+	v.IsValid = Config.ValidatePin(t.PinCode)
 
 	// Moved the click functionality to here so the IP of the module wouldn't be publicly
 	// available
