@@ -51,7 +51,7 @@ func GetSoilReading() {
 	soilResponse := &Garden{}
 	soilErr := json.Unmarshal(body, &soilResponse)
 	if soilErr != nil {
-		errorResponse := "Probably got a bad reading"
+		errorResponse := "Probably got a bad soil reading"
 		fmt.Println(errorResponse)
 		return
 	}
@@ -83,7 +83,7 @@ func StartWater() {
 
 	waterResponse := &Water{}
 	if err := json.Unmarshal(waterBody, &waterResponse); err != nil {
-		fmt.Println("Probably got a bad reading")
+		fmt.Println("Probably got a bad water reading")
 		return
 	}
 

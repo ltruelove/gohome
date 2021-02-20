@@ -1,6 +1,10 @@
 function DoorViewModel(){
     var self = this;
     this.pinCode = ko.observable();
+    this.humidity = ko.observable();
+    this.celcius = ko.observable();
+    this.fahrenheit = ko.observable();
+    this.doorClosed = ko.observable();
 
     this.doorStatus = function() {}
 
@@ -12,6 +16,21 @@ function DoorViewModel(){
             }
         }, 'json');
     }
+    
+    this.getStatus = function(){
+        $.get('http://' + STATUS_IP, function(response){
+            console.log(response);
+
+            self.humidity(response.humidity);
+            self.celcius(response.celcius);
+            self.fahrenheit(response.fahrenheit);
+            self.doorClosed(response.doorClosed);
+        });
+    }
+    
+    $(window).on("load", function(){
+        self.getStatus();
+    });
 }
 
 ko.applyBindings(new DoorViewModel());

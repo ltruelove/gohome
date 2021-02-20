@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/page"
 	"github.com/ltruelove/gohome/internal/app/pin"
@@ -51,7 +52,7 @@ func SoilHandle(writer http.ResponseWriter, request *http.Request) {
 
 	soilResponse := &Garden{}
 	if err := json.Unmarshal(body, &soilResponse); err != nil {
-		errorResponse := "Probably got a bad reading"
+		errorResponse := "Probably got a bad soil reading"
 		writer.Write([]byte(errorResponse))
 		fmt.Println(errorResponse)
 	} else {
@@ -78,7 +79,7 @@ func WaterStatus(writer http.ResponseWriter, request *http.Request) {
 
 	waterResponse := &Water{}
 	if err := json.Unmarshal(body, &waterResponse); err != nil {
-		errorResponse := "Probably got a bad reading"
+		errorResponse := "Probably got a bad water reading"
 		writer.Write([]byte(errorResponse))
 		fmt.Println(errorResponse)
 	} else {

@@ -1,10 +1,11 @@
 package garage
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
-	"fmt"
-	"encoding/json"
+
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/page"
 	"github.com/ltruelove/gohome/internal/app/pin"
@@ -20,7 +21,10 @@ func RegisterHandlers(mainConfig config.Configuration) {
 }
 
 func DoorHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &page.Page{Title: "This is the GoHome Door Page"}
+	p := &page.Page{
+		Title:    "This is the GoHome Door Page",
+		StatusIP: Config.GarageStatusIP,
+	}
 	t, _ := template.ParseFiles(Config.WebDir + "/html/door.html")
 	t.Execute(writer, p)
 }
@@ -49,4 +53,3 @@ func ClickGarageDoorButton(writer http.ResponseWriter, request *http.Request) {
 	pinresponse, _ := json.Marshal(v)
 	writer.Write(pinresponse)
 }
-
