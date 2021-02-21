@@ -21,7 +21,10 @@ func RegisterHandlers(mainConfig config.Configuration) {
 }
 
 func homeHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &page.Page{Title: "This is the GoHome Home Page"}
+	p := &page.Page{
+		Title:    "This is the GoHome Home Page",
+		StatusIP: Config.GarageStatusIP,
+	}
 	t, _ := template.ParseFiles(Config.WebDir + "/html/home.html")
 	t.Execute(writer, p)
 }
