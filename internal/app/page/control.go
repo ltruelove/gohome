@@ -3,9 +3,8 @@ package page
 import "io/ioutil"
 
 type Page struct {
-	Title    string
-	StatusIP string
-	Body     []byte
+	Title string
+	Body  []byte
 }
 
 func LoadPage(title string) (*Page, error) {

@@ -24,8 +24,7 @@ func RegisterHandlers(mainConfig config.Configuration) {
 
 func DoorHandler(writer http.ResponseWriter, request *http.Request) {
 	p := &page.Page{
-		Title:    "This is the GoHome Door Page",
-		StatusIP: Config.GarageStatusIP,
+		Title: "This is the GoHome Door Page",
 	}
 	t, _ := template.ParseFiles(Config.WebDir + "/html/door.html")
 	t.Execute(writer, p)

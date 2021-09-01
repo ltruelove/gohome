@@ -18,7 +18,7 @@ function DoorViewModel(){
     }
     
     this.getStatus = function(){
-        $.get('http://' + STATUS_IP, function(response){
+        $.get('/doorStatus', function(response){
             self.humidity(response.humidity);
             self.celcius(response.celcius);
             self.fahrenheit(response.fahrenheit);

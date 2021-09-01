@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<title>{{.Title}}</title>
+		<link href="/dependency/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet"/>
+		<script src="/dependency/bootstrap-3.3.7-dist/js/jquery-3.1.0.js"></script>
+		<script src="/dependency/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+	</head>
+
+	<body>
+		<div id="bodyDiv" class="container">
+            <div class="row">
+                <div class="col-sm-6">
+                    <h3>Kids Room</h3>
+                    <p>Temperature (F): <span data-bind="text: kids.fahrenheit"></span></p>
+                    <p>Temperature (C): <span data-bind="text: kids.celcius"></span></p>
+                    <p>Humidity: <span data-bind="text: kids.humidity"></span>%</p>
+                </div>
+                <div class="col-sm-6">
+                    <h3>Master Bedroom</h3>
+                    <p>Temperature (F): <span data-bind="text: master.fahrenheit"></span></p>
+                    <p>Temperature (C): <span data-bind="text: master.celcius"></span></p>
+                    <p>Humidity: <span data-bind="text: master.humidity"></span>%</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <h3>Garage</h3>
+                    <p>Temperature (F): <span data-bind="text: garage.fahrenheit"></span></p>
+                    <p>Temperature (C): <span data-bind="text: garage.celcius"></span></p>
+                    <p>Humidity: <span data-bind="text: garage.humidity"></span>%</p>
+                </div>
+                <div class="col-sm-6">
+                    <h3>Main Floor</h3>
+                    <p>Temperature (F): <span data-bind="text: main.fahrenheit"></span></p>
+                    <p>Temperature (C): <span data-bind="text: main.celcius"></span></p>
+                    <p>Humidity: <span data-bind="text: main.humidity"></span>%</p>
+                </div>
+            </div>
+        </div>
+
+		<script src="/dependency/bootstrap-3.3.7-dist/js/knockout-3.4.0.js"></script>
+		<script src="/js/temps.js"></script>
+	</body>
+</html>

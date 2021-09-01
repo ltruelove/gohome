@@ -8,6 +8,9 @@ type Configuration struct {
 	Pin            string `json:"pin"`
 	DoorIp         string `json:"doorIp"`
 	GarageStatusIP string `json:"garageStatusIp"`
+	KidsStatusIP   string `json:"kidsStatusIp"`
+	MasterStatusIP string `json:"masterStatusIp"`
+	MainStatusIP   string `json:"mainStatusIp"`
 	GardenIp       string `json:"gardenIp"`
 	WaterIp        string `json:"waterIp"`
 	SoilThreshold  int    `json:"soilThreshold"`

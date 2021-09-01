@@ -12,6 +12,7 @@ import (
 	"github.com/ltruelove/gohome/internal/app/garden"
 	"github.com/ltruelove/gohome/internal/app/home"
 	"github.com/ltruelove/gohome/internal/app/pin"
+	"github.com/ltruelove/gohome/internal/app/temps"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 	//"database/sql"
 	//_ "github.com/mattn/go-sqlite3"
@@ -40,6 +41,7 @@ func main() {
 	pin.RegisterHandlers(Config)
 	garden.RegisterHandlers(Config)
 	garage.RegisterHandlers(Config)
+	temps.RegisterHandlers(Config)
 	electrical.RegisterHandlers()
 
 	//handle file system requests
