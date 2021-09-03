@@ -8,32 +8,12 @@
 
 	<body>
 		<div id="bodyDiv" class="container">
-            <div class="row">
+            <div class="row" data-bind="foreach: rooms">
                 <div class="col-sm-6">
-                    <h3>Kids Room</h3>
-                    <p>Temperature (F): <span data-bind="text: kids.fahrenheit"></span></p>
-                    <p>Temperature (C): <span data-bind="text: kids.celcius"></span></p>
-                    <p>Humidity: <span data-bind="text: kids.humidity"></span>%</p>
-                </div>
-                <div class="col-sm-6">
-                    <h3>Master Bedroom</h3>
-                    <p>Temperature (F): <span data-bind="text: master.fahrenheit"></span></p>
-                    <p>Temperature (C): <span data-bind="text: master.celcius"></span></p>
-                    <p>Humidity: <span data-bind="text: master.humidity"></span>%</p>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <h3>Garage</h3>
-                    <p>Temperature (F): <span data-bind="text: garage.fahrenheit"></span></p>
-                    <p>Temperature (C): <span data-bind="text: garage.celcius"></span></p>
-                    <p>Humidity: <span data-bind="text: garage.humidity"></span>%</p>
-                </div>
-                <div class="col-sm-6">
-                    <h3>Main Floor</h3>
-                    <p>Temperature (F): <span data-bind="text: main.fahrenheit"></span></p>
-                    <p>Temperature (C): <span data-bind="text: main.celcius"></span></p>
-                    <p>Humidity: <span data-bind="text: main.humidity"></span>%</p>
+                    <h3 data-bind="text: name">Kids Room</h3>
+                    <p>Temperature (F): <span data-bind="text: fahrenheit"></span></p>
+                    <p>Temperature (C): <span data-bind="text: celcius"></span></p>
+                    <p>Humidity: <span data-bind="text: humidity"></span>%</p>
                 </div>
             </div>
         </div>
