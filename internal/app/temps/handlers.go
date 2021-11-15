@@ -15,10 +15,11 @@ import (
 var Config config.Configuration
 
 type RoomTemperature struct {
-	Fahrenheit float32 `json:"fahrenheit"`
-	Celcius    float32 `json:"celcius"`
-	Humidity   float32 `json:"humidity"`
-	Name       string  `json:"name"`
+	Fahrenheit   float32 `json:"fahrenheit"`
+	Celcius      float32 `json:"celcius"`
+	Humidity     float32 `json:"humidity"`
+	Name         string  `json:"name"`
+	ErrorMessage string  `json:"errorMessage"`
 }
 
 func RegisterHandlers(mainConfig config.Configuration) {
@@ -64,25 +65,27 @@ func writeResponse(writer http.ResponseWriter, responseData []byte) {
 func fetchTemperature(address string, name string) RoomTemperature {
 	status, err := http.Get(address)
 
+	var t RoomTemperature
+	t.Name = name
+
 	if err != nil {
-		panic(err)
+		t.ErrorMessage = "There was an error fetching the temperature"
+		return t
 	}
 
 	defer status.Body.Close()
 	responseData, rErr := ioutil.ReadAll(status.Body)
 
 	if rErr != nil {
-		panic(rErr)
+		t.ErrorMessage = "There was an error fetching the temperature"
+		return t
 	}
-
-	var t RoomTemperature
 
 	err = json.Unmarshal(responseData, &t)
 	if err != nil {
-		panic(err)
+		t.ErrorMessage = "There was an error fetching the temperature"
+		return t
 	}
-
-	t.Name = name
 
 	return t
 }
