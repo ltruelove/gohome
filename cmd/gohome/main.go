@@ -9,11 +9,12 @@ import (
 
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/handlers"
+	"github.com/ltruelove/gohome/internal/app/setup"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 var Config config.Configuration
+var db *sql.DB
 
 func main() {
 	// parse config settings
@@ -29,20 +30,8 @@ func main() {
 		panic(err)
 	}
 
-	db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
-	checkErr(sqlErr)
-
-	rows, sqlErr := db.Query("SELECT * FROM user;")
-	checkErr(sqlErr)
-
-	for rows.Next() {
-		var uid int
-		var username string
-		var password string
-		var isDisabled string
-		sqlErr = rows.Scan(&uid, &username, &password, &isDisabled)
-		checkErr(sqlErr)
-	}
+	db = setup.InitDb()
+	defer db.Close()
 
 	//register application routes
 	//each app section should have its own handlers to register with the
@@ -62,10 +51,4 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
-}
-
-func checkErr(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
