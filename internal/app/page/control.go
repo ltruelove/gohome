@@ -1,17 +1,16 @@
 package page
 
-import "io/ioutil"
+import (
+	"io/ioutil"
 
-type Page struct {
-	Title string
-	Body  []byte
-}
+	"github.com/ltruelove/gohome/internal/app/data"
+)
 
-func LoadPage(title string) (*Page, error) {
+func LoadPage(title string) (*data.Page, error) {
 	filename := title + ".txt"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	return &Page{Title: title, Body: body}, nil
+	return &data.Page{Title: title, Body: body}, nil
 }
