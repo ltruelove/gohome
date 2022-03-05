@@ -25,4 +25,5 @@ _testmain.go
 *.swp
 config.json
 *~
+*.s3db
 *.s3db-journal
