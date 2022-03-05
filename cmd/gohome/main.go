@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -14,7 +13,6 @@ import (
 )
 
 var Config config.Configuration
-var db *sql.DB
 
 func main() {
 	// parse config settings
@@ -30,8 +28,8 @@ func main() {
 		panic(err)
 	}
 
-	db = setup.InitDb()
-	defer db.Close()
+	setup.InitDb()
+	defer setup.DB.Close()
 
 	//register application routes
 	//each app section should have its own handlers to register with the

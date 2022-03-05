@@ -7,18 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/providers"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
-
-type RoomTemperature struct {
-	Fahrenheit   float32 `json:"fahrenheit"`
-	Celcius      float32 `json:"celcius"`
-	Humidity     float32 `json:"humidity"`
-	Name         string  `json:"name"`
-	ErrorMessage string  `json:"errorMessage"`
-}
 
 func RegisterTempHandlers(mainConfig config.Configuration) {
 	Config = mainConfig
@@ -28,6 +22,9 @@ func RegisterTempHandlers(mainConfig config.Configuration) {
 	routing.AddGenericRoute("/temps/master", HandleMasterSettingsRequest)
 	routing.AddGenericRoute("/temps/main", HandleMainSettingsRequest)
 	routing.AddGenericRoute("/temps/all", HandleAllSettingsRequest)
+	routing.AddRouteWithMethod("/temps/registersensor", "POST", RegisterTempSensor)
+	routing.AddRouteWithMethod("/temps/updatesensor", "PUT", UpdateTempSensor)
+	routing.AddRouteWithMethod("/temps/deletesensor", "DELETE", DeleteTempSensor)
 }
 
 func TempsHandler(writer http.ResponseWriter, request *http.Request) {
@@ -60,10 +57,10 @@ func writeResponse(writer http.ResponseWriter, responseData []byte) {
 	writer.Write(responseData)
 }
 
-func fetchTemperature(address string, name string) RoomTemperature {
+func fetchTemperature(address string, name string) data.RoomTemperature {
 	status, err := http.Get(address)
 
-	var t RoomTemperature
+	var t data.RoomTemperature
 	t.Name = name
 
 	if err != nil {
@@ -88,8 +85,48 @@ func fetchTemperature(address string, name string) RoomTemperature {
 	return t
 }
 
+func RegisterTempSensor(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var sensor data.TemperatureSensor
+
+	err := decoder.Decode(&sensor)
+	if err != nil {
+		panic(err)
+	}
+
+	sensor.SensorId = uuid.NewString()
+
+	if providers.VerifyTemperatureSensorIdIsNew(sensor.SensorId) {
+		providers.AddNewTemperatureSensor(&sensor)
+	}
+}
+
+func UpdateTempSensor(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var sensor data.TemperatureSensor
+
+	err := decoder.Decode(&sensor)
+	if err != nil {
+		panic(err)
+	}
+
+	providers.UpdateTemperatureSensor(&sensor)
+}
+
+func DeleteTempSensor(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var sensor data.TemperatureSensor
+
+	err := decoder.Decode(&sensor)
+	if err != nil {
+		panic(err)
+	}
+
+	providers.DeleteTemperatureSensor(sensor.SensorId)
+}
+
 func HandleAllSettingsRequest(writer http.ResponseWriter, request *http.Request) {
-	allTemps := make([]RoomTemperature, 0)
+	allTemps := make([]data.RoomTemperature, 0)
 	kidsTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.KidsStatusIP), "Kids' Room")
 	mainTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.MainStatusIP), "Main Floor")
 	masterTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.MasterStatusIP), "Master Bedroom")

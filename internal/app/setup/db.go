@@ -6,16 +6,16 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+var DB *sql.DB
+
 // Creates the database if it doesn't exist and then opens it. Checks if tables exist, and if not
 // creates them.
-func InitDb() *sql.DB {
+func InitDb() {
 	//open/create db
 	db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
-	checkErr(sqlErr)
+	CheckErr(sqlErr)
 
 	checkTables(db)
-
-	return db
 }
 
 func checkTables(db *sql.DB) {
@@ -26,7 +26,7 @@ func checkTables(db *sql.DB) {
 	FROM sqlite_master
 	WHERE type='table' AND name='TemperatureSensors';`)
 
-	checkErr(sqlErr)
+	CheckErr(sqlErr)
 
 	//determine if any rows have been returned
 	defer rows.Close()
@@ -37,11 +37,11 @@ func checkTables(db *sql.DB) {
 	//if no rows exist, create the table
 	if rowCount < 1 {
 		_, sqlErr := db.Exec(CreateTemperatureSensors)
-		checkErr(sqlErr)
+		CheckErr(sqlErr)
 	}
 }
 
-func checkErr(err error) {
+func CheckErr(err error) {
 	if err != nil {
 		panic(err)
 	}

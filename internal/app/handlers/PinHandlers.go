@@ -16,15 +16,15 @@ func RegisterPinHandlers(mainConfig config.Configuration) {
 
 func PinValid(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
-	var t data.PinRequest
+	var pinRequest data.PinRequest
 
-	err := decoder.Decode(&t)
+	err := decoder.Decode(&pinRequest)
 	if err != nil {
 		panic(err)
 	}
 
 	var v = new(data.Validator)
-	v.IsValid = Config.ValidatePin(t.PinCode)
+	v.IsValid = Config.ValidatePin(pinRequest.PinCode)
 
 	if !v.IsValid {
 		http.Error(writer, "Not valid", 401)
