@@ -1,25 +1,26 @@
 package providers
 
 import (
+	"database/sql"
+	"fmt"
+
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-const tableName string = "TemperatureSensors"
-
-func VerifyTemperatureSensorIdIsNew(sensorId string) bool {
-	sensor := FetchTemperatureSensor(sensorId)
+func VerifyTemperatureSensorIdIsNew(sensorId string, db *sql.DB) bool {
+	sensor := FetchTemperatureSensor(sensorId, db)
 	return len(sensor.SensorId) == 0
 }
 
-func FetchAllTemperatureSensors() []data.TemperatureSensor {
-	stmt, err := setup.DB.Prepare(`SELECT id, name, isGarage, ipAddress
-	FROM ?`)
+func FetchAllTemperatureSensors(db *sql.DB) []data.TemperatureSensor {
+	stmt, err := db.Prepare(`SELECT id, name, isGarage, ipAddress
+	FROM TemperatureSensors`)
 
 	setup.CheckErr(err)
 	var sensors []data.TemperatureSensor
 
-	rows, err := stmt.Query(tableName)
+	rows, err := stmt.Query()
 	setup.CheckErr(err)
 
 	for rows.Next() {
@@ -35,52 +36,54 @@ func FetchAllTemperatureSensors() []data.TemperatureSensor {
 	return sensors
 }
 
-func FetchTemperatureSensor(sensorId string) data.TemperatureSensor {
-	stmt, err := setup.DB.Prepare(`SELECT id, name, isGarage, ipAddress
-	FROM ?
-	WHERE id = ?`)
-
+func FetchTemperatureSensor(sensorId string, db *sql.DB) data.TemperatureSensor {
+	stmt, err := db.Prepare("SELECT id, name, isGarage, ipAddress FROM TemperatureSensors WHERE id = ?")
 	setup.CheckErr(err)
+	defer stmt.Close()
+
 	var sensor data.TemperatureSensor
 
-	err = stmt.QueryRow(tableName, sensorId).Scan(&sensor.SensorId,
+	err = stmt.QueryRow(sensorId).Scan(&sensor.SensorId,
 		&sensor.Name,
 		&sensor.IsGarage,
 		&sensor.IpAddress)
-	defer stmt.Close()
 
-	setup.CheckErr(err)
+	if err != sql.ErrNoRows {
+		setup.CheckErr(err)
+	}
 
 	return sensor
 }
 
-func AddNewTemperatureSensor(sensor *data.TemperatureSensor) {
-	stmt, err := setup.DB.Prepare(`INSERT INTO ?
+func AddNewTemperatureSensor(sensor *data.TemperatureSensor, db *sql.DB) {
+	fmt.Println("Preparing insert")
+	stmt, err := db.Prepare(`INSERT INTO TemperatureSensors
 	(id, name, isGarage, ipAddress)
 	VALUES (?, ?, ?, ?)`)
 
 	setup.CheckErr(err)
 
-	_, err = stmt.Query(tableName,
-		sensor.SensorId,
+	fmt.Println("Executing insert")
+	_, err = stmt.Exec(sensor.SensorId,
 		sensor.Name,
 		sensor.IsGarage,
 		sensor.IpAddress)
 
 	defer stmt.Close()
 
+	fmt.Println("Checking insert")
 	setup.CheckErr(err)
+	fmt.Println("Insert succeeded")
 }
 
-func UpdateTemperatureSensor(sensor *data.TemperatureSensor) {
-	stmt, err := setup.DB.Prepare(`UPDATE ?
+func UpdateTemperatureSensor(sensor *data.TemperatureSensor, db *sql.DB) {
+	stmt, err := db.Prepare(`UPDATE TemperatureSensors
 	SET name = ?, isGarage = ?, ipAddress = ?
 	WHERE id = ?`)
 
 	setup.CheckErr(err)
 
-	_, err = stmt.Query(tableName,
-		sensor.Name,
+	_, err = stmt.Exec(sensor.Name,
 		sensor.IsGarage,
 		sensor.IpAddress,
 		sensor.SensorId)
@@ -90,13 +93,13 @@ func UpdateTemperatureSensor(sensor *data.TemperatureSensor) {
 	setup.CheckErr(err)
 }
 
-func DeleteTemperatureSensor(sensorId string) {
-	stmt, err := setup.DB.Prepare(`DELETE FROM ?
+func DeleteTemperatureSensor(sensorId string, db *sql.DB) {
+	stmt, err := db.Prepare(`DELETE FROM TemperatureSensors
 	WHERE id = ?`)
 
 	setup.CheckErr(err)
 
-	_, err = stmt.Query(tableName, sensorId)
+	_, err = stmt.Exec(sensorId)
 
 	defer stmt.Close()
 

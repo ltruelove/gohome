@@ -28,8 +28,9 @@ func main() {
 		panic(err)
 	}
 
-	setup.InitDb()
-	defer setup.DB.Close()
+	db := setup.InitDb()
+
+	tempHandler := &handlers.TempHandler{DB: db}
 
 	//register application routes
 	//each app section should have its own handlers to register with the
@@ -38,8 +39,10 @@ func main() {
 	handlers.RegisterPinHandlers(Config)
 	handlers.RegisterGardenHandlers(Config)
 	handlers.RegisterGarageHandlers(Config)
-	handlers.RegisterTempHandlers(Config)
+	tempHandler.RegisterTempHandlers(Config)
 	handlers.RegisterElectricHandlers()
+
+	defer db.Close()
 
 	//handle file system requests
 	routing.AppRouter.PathPrefix("/").Handler(http.FileServer(http.Dir("./" + Config.WebDir + "/")))

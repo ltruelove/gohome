@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -14,7 +15,11 @@ import (
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
-func RegisterTempHandlers(mainConfig config.Configuration) {
+type TempHandler struct {
+	DB *sql.DB
+}
+
+func (tempHandler *TempHandler) RegisterTempHandlers(mainConfig config.Configuration) {
 	Config = mainConfig
 	routing.AddGenericRoute("/temps", TempsHandler)
 	routing.AddGenericRoute("/temps/kids", HandleKidsSettingsRequest)
@@ -22,9 +27,9 @@ func RegisterTempHandlers(mainConfig config.Configuration) {
 	routing.AddGenericRoute("/temps/master", HandleMasterSettingsRequest)
 	routing.AddGenericRoute("/temps/main", HandleMainSettingsRequest)
 	routing.AddGenericRoute("/temps/all", HandleAllSettingsRequest)
-	routing.AddRouteWithMethod("/temps/registersensor", "POST", RegisterTempSensor)
-	routing.AddRouteWithMethod("/temps/updatesensor", "PUT", UpdateTempSensor)
-	routing.AddRouteWithMethod("/temps/deletesensor", "DELETE", DeleteTempSensor)
+	routing.AddRouteWithMethod("/temps/registersensor", "POST", tempHandler.RegisterTempSensor)
+	routing.AddRouteWithMethod("/temps/updatesensor", "PUT", tempHandler.UpdateTempSensor)
+	routing.AddRouteWithMethod("/temps/deletesensor", "DELETE", tempHandler.DeleteTempSensor)
 }
 
 func TempsHandler(writer http.ResponseWriter, request *http.Request) {
@@ -85,7 +90,7 @@ func fetchTemperature(address string, name string) data.RoomTemperature {
 	return t
 }
 
-func RegisterTempSensor(writer http.ResponseWriter, request *http.Request) {
+func (tempHandler *TempHandler) RegisterTempSensor(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
 	var sensor data.TemperatureSensor
 
@@ -96,12 +101,22 @@ func RegisterTempSensor(writer http.ResponseWriter, request *http.Request) {
 
 	sensor.SensorId = uuid.NewString()
 
-	if providers.VerifyTemperatureSensorIdIsNew(sensor.SensorId) {
-		providers.AddNewTemperatureSensor(&sensor)
+	fmt.Println((sensor.SensorId))
+	if providers.VerifyTemperatureSensorIdIsNew(sensor.SensorId, tempHandler.DB) {
+		fmt.Println("Add a new sensor")
+		providers.AddNewTemperatureSensor(&sensor, tempHandler.DB)
+
+		result, err := json.Marshal(sensor)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(result)
+		writeResponse(writer, result)
 	}
 }
 
-func UpdateTempSensor(writer http.ResponseWriter, request *http.Request) {
+func (tempHandler *TempHandler) UpdateTempSensor(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
 	var sensor data.TemperatureSensor
 
@@ -110,10 +125,10 @@ func UpdateTempSensor(writer http.ResponseWriter, request *http.Request) {
 		panic(err)
 	}
 
-	providers.UpdateTemperatureSensor(&sensor)
+	providers.UpdateTemperatureSensor(&sensor, tempHandler.DB)
 }
 
-func DeleteTempSensor(writer http.ResponseWriter, request *http.Request) {
+func (tempHandler *TempHandler) DeleteTempSensor(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
 	var sensor data.TemperatureSensor
 
@@ -122,7 +137,7 @@ func DeleteTempSensor(writer http.ResponseWriter, request *http.Request) {
 		panic(err)
 	}
 
-	providers.DeleteTemperatureSensor(sensor.SensorId)
+	providers.DeleteTemperatureSensor(sensor.SensorId, tempHandler.DB)
 }
 
 func HandleAllSettingsRequest(writer http.ResponseWriter, request *http.Request) {
