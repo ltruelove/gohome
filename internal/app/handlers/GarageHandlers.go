@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/ltruelove/gohome/config"
@@ -15,7 +14,6 @@ import (
 func RegisterGarageHandlers(mainConfig config.Configuration) {
 	Config = mainConfig
 	routing.AddGenericRoute("/door", DoorHandler)
-	routing.AddGenericRoute("/doorStatus", HandleSettingsRequest)
 	routing.AddRouteWithMethod("/clickGarageDoorButton", "POST", ClickGarageDoorButton)
 }
 
@@ -25,25 +23,6 @@ func DoorHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 	t, _ := template.ParseFiles(Config.WebDir + "/html/door.html")
 	t.Execute(writer, p)
-}
-
-func HandleSettingsRequest(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s", Config.GarageStatusIP)
-	status, err := http.Get(address)
-
-	if err != nil {
-		panic(err)
-	}
-
-	defer status.Body.Close()
-	responseData, rErr := ioutil.ReadAll(status.Body)
-
-	if rErr != nil {
-		panic(rErr)
-	}
-
-	writer.Header().Set("Content-Type", "application/json")
-	writer.Write(responseData)
 }
 
 func ClickGarageDoorButton(writer http.ResponseWriter, request *http.Request) {

@@ -18,11 +18,19 @@ function DoorViewModel(){
     }
     
     this.getStatus = function(){
-        $.get('/doorStatus', function(response){
-            self.humidity(response.humidity);
-            self.celcius(response.celcius);
-            self.fahrenheit(response.fahrenheit);
-            self.doorClosed(response.doorClosed);
+        $.get('/temps/garage', function(response){
+            if(response.ErrorMessage){
+                console.log(response.ErrorMessage);
+            }else{
+                self.humidity(response.humidity);
+                self.celcius(response.celcius);
+                self.fahrenheit(response.fahrenheit);
+                self.doorClosed(response.doorClosed);
+            }
+        }).fail(function(response, d){
+            if(response.responseText){
+                console.log(JSON.parse(response.responseText));
+            }
         });
     }
     
