@@ -22,11 +22,8 @@ type TempHandler struct {
 func (tempHandler *TempHandler) RegisterTempHandlers(mainConfig config.Configuration) {
 	Config = mainConfig
 	routing.AddGenericRoute("/temps", TempsHandler)
-	routing.AddGenericRoute("/temps/kids", HandleKidsSettingsRequest)
-	routing.AddGenericRoute("/temps/garage", HandleGarageSettingsRequest)
-	routing.AddGenericRoute("/temps/master", HandleMasterSettingsRequest)
-	routing.AddGenericRoute("/temps/main", HandleMainSettingsRequest)
-	routing.AddGenericRoute("/temps/all", HandleAllSettingsRequest)
+	routing.AddGenericRoute("/temps/garage", tempHandler.HandleGarageTempRequest)
+	routing.AddGenericRoute("/temps/all", tempHandler.HandleAllTempsRequest)
 	routing.AddRouteWithMethod("/temps/registersensor", "POST", tempHandler.RegisterTempSensor)
 	routing.AddRouteWithMethod("/temps/updatesensor", "PUT", tempHandler.UpdateTempSensor)
 	routing.AddRouteWithMethod("/temps/deletesensor", "DELETE", tempHandler.DeleteTempSensor)
@@ -140,17 +137,14 @@ func (tempHandler *TempHandler) DeleteTempSensor(writer http.ResponseWriter, req
 	providers.DeleteTemperatureSensor(sensor.SensorId, tempHandler.DB)
 }
 
-func HandleAllSettingsRequest(writer http.ResponseWriter, request *http.Request) {
+func (tempHandler *TempHandler) HandleAllTempsRequest(writer http.ResponseWriter, request *http.Request) {
+	allSensors := providers.FetchAllTemperatureSensors(tempHandler.DB)
 	allTemps := make([]data.RoomTemperature, 0)
-	kidsTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.KidsStatusIP), "Kids' Room")
-	mainTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.MainStatusIP), "Main Floor")
-	masterTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.MasterStatusIP), "Master Bedroom")
-	garageTemp := fetchTemperature(fmt.Sprintf("http://%s", Config.GarageStatusIP), "Garage")
 
-	allTemps = append(allTemps, kidsTemp)
-	allTemps = append(allTemps, mainTemp)
-	allTemps = append(allTemps, masterTemp)
-	allTemps = append(allTemps, garageTemp)
+	for _, sensor := range allSensors {
+		temp := fetchTemperature(fmt.Sprintf("http://%s", sensor.IpAddress), sensor.Name)
+		allTemps = append(allTemps, temp)
+	}
 
 	result, err := json.Marshal(allTemps)
 
@@ -161,22 +155,31 @@ func HandleAllSettingsRequest(writer http.ResponseWriter, request *http.Request)
 	writeResponse(writer, result)
 }
 
-func HandleKidsSettingsRequest(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s", Config.KidsStatusIP)
-	makeRequest(writer, request, address)
-}
+func (tempHandler *TempHandler) HandleGarageTempRequest(writer http.ResponseWriter, request *http.Request) {
+	garageSensor := providers.FetchGarageTemperatureSensor(tempHandler.DB)
+	var response data.RoomTemperature
 
-func HandleGarageSettingsRequest(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s", Config.GarageStatusIP)
-	makeRequest(writer, request, address)
-}
+	//no garage sensor found return 404
+	if garageSensor.SensorId == "" {
+		writer.WriteHeader(http.StatusNotFound)
+		response.ErrorMessage = "Garage sensor not found"
+		jsonResponse, err := json.Marshal(response)
 
-func HandleMasterSettingsRequest(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s", Config.MasterStatusIP)
-	makeRequest(writer, request, address)
-}
+		if err != nil {
+			panic(err)
+		}
 
-func HandleMainSettingsRequest(writer http.ResponseWriter, request *http.Request) {
-	address := fmt.Sprintf("http://%s", Config.MainStatusIP)
-	makeRequest(writer, request, address)
+		writeResponse(writer, jsonResponse)
+		return
+	}
+
+	response = fetchTemperature(fmt.Sprintf("http://%s", garageSensor.IpAddress), garageSensor.Name)
+
+	result, err := json.Marshal(response)
+
+	if err != nil {
+		panic(err)
+	}
+
+	writeResponse(writer, result)
 }

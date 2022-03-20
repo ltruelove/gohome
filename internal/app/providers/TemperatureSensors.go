@@ -55,6 +55,25 @@ func FetchTemperatureSensor(sensorId string, db *sql.DB) data.TemperatureSensor 
 	return sensor
 }
 
+func FetchGarageTemperatureSensor(db *sql.DB) data.TemperatureSensor {
+	stmt, err := db.Prepare("SELECT id, name, isGarage, ipAddress FROM TemperatureSensors WHERE isGarage = 1")
+	setup.CheckErr(err)
+	defer stmt.Close()
+
+	var sensor data.TemperatureSensor
+
+	err = stmt.QueryRow().Scan(&sensor.SensorId,
+		&sensor.Name,
+		&sensor.IsGarage,
+		&sensor.IpAddress)
+
+	if err != sql.ErrNoRows {
+		setup.CheckErr(err)
+	}
+
+	return sensor
+}
+
 func AddNewTemperatureSensor(sensor *data.TemperatureSensor, db *sql.DB) {
 	fmt.Println("Preparing insert")
 	stmt, err := db.Prepare(`INSERT INTO TemperatureSensors
