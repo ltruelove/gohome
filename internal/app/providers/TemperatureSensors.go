@@ -2,7 +2,6 @@ package providers
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/setup"
@@ -75,14 +74,12 @@ func FetchGarageTemperatureSensor(db *sql.DB) data.TemperatureSensor {
 }
 
 func AddNewTemperatureSensor(sensor *data.TemperatureSensor, db *sql.DB) {
-	fmt.Println("Preparing insert")
 	stmt, err := db.Prepare(`INSERT INTO TemperatureSensors
 	(id, name, isGarage, ipAddress)
 	VALUES (?, ?, ?, ?)`)
 
 	setup.CheckErr(err)
 
-	fmt.Println("Executing insert")
 	_, err = stmt.Exec(sensor.SensorId,
 		sensor.Name,
 		sensor.IsGarage,
@@ -90,9 +87,7 @@ func AddNewTemperatureSensor(sensor *data.TemperatureSensor, db *sql.DB) {
 
 	defer stmt.Close()
 
-	fmt.Println("Checking insert")
 	setup.CheckErr(err)
-	fmt.Println("Insert succeeded")
 }
 
 func UpdateTemperatureSensor(sensor *data.TemperatureSensor, db *sql.DB) {

@@ -98,9 +98,7 @@ func (tempHandler *TempHandler) RegisterTempSensor(writer http.ResponseWriter, r
 
 	sensor.SensorId = uuid.NewString()
 
-	fmt.Println((sensor.SensorId))
 	if providers.VerifyTemperatureSensorIdIsNew(sensor.SensorId, tempHandler.DB) {
-		fmt.Println("Add a new sensor")
 		providers.AddNewTemperatureSensor(&sensor, tempHandler.DB)
 
 		result, err := json.Marshal(sensor)
@@ -108,7 +106,6 @@ func (tempHandler *TempHandler) RegisterTempSensor(writer http.ResponseWriter, r
 			panic(err)
 		}
 
-		fmt.Println(result)
 		writeResponse(writer, result)
 	}
 }
