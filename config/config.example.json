@@ -1,10 +1,6 @@
 {
     "pin":"9999",
     "doorIp":"127.0.0.1",
-    "garageStatusIp":"127.0.0.1",
-    "masterStatusIp":"127.0.0.1",
-    "kidsStatusIp":"127.0.0.1",
-    "mainStatusIp":"127.0.0.1",
     "gardenIp":"127.0.0.1",
     "waterIp":"127.0.0.1",
     "soilThreshold":100,
