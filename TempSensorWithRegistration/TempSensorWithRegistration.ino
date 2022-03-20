@@ -40,7 +40,6 @@ void setup() {
   WiFi.disconnect();
   //clearPreferences();
 
-  Serial.println("getting preferences");
   prefs.begin(prefsName, true);
   ssid = prefs.getString("ssid", "");
   pass = prefs.getString("pass", "");
@@ -48,13 +47,11 @@ void setup() {
   apiPort = prefs.getUInt("apiPort", 80);
   sensorId = prefs.getString("sensorId");
   name = prefs.getString("name");
+  isGarage = prefs.getString("isGarage");
   prefs.end();
 
-
-  Serial.println("Check for empty SSID");
   if(!ssid.isEmpty()){
 
-    Serial.println("Try to connect to WiFi");
     connectToWifi(ssid.c_str(), pass.c_str());
     hasPreferences = true;
 
@@ -66,14 +63,11 @@ void setup() {
     Serial.println(sensorId);
 
     if(WiFi.status() == WL_CONNECTED){
-      Serial.println("Connected to WiFi");
       isConnected = true;
 
       if(sensorId.isEmpty()){
-        Serial.println("Sensor ID does not exist, attempt to register it");
         registerSensorWithAPI(apiHost, apiPort);
       }else{
-        Serial.println("Begin standard operation");
         //this should be where the device operates most of the time
         updateIPWithAPI();
         dht.begin();
@@ -82,13 +76,10 @@ void setup() {
         launchSensorWeb();
       }
     } else {
-      Serial.println("WiFi did not connect with given data");
       setupAccessPoint();
     }
   }else{
-    Serial.println("empty ssid");
     setupAccessPoint();
-    Serial.println("Web Server started");
   }
 }
 
@@ -110,10 +101,8 @@ void loop() {
       WiFi.disconnect();
       if(WiFi.reconnect()){
         if(!sensorId.isEmpty()){
-          Serial.println("Updating API with new IP");
           updateIPWithAPI();
         }else{
-          Serial.println("Attempt to register sensor with the API");
           registerSensorWithAPI(apiHost, apiPort);
         }
       }
