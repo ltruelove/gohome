@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/handlers"
+	"github.com/ltruelove/gohome/internal/app/controllers"
 	"github.com/ltruelove/gohome/internal/app/setup"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -30,17 +30,17 @@ func main() {
 
 	db := setup.InitDb()
 
-	tempHandler := &handlers.TempHandler{DB: db}
+	tempController := &controllers.TempController{DB: db}
 
 	//register application routes
 	//each app section should have its own handlers to register with the
 	//routing package which now lives outside main in internal/pkg
-	handlers.RegisterHomeHandlers(Config)
-	handlers.RegisterPinHandlers(Config)
-	handlers.RegisterGardenHandlers(Config)
-	handlers.RegisterGarageHandlers(Config)
-	tempHandler.RegisterTempHandlers(Config)
-	handlers.RegisterElectricHandlers()
+	controllers.RegisterHomeControllers(Config)
+	controllers.RegisterPinControllers(Config)
+	controllers.RegisterGardenControllers(Config)
+	controllers.RegisterGarageControllers(Config)
+	tempController.RegisterTempControllers(Config)
+	controllers.RegisterElectricControllers()
 
 	defer db.Close()
 

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/models"
 )
 
 var Config config.Configuration
@@ -41,7 +41,7 @@ func GetSoilReading() {
 	re := regexp.MustCompile(`\r?\n`)
 	jsonString = re.ReplaceAllString(jsonString, " ")
 
-	soilResponse := &data.Garden{}
+	soilResponse := &models.Garden{}
 	soilErr := json.Unmarshal(body, &soilResponse)
 	if soilErr != nil {
 		errorResponse := "Probably got a bad soil reading"
@@ -74,7 +74,7 @@ func StartWater() {
 	re := regexp.MustCompile(`\r?\n`)
 	waterString = re.ReplaceAllString(waterString, " ")
 
-	waterResponse := &data.Water{}
+	waterResponse := &models.Water{}
 	if err := json.Unmarshal(waterBody, &waterResponse); err != nil {
 		fmt.Println("Probably got a bad water reading")
 		return
