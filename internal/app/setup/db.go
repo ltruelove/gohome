@@ -20,8 +20,8 @@ func InitDb() *sql.DB {
 }
 
 func checkTables(db *sql.DB) {
-	fmt.Println("Creating temp sensor table if not exists")
-	db.Exec(CreateTemperatureSensors)
+	fmt.Println("Creating db tables if they don't exist")
+	db.Exec(CreateTables)
 }
 
 func CheckErr(err error) {

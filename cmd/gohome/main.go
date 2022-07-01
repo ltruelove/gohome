@@ -30,8 +30,6 @@ func main() {
 
 	db := setup.InitDb()
 
-	tempController := &controllers.TempController{DB: db}
-
 	//register application routes
 	//each app section should have its own handlers to register with the
 	//routing package which now lives outside main in internal/pkg
@@ -39,7 +37,6 @@ func main() {
 	controllers.RegisterPinControllers(Config)
 	controllers.RegisterGardenControllers(Config)
 	controllers.RegisterGarageControllers(Config)
-	tempController.RegisterTempControllers(Config)
 	controllers.RegisterElectricControllers()
 
 	defer db.Close()
