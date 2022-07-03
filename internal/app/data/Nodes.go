@@ -13,7 +13,7 @@ func VerifyNodeIdIsNew(nodeId string, db *sql.DB) bool {
 }
 
 func FetchAllNodes(db *sql.DB) []models.Node {
-	stmt, err := db.Prepare(`SELECT Id, Name FROM Nodes`)
+	stmt, err := db.Prepare(`SELECT Id, Name FROM Node`)
 
 	setup.CheckErr(err)
 	var nodes []models.Node
@@ -33,7 +33,7 @@ func FetchAllNodes(db *sql.DB) []models.Node {
 }
 
 func FetchNode(nodeId string, db *sql.DB) models.Node {
-	stmt, err := db.Prepare("SELECT Id, Name FROM Nodes WHERE id = ?")
+	stmt, err := db.Prepare("SELECT Id, Name FROM Node WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
 
@@ -49,8 +49,66 @@ func FetchNode(nodeId string, db *sql.DB) models.Node {
 	return node
 }
 
-func AddNewNode(node *models.Node, db *sql.DB) {
-	stmt, err := db.Prepare(`INSERT INTO Nodes
+func FetchNodeSensors(nodeId int, db *sql.DB) []models.NodeSensor {
+	stmt, err := db.Prepare(`SELECT
+		Id,
+		SensorTypeId,
+		Pin
+		Name FROM NodeSenor WHERE id = ?`)
+	setup.CheckErr(err)
+	defer stmt.Close()
+
+	var sensors []models.NodeSensor
+
+	rows, err := stmt.Query()
+	setup.CheckErr(err)
+
+	for rows.Next() {
+		var sensor models.NodeSensor
+		sensor.NodeId = nodeId
+
+		rows.Scan(&sensor.Id,
+			&sensor.SensorTypeId,
+			&sensor.Pin,
+			&sensor.Name)
+
+		sensors = append(sensors, sensor)
+	}
+
+	return sensors
+}
+
+func FetchNodeSwitches(nodeId int, db *sql.DB) []models.NodeSwitch {
+	stmt, err := db.Prepare(`SELECT
+		Id,
+		SwitchTypeId,
+		Pin
+		Name FROM NodeSenor WHERE id = ?`)
+	setup.CheckErr(err)
+	defer stmt.Close()
+
+	var nodeSwitches []models.NodeSwitch
+
+	rows, err := stmt.Query()
+	setup.CheckErr(err)
+
+	for rows.Next() {
+		var nodeSwitch models.NodeSwitch
+		nodeSwitch.NodeId = nodeId
+
+		rows.Scan(&nodeSwitch.Id,
+			&nodeSwitch.SwitchTypeId,
+			&nodeSwitch.Pin,
+			&nodeSwitch.Name)
+
+		nodeSwitches = append(nodeSwitches, nodeSwitch)
+	}
+
+	return nodeSwitches
+}
+
+func CreateNode(node *models.Node, db *sql.DB) {
+	stmt, err := db.Prepare(`INSERT INTO Node
 	(Id, Name, Mac)
 	VALUES (?, ?, ?)`)
 
@@ -66,7 +124,7 @@ func AddNewNode(node *models.Node, db *sql.DB) {
 }
 
 func UpdateNode(node *models.Node, db *sql.DB) {
-	stmt, err := db.Prepare(`UPDATE Nodes
+	stmt, err := db.Prepare(`UPDATE Node
 	SET Name = ?, Mac = ?
 	WHERE id = ?`)
 
@@ -82,7 +140,7 @@ func UpdateNode(node *models.Node, db *sql.DB) {
 }
 
 func DeleteNode(nodeId string, db *sql.DB) {
-	stmt, err := db.Prepare(`DELETE FROM Nodes
+	stmt, err := db.Prepare(`DELETE FROM Node
 	WHERE id = ?`)
 
 	setup.CheckErr(err)

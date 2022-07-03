@@ -1,6 +1,6 @@
 package setup
 
-const CreateTables string = `CREATE TABLE IF NOT EXISTS "SensorTypes" (
+const CreateTables string = `CREATE TABLE IF NOT EXISTS "SensorType" (
 	"Id"	INTEGER NOT NULL UNIQUE,
 	"Name"	TEXT NOT NULL UNIQUE,
 	PRIMARY KEY("Id" AUTOINCREMENT)
