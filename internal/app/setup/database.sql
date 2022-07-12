@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS "SensorTypeData" (
 	"Name"	TEXT,
 	"ValueType"	TEXT,
 	PRIMARY KEY("Id" AUTOINCREMENT),
-	FOREIGN KEY("SensorTypeId") REFERENCES "SensorTypes"("Id")
+	FOREIGN KEY("SensorTypeId") REFERENCES "SensorType"("Id")
 );
 
 CREATE TABLE IF NOT EXISTS "SwitchType" (
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS "NodeSensor" (
 	"Name"	TEXT NOT NULL,
 	"Pin"	INTEGER NOT NULL,
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
-	FOREIGN KEY("SensorTypeId") REFERENCES "SensorTypes"("Id"),
+	FOREIGN KEY("SensorTypeId") REFERENCES "SensorType"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
@@ -50,66 +50,67 @@ CREATE TABLE IF NOT EXISTS "NodeSwitch" (
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
-CREATE TABLE IF NOT EXISTS "NodeController" (
+CREATE TABLE IF NOT EXISTS "ControlPoint" (
 	"Id"	INTEGER NOT NULL UNIQUE,
 	"Name"	TEXT NOT NULL,
 	"IpAddress"	TEXT NOT NULL,
+	"Mac"	TEXT NOT NULL,
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
-CREATE TABLE IF NOT EXISTS "ControllerNodes" (
+CREATE TABLE IF NOT EXISTS "ControlPointNodes" (
 	"Id"	INTEGER NOT NULL UNIQUE,
-	"ControllerId"	INTEGER NOT NULL,
+	"ControlPointId"	INTEGER NOT NULL,
 	"NodeId"	INTEGER NOT NULL,
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
-	FOREIGN KEY("ControllerId") REFERENCES "NodeController"("Id"),
+	FOREIGN KEY("ControlPointId") REFERENCES "NodeControlPoint"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
-INSERT INTO "main"."SensorTypes"
+INSERT INTO "SensorType"
 ("Name")
 VALUES ('DHT');
 
-INSERT INTO "main"."SensorTypes"
+INSERT INTO "SensorType"
 ("Name")
 VALUES ('Moisture');
 
-INSERT INTO "main"."SensorTypes"
+INSERT INTO "SensorType"
 ("Name")
 VALUES ('Magnetic');
 
-INSERT INTO "main"."SensorTypes"
+INSERT INTO "SensorType"
 ("Name")
 VALUES ('Photoresistor');
 
-INSERT INTO "main"."SensorTypeData"
+INSERT INTO "SensorTypeData"
 ("SensorTypeId", "Name", "ValueType")
 VALUES (1, 'TemperatureF', 'float');
 
-INSERT INTO "main"."SensorTypeData"
+INSERT INTO "SensorTypeData"
 ("SensorTypeId", "Name", "ValueType")
 VALUES (1, 'TemperatureC', 'float');
 
-INSERT INTO "main"."SensorTypeData"
+INSERT INTO "SensorTypeData"
 ("SensorTypeId", "Name", "ValueType")
 VALUES (1, 'Humidity', 'float');
 
-INSERT INTO "main"."SensorTypeData"
+INSERT INTO "SensorTypeData"
 ("SensorTypeId", "Name", "ValueType")
 VALUES (2, 'Moisture', 'int');
 
-INSERT INTO "main"."SensorTypeData"
+INSERT INTO "SensorTypeData"
 ("SensorTypeId", "Name", "ValueType")
 VALUES (3, 'IsClosed', 'int');
 
-INSERT INTO "main"."SensorTypeData"
+INSERT INTO "SensorTypeData"
 ("SensorTypeId", "Name", "ValueType")
 VALUES (4, 'ResistorValue', 'int');
 
-INSERT INTO "main"."SwitchTypes"
+INSERT INTO "SwitchType"
 ("Name")
 VALUES ('Momentary');
 
-INSERT INTO "main"."SwitchTypes"
+INSERT INTO "SwitchType"
 ("Name")
 VALUES ('Toggle');

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS "SensorTypeData" (
 	"Name"	TEXT,
 	"ValueType"	TEXT,
 	PRIMARY KEY("Id" AUTOINCREMENT),
-	FOREIGN KEY("SensorTypeId") REFERENCES "SensorTypes"("Id")
+	FOREIGN KEY("SensorTypeId") REFERENCES "SensorType"("Id")
 );
 
 CREATE TABLE IF NOT EXISTS "SwitchType" (
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS "NodeSensor" (
 	"Name"	TEXT NOT NULL,
 	"Pin"	INTEGER NOT NULL,
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
-	FOREIGN KEY("SensorTypeId") REFERENCES "SensorTypes"("Id"),
+	FOREIGN KEY("SensorTypeId") REFERENCES "SensorType"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
@@ -52,18 +52,19 @@ CREATE TABLE IF NOT EXISTS "NodeSwitch" (
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
-CREATE TABLE IF NOT EXISTS "NodeController" (
+CREATE TABLE IF NOT EXISTS "ControlPoint" (
 	"Id"	INTEGER NOT NULL UNIQUE,
 	"Name"	TEXT NOT NULL,
 	"IpAddress"	TEXT NOT NULL,
+	"Mac"	TEXT NOT NULL,
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
-CREATE TABLE IF NOT EXISTS "ControllerNodes" (
+CREATE TABLE IF NOT EXISTS "ControlPointNodes" (
 	"Id"	INTEGER NOT NULL UNIQUE,
-	"ControllerId"	INTEGER NOT NULL,
+	"ControlPointId"	INTEGER NOT NULL,
 	"NodeId"	INTEGER NOT NULL,
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
-	FOREIGN KEY("ControllerId") REFERENCES "NodeController"("Id"),
+	FOREIGN KEY("ControlPointId") REFERENCES "NodeControlPoint"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );`

@@ -1,6 +1,6 @@
 package models
 
-type NodeController struct {
+type ControlPoint struct {
 	Id        int    `json:"Id"`
 	Name      string `json:"Name"`
 	IpAddress string `json:"IpAddress"`
