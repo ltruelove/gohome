@@ -9,7 +9,7 @@ import (
 
 func FetchAllSensorTypes(db *sql.DB) []models.SensorType {
 	stmt, err := db.Prepare(`SELECT Id, Name
-	FROM SensorTypes`)
+	FROM SensorType`)
 
 	setup.CheckErr(err)
 	var sensors []models.SensorType
@@ -29,7 +29,7 @@ func FetchAllSensorTypes(db *sql.DB) []models.SensorType {
 }
 
 func FetchSensorType(sensorTypeId int, db *sql.DB) models.SensorType {
-	stmt, err := db.Prepare("SELECT Id, Name FROM SensorTypes WHERE id = ?")
+	stmt, err := db.Prepare("SELECT Id, Name FROM SensorType WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
 

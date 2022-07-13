@@ -30,6 +30,10 @@ func main() {
 
 	db := setup.InitDb()
 
+	viewController := controllers.ViewController{DB: db}
+	sensorTypeController := controllers.SensorTypeController{DB: db}
+	switchTypeController := controllers.SwitchTypeController{DB: db}
+
 	//register application routes
 	//each app section should have its own handlers to register with the
 	//routing package which now lives outside main in internal/pkg
@@ -38,6 +42,10 @@ func main() {
 	controllers.RegisterGardenControllers(Config)
 	controllers.RegisterGarageControllers(Config)
 	controllers.RegisterElectricControllers()
+
+	viewController.RegisterViewEndpoints()
+	sensorTypeController.RegisterSensorTypeEndpoints()
+	switchTypeController.RegisterSwitchTypeEndpoints()
 
 	defer db.Close()
 

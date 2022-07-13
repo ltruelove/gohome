@@ -9,7 +9,7 @@ import (
 
 func FetchAllSwitchTypes(db *sql.DB) []models.SwitchType {
 	stmt, err := db.Prepare(`SELECT Id, Name
-	FROM SwitchTypes`)
+	FROM SwitchType`)
 
 	setup.CheckErr(err)
 	var nodeSwitches []models.SwitchType
@@ -29,7 +29,7 @@ func FetchAllSwitchTypes(db *sql.DB) []models.SwitchType {
 }
 
 func FetchSwitchType(nodeSwitchTypeId int, db *sql.DB) models.SwitchType {
-	stmt, err := db.Prepare("SELECT Id, Name FROM SwitchTypes WHERE id = ?")
+	stmt, err := db.Prepare("SELECT Id, Name FROM SwitchType WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
 
