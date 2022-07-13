@@ -7,7 +7,7 @@ import (
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func VerifyNodeSensorIdIsNew(nodeId string, db *sql.DB) bool {
+func VerifyNodeSensorIdIsNew(nodeId int, db *sql.DB) bool {
 	node := FetchNodeSensor(nodeId, db)
 	return node.Id > 0
 }
@@ -42,7 +42,7 @@ func FetchAllNodeSensors(db *sql.DB) []models.NodeSensor {
 	return sensors
 }
 
-func FetchNodeSensor(nodeId string, db *sql.DB) models.NodeSensor {
+func FetchNodeSensor(nodeId int, db *sql.DB) models.NodeSensor {
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		NodeId,
@@ -103,7 +103,7 @@ func UpdateNodeSensor(sensor *models.NodeSensor, db *sql.DB) {
 	setup.CheckErr(err)
 }
 
-func DeleteNodeSensor(sensorId string, db *sql.DB) {
+func DeleteNodeSensor(sensorId int, db *sql.DB) {
 	stmt, err := db.Prepare(`DELETE FROM NodeSensor
 	WHERE id = ?`)
 

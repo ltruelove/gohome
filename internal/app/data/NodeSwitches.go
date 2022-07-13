@@ -7,7 +7,7 @@ import (
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func VerifyNodeSwitchIdIsNew(nodeId string, db *sql.DB) bool {
+func VerifyNodeSwitchIdIsNew(nodeId int, db *sql.DB) bool {
 	node := FetchNodeSwitch(nodeId, db)
 	return node.Id > 0
 }
@@ -42,7 +42,7 @@ func FetchAllNodeSwitches(db *sql.DB) []models.NodeSwitch {
 	return nodeSwitches
 }
 
-func FetchNodeSwitch(nodeId string, db *sql.DB) models.NodeSwitch {
+func FetchNodeSwitch(nodeId int, db *sql.DB) models.NodeSwitch {
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		NodeId,
@@ -103,7 +103,7 @@ func UpdateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) {
 	setup.CheckErr(err)
 }
 
-func DeleteNodeSwitch(nodeSwitchId string, db *sql.DB) {
+func DeleteNodeSwitch(nodeSwitchId int, db *sql.DB) {
 	stmt, err := db.Prepare(`DELETE FROM NodeSwitch
 	WHERE id = ?`)
 

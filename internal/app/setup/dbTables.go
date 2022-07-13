@@ -67,4 +67,39 @@ CREATE TABLE IF NOT EXISTS "ControlPointNodes" (
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
 	FOREIGN KEY("ControlPointId") REFERENCES "NodeControlPoint"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
-);`
+);
+
+CREATE TABLE IF NOT EXISTS "View" (
+	"Id"	INTEGER NOT NULL UNIQUE,
+	"Name"	TEXT NOT NULL,
+	PRIMARY KEY("Id" AUTOINCREMENT)
+);
+
+CREATE TABLE IF NOT EXISTS "ViewNodeSensorData" (
+	"Id"	INTEGER NOT NULL UNIQUE,
+	"NodeId"	INTEGER NOT NULL,
+	"ViewId"	INTEGER NOT NULL,
+	"NodeSensorId"	INTEGER NOT NULL,
+	"SensorTypeDataId"	INTEGER NOT NULL,
+	"Name"	TEXT NOT NULL,
+	UNIQUE("NodeId","ViewId","NodeSensorId","SensorTypeDataId"),
+	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
+	FOREIGN KEY("ViewId") REFERENCES "View"("Id"),
+	FOREIGN KEY("SensorTypeDataId") REFERENCES "SensorTypeData"("Id"),
+	FOREIGN KEY("NodeSensorId") REFERENCES "NodeSensor"("Id"),
+	PRIMARY KEY("Id" AUTOINCREMENT)
+);
+
+CREATE TABLE IF NOT EXISTS "ViewNodeSwitchData" (
+	"Id"	INTEGER NOT NULL UNIQUE,
+	"NodeId"	INTEGER NOT NULL,
+	"ViewId"	INTEGER NOT NULL,
+	"NodeSwitchId"	INTEGER NOT NULL,
+	"Name"	TEXT NOT NULL,
+	UNIQUE("NodeId","ViewId","NodeSwitchId"),
+	PRIMARY KEY("Id" AUTOINCREMENT),
+	FOREIGN KEY("ViewId") REFERENCES "View"("Id"),
+	FOREIGN KEY("NodeSwitchId") REFERENCES "NodeSwitch"("Id"),
+	FOREIGN KEY("NodeId") REFERENCES "Node"("Id")
+);
+`

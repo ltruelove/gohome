@@ -7,7 +7,7 @@ import (
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func VerifyControlPointIdIsNew(nodeId string, db *sql.DB) bool {
+func VerifyControlPointIdIsNew(nodeId int, db *sql.DB) bool {
 	node := FetchControlPoint(nodeId, db)
 	return node.Id > 0
 }
@@ -65,7 +65,7 @@ func FetchAllControlPointNodes(db *sql.DB, controlPointId int) []models.Node {
 	return nodes
 }
 
-func FetchControlPoint(controlPointId string, db *sql.DB) models.ControlPoint {
+func FetchControlPoint(controlPointId int, db *sql.DB) models.ControlPoint {
 	stmt, err := db.Prepare("SELECT Id, Name, IpAddress, Mac FROM ControlPoint WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
@@ -118,7 +118,7 @@ func UpdateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) {
 	setup.CheckErr(err)
 }
 
-func DeleteControlPoint(controlPointId string, db *sql.DB) {
+func DeleteControlPoint(controlPointId int, db *sql.DB) {
 	stmt, err := db.Prepare(`DELETE FROM ControlPoint
 	WHERE id = ?`)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func VerifyNodeIdIsNew(nodeId string, db *sql.DB) bool {
+func VerifyNodeIdIsNew(nodeId int, db *sql.DB) bool {
 	node := FetchNode(nodeId, db)
 	return node.Id > 0
 }
@@ -32,7 +32,7 @@ func FetchAllNodes(db *sql.DB) []models.Node {
 	return nodes
 }
 
-func FetchNode(nodeId string, db *sql.DB) models.Node {
+func FetchNode(nodeId int, db *sql.DB) models.Node {
 	stmt, err := db.Prepare("SELECT Id, Name FROM Node WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
@@ -139,7 +139,7 @@ func UpdateNode(node *models.Node, db *sql.DB) {
 	setup.CheckErr(err)
 }
 
-func DeleteNode(nodeId string, db *sql.DB) {
+func DeleteNode(nodeId int, db *sql.DB) {
 	stmt, err := db.Prepare(`DELETE FROM Node
 	WHERE id = ?`)
 
