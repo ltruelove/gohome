@@ -21,6 +21,7 @@ type SensorTypeController struct {
 func (controller *SensorTypeController) RegisterSensorTypeEndpoints() {
 	routing.AddRouteWithMethod("/sensorType", "GET", controller.AllSensorTypes)
 	routing.AddRouteWithMethod("/sensorType/{id}", "GET", controller.SensorTypeById)
+	routing.AddRouteWithMethod("/sensorType/data/{id}", "GET", controller.SensorTypeDataById)
 }
 
 func (controller *SensorTypeController) AllSensorTypes(writer http.ResponseWriter, request *http.Request) {
@@ -42,6 +43,21 @@ func (controller *SensorTypeController) SensorTypeById(writer http.ResponseWrite
 	setup.CheckErr(err)
 
 	item := data.FetchSensorType(id, controller.DB)
+
+	result, err := json.Marshal(item)
+
+	setup.CheckErr(err)
+
+	writeResponse(writer, result)
+}
+
+func (controller *SensorTypeController) SensorTypeDataById(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	setup.CheckErr(err)
+
+	item := data.FetchSensorTypeData(id, controller.DB)
 
 	result, err := json.Marshal(item)
 

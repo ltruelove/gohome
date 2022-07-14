@@ -61,6 +61,8 @@ func FetchSensorTypeData(sensorTypeId int, db *sql.DB) []models.SensorTypeData {
 
 	for rows.Next() {
 		var sensor models.SensorTypeData
+		sensor.SensorTypeId = sensorTypeId
+
 		rows.Scan(&sensor.Id,
 			&sensor.Name,
 			&sensor.ValueType)
