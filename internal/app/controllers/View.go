@@ -140,7 +140,7 @@ func (controller *ViewController) DeleteView(writer http.ResponseWriter, request
 	}
 
 	if isNew {
-		log.Printf("View for id %d doesn't exist")
+		log.Printf("View for id %d doesn't exist", id)
 		http.Error(writer, "View not found", http.StatusNotFound)
 		return
 	}
