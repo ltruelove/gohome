@@ -2,20 +2,27 @@ package data
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
-	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func FetchAllSwitchTypes(db *sql.DB) []models.SwitchType {
+func FetchAllSwitchTypes(db *sql.DB) ([]models.SwitchType, error) {
 	stmt, err := db.Prepare(`SELECT Id, Name
 	FROM SwitchType`)
+	if err != nil {
+		log.Println("Error preparing fetch all switch types sql")
+		return nil, err
+	}
 
-	setup.CheckErr(err)
 	var nodeSwitches []models.SwitchType
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for all switch types")
+		return nil, err
+	}
+	defer stmt.Close()
 
 	for rows.Next() {
 		var nodeSwitch models.SwitchType
@@ -23,24 +30,28 @@ func FetchAllSwitchTypes(db *sql.DB) []models.SwitchType {
 			&nodeSwitch.Name)
 		nodeSwitches = append(nodeSwitches, nodeSwitch)
 	}
-	defer stmt.Close()
 
-	return nodeSwitches
+	return nodeSwitches, nil
 }
 
-func FetchSwitchType(nodeSwitchTypeId int, db *sql.DB) models.SwitchType {
-	stmt, err := db.Prepare("SELECT Id, Name FROM SwitchType WHERE id = ?")
-	setup.CheckErr(err)
-	defer stmt.Close()
-
+func FetchSwitchType(nodeSwitchTypeId int, db *sql.DB) (models.SwitchType, error) {
 	var nodeSwitch models.SwitchType
+
+	stmt, err := db.Prepare("SELECT Id, Name FROM SwitchType WHERE id = ?")
+	if err != nil {
+		log.Println("Error preparing fetch switch type sql")
+		return nodeSwitch, err
+	}
 
 	err = stmt.QueryRow(nodeSwitchTypeId).Scan(&nodeSwitch.Id,
 		&nodeSwitch.Name)
 
-	if err != sql.ErrNoRows {
-		setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for the switch type")
+		return nodeSwitch, err
 	}
 
-	return nodeSwitch
+	defer stmt.Close()
+
+	return nodeSwitch, nil
 }

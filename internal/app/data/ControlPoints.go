@@ -2,24 +2,37 @@ package data
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
-	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func VerifyControlPointIdIsNew(nodeId int, db *sql.DB) bool {
-	node := FetchControlPoint(nodeId, db)
-	return node.Id > 0
+func VerifyControlPointIdIsNew(nodeId int, db *sql.DB) (bool, error) {
+	node, err := FetchControlPoint(nodeId, db)
+	if err != nil {
+		log.Println("Error fetching control point")
+		return false, err
+	}
+
+	return node.Id > 0, nil
 }
 
-func FetchAllControlPoints(db *sql.DB) []models.ControlPoint {
+func FetchAllControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
 	stmt, err := db.Prepare(`SELECT Id, Name, IpAddress, Mac FROM ControlPoint`)
+	if err != nil {
+		log.Println("Error preparing all control points sql")
+		return nil, err
+	}
 
-	setup.CheckErr(err)
 	var controlPoints []models.ControlPoint
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for all control points")
+		return nil, err
+	}
+
+	defer stmt.Close()
 
 	for rows.Next() {
 		var controlPoint models.ControlPoint
@@ -31,12 +44,11 @@ func FetchAllControlPoints(db *sql.DB) []models.ControlPoint {
 
 		controlPoints = append(controlPoints, controlPoint)
 	}
-	defer stmt.Close()
 
-	return controlPoints
+	return controlPoints, nil
 }
 
-func FetchAllControlPointNodes(db *sql.DB, controlPointId int) []models.Node {
+func FetchAllControlPointNodes(db *sql.DB, controlPointId int) ([]models.Node, error) {
 	stmt, err := db.Prepare(`SELECT
 			Node.Id,
 			Node.Name,
@@ -44,12 +56,20 @@ func FetchAllControlPointNodes(db *sql.DB, controlPointId int) []models.Node {
 		FROM ControlPointNodes
 		INNER JOIN Node ON Node.Id = ControlPointNodes.NodeId
 		WHERE ControlPointNodes.ControlPointId = ?`)
+	if err != nil {
+		log.Println("Error preparing all control point nodes sql")
+		return nil, err
+	}
 
-	setup.CheckErr(err)
 	var nodes []models.Node
 
 	rows, err := stmt.Query(controlPointId)
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for all control point nodes")
+		return nil, err
+	}
+
+	defer stmt.Close()
 
 	for rows.Next() {
 		var node models.Node
@@ -60,73 +80,101 @@ func FetchAllControlPointNodes(db *sql.DB, controlPointId int) []models.Node {
 
 		nodes = append(nodes, node)
 	}
-	defer stmt.Close()
 
-	return nodes
+	return nodes, nil
 }
 
-func FetchControlPoint(controlPointId int, db *sql.DB) models.ControlPoint {
-	stmt, err := db.Prepare("SELECT Id, Name, IpAddress, Mac FROM ControlPoint WHERE id = ?")
-	setup.CheckErr(err)
-	defer stmt.Close()
-
+func FetchControlPoint(controlPointId int, db *sql.DB) (models.ControlPoint, error) {
 	var controlPoint models.ControlPoint
+
+	stmt, err := db.Prepare("SELECT Id, Name, IpAddress, Mac FROM ControlPoint WHERE id = ?")
+	if err != nil {
+		log.Printf("Error preparing fetch control point sql: %v", err)
+		return controlPoint, err
+	}
 
 	err = stmt.QueryRow(controlPointId).Scan(&controlPoint.Id,
 		&controlPoint.Name,
 		&controlPoint.IpAddress,
 		&controlPoint.Mac)
 
-	if err != sql.ErrNoRows {
-		setup.CheckErr(err)
+	defer stmt.Close()
+
+	if err != nil {
+		log.Println("Error querying for control point")
+		return controlPoint, err
 	}
 
-	return controlPoint
+	return controlPoint, nil
 }
 
-func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) {
+func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO ControlPoint
 	(Id, Name, IpAddress, Mac)
 	VALUES (?, ?, ?, ?)`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing create control point sql")
+		return err
+	}
 
 	_, err = stmt.Exec(controlPoint.Id,
 		controlPoint.Name,
 		controlPoint.IpAddress,
 		controlPoint.Mac)
 
+	if err != nil {
+		log.Println("Error creating control point")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }
 
-func UpdateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) {
+func UpdateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 	stmt, err := db.Prepare(`UPDATE ControlPoint
 	SET Name = ?, IpAddress = ?, Mac = ?
 	WHERE id = ?`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing update control point sql")
+		return err
+	}
 
 	_, err = stmt.Exec(controlPoint.Name,
 		controlPoint.IpAddress,
 		controlPoint.Mac,
 		controlPoint.Id)
 
+	if err != nil {
+		log.Println("Error updating control point")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }
 
-func DeleteControlPoint(controlPointId int, db *sql.DB) {
+func DeleteControlPoint(controlPointId int, db *sql.DB) error {
 	stmt, err := db.Prepare(`DELETE FROM ControlPoint
 	WHERE id = ?`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing delete control point sql")
+		return err
+	}
 
 	_, err = stmt.Exec(controlPointId)
 
+	if err != nil {
+		log.Println("Error deleting control point")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }

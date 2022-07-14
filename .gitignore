@@ -27,3 +27,5 @@ config.json
 *~
 *.s3db
 *.s3db-journal
+
+gohome_log.log

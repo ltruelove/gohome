@@ -3,6 +3,7 @@ package data
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/app/setup"
@@ -16,37 +17,53 @@ const defaultViewNodeSwitchDataSelect string = `SELECT
 	Name
 	FROM View`
 
-func FetchAllViewNodeSwitchData(db *sql.DB) []models.ViewNodeSwitchData {
+func FetchAllViewNodeSwitchData(db *sql.DB) ([]models.ViewNodeSwitchData, error) {
 	stmt, err := db.Prepare(defaultViewNodeSwitchDataSelect)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing all node switch data sql")
+		return nil, err
+	}
 	var listData []models.ViewNodeSwitchData
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for all node switch data")
+		return nil, err
+	}
+
+	defer stmt.Close()
 
 	for rows.Next() {
 		var item models.ViewNodeSwitchData
-		rows.Scan(&item.Id,
+		err := rows.Scan(&item.Id,
 			&item.NodeId,
 			&item.ViewId,
 			&item.NodeSwitchId,
 			&item.Name)
+
+		if err != nil {
+			log.Println("Error scanning node switch data")
+			return nil, err
+		}
+
 		listData = append(listData, item)
 	}
-	defer stmt.Close()
 
-	return listData
+	return listData, nil
 }
 
-func FetchViewNodeSwitchData(id int, db *sql.DB) models.ViewNodeSwitchData {
+func FetchViewNodeSwitchData(id int, db *sql.DB) (models.ViewNodeSwitchData, error) {
+	var item models.ViewNodeSwitchData
+
 	query := fmt.Sprintf("%s %s", defaultViewNodeSwitchDataSelect, "WHERE id = ?")
 	stmt, err := db.Prepare(query)
+	if err != nil {
+		log.Println("Error preparing fetch node switch data sql")
+		return item, err
+	}
 
-	setup.CheckErr(err)
 	defer stmt.Close()
-
-	var item models.ViewNodeSwitchData
 
 	err = stmt.QueryRow(id).Scan(&item.Id,
 		&item.NodeId,
@@ -54,34 +71,48 @@ func FetchViewNodeSwitchData(id int, db *sql.DB) models.ViewNodeSwitchData {
 		&item.NodeSwitchId,
 		&item.Name)
 
-	if err != sql.ErrNoRows {
-		setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for node switch data")
+		return item, err
 	}
 
-	return item
+	return item, nil
 }
 
-func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) {
+func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO ViewNodeSwitchData
 	(NodeId, ViewId, NodeSwitchId, Name)
 	VALUES (?, ?, ?, ?, ?)`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing create node switch data sql")
+		return err
+	}
 
 	_, err = stmt.Exec(item.NodeId,
 		item.ViewId,
 		item.NodeSwitchId,
 		item.Name)
 
+	if err != nil {
+		log.Println("Error creating node switch data")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }
 
-func UpdateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) {
+func UpdateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error {
 	stmt, err := db.Prepare(`UPDATE ViewNodeSwitchData
 	SET NodeId = ?, ViewId = ?, NodeSwitchId = ?, Name = ?
 	WHERE id = ?`)
+
+	if err != nil {
+		log.Println("Error preparing update node switch data sql")
+		return err
+	}
 
 	setup.CheckErr(err)
 
@@ -91,20 +122,33 @@ func UpdateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) {
 		item.Name,
 		item.Id)
 
+	if err != nil {
+		log.Println("Error updating node switch data")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }
 
-func DeleteViewNodeSwitchData(id int, db *sql.DB) {
+func DeleteViewNodeSwitchData(id int, db *sql.DB) error {
 	stmt, err := db.Prepare(`DELETE FROM ViewNodeSwitchData
 	WHERE id = ?`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing delete node switch data sql")
+		return err
+	}
 
 	_, err = stmt.Exec(id)
 
+	if err != nil {
+		log.Println("Error deleting node switch data")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }

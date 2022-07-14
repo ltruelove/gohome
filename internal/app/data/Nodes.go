@@ -2,24 +2,34 @@ package data
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
 func VerifyNodeIdIsNew(nodeId int, db *sql.DB) bool {
-	node := FetchNode(nodeId, db)
-	return node.Id > 0
+	_, err := FetchNode(nodeId, db)
+
+	return err != nil
 }
 
-func FetchAllNodes(db *sql.DB) []models.Node {
+func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
 	stmt, err := db.Prepare(`SELECT Id, Name FROM Node`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
 	var nodes []models.Node
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
 	for rows.Next() {
 		var node models.Node
@@ -29,10 +39,10 @@ func FetchAllNodes(db *sql.DB) []models.Node {
 	}
 	defer stmt.Close()
 
-	return nodes
+	return nodes, nil
 }
 
-func FetchNode(nodeId int, db *sql.DB) models.Node {
+func FetchNode(nodeId int, db *sql.DB) (models.Node, error) {
 	stmt, err := db.Prepare("SELECT Id, Name FROM Node WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
@@ -42,11 +52,12 @@ func FetchNode(nodeId int, db *sql.DB) models.Node {
 	err = stmt.QueryRow(nodeId).Scan(&node.Id,
 		&node.Name)
 
-	if err != sql.ErrNoRows {
-		setup.CheckErr(err)
+	if err != nil {
+		log.Println(err)
+		return node, err
 	}
 
-	return node
+	return node, nil
 }
 
 func FetchNodeSensors(nodeId int, db *sql.DB) []models.NodeSensor {

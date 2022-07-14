@@ -2,20 +2,26 @@ package data
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
-	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func FetchAllSensorTypes(db *sql.DB) []models.SensorType {
+func FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
 	stmt, err := db.Prepare(`SELECT Id, Name
 	FROM SensorType`)
+	if err != nil {
+		log.Println("Error preparing all sensor types sql")
+		return nil, err
+	}
 
-	setup.CheckErr(err)
 	var sensors []models.SensorType
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for all sensor types")
+		return nil, err
+	}
 
 	for rows.Next() {
 		var sensor models.SensorType
@@ -25,39 +31,50 @@ func FetchAllSensorTypes(db *sql.DB) []models.SensorType {
 	}
 	defer stmt.Close()
 
-	return sensors
+	return sensors, nil
 }
 
-func FetchSensorType(sensorTypeId int, db *sql.DB) models.SensorType {
-	stmt, err := db.Prepare("SELECT Id, Name FROM SensorType WHERE id = ?")
-	setup.CheckErr(err)
-	defer stmt.Close()
-
+func FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
 	var sensor models.SensorType
+
+	stmt, err := db.Prepare("SELECT Id, Name FROM SensorType WHERE id = ?")
+	if err != nil {
+		log.Println("Error preparing the fetch sensor type sql")
+		return sensor, err
+	}
+	defer stmt.Close()
 
 	err = stmt.QueryRow(sensorTypeId).Scan(&sensor.Id,
 		&sensor.Name)
 
-	if err != sql.ErrNoRows {
-		setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for the sensor type")
+		return sensor, err
 	}
 
-	return sensor
+	return sensor, nil
 }
 
-func FetchSensorTypeData(sensorTypeId int, db *sql.DB) []models.SensorTypeData {
+func FetchSensorTypeData(sensorTypeId int, db *sql.DB) ([]models.SensorTypeData, error) {
 	stmt, err := db.Prepare(`SELECT
 		Id, 
 		Name, 
 		ValueType 
 		FROM SensorTypeData 
 		WHERE SensorTypeId = ?`)
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing the fetch sensor type data sql")
+		return nil, err
+	}
 	defer stmt.Close()
+
 	var sensorData []models.SensorTypeData
 
 	rows, err := stmt.Query(sensorTypeId)
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error querying for the sensor type data")
+		return nil, err
+	}
 
 	for rows.Next() {
 		var sensor models.SensorTypeData
@@ -70,5 +87,5 @@ func FetchSensorTypeData(sensorTypeId int, db *sql.DB) []models.SensorTypeData {
 	}
 	defer stmt.Close()
 
-	return sensorData
+	return sensorData, nil
 }

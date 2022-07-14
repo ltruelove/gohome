@@ -2,7 +2,7 @@ package setup
 
 import (
 	"database/sql"
-	"fmt"
+	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -22,14 +22,14 @@ func InitDb() *sql.DB {
 }
 
 func checkTables(db *sql.DB) {
-	fmt.Println("Creating db tables if they don't exist")
+	log.Println("Creating db tables if they don't exist")
 	_, err := db.Exec(CreateTables)
 
 	CheckErr(err)
 }
 
 func populateStaticData(db *sql.DB) {
-	fmt.Println("Populating static data if it doesn't exist")
+	log.Println("Populating static data if it doesn't exist")
 	_, err := db.Exec(StaticData)
 
 	CheckErr(err)
@@ -37,7 +37,7 @@ func populateStaticData(db *sql.DB) {
 
 func CheckErr(err error) {
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		//panic(err)
 	}
 }

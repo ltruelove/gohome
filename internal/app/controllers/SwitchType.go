@@ -3,13 +3,13 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
-	"github.com/ltruelove/gohome/internal/app/setup"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
@@ -24,28 +24,59 @@ func (controller *SwitchTypeController) RegisterSwitchTypeEndpoints() {
 }
 
 func (controller *SwitchTypeController) AllSwitchTypes(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Fetch all switch types")
+
 	if len(controller.AllTypes) == 0 {
-		controller.AllTypes = data.FetchAllSwitchTypes(controller.DB)
+		var fetchErr error
+		controller.AllTypes, fetchErr = data.FetchAllSwitchTypes(controller.DB)
+
+		if fetchErr != nil {
+			log.Printf("Error fetching switch types from the db: %v", fetchErr)
+			http.Error(writer, "Data error", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	result, err := json.Marshal(controller.AllTypes)
+	if err != nil {
+		log.Printf("An error occurred marshalling switch data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
 
-	setup.CheckErr(err)
-
+	log.Printf("%d switch types found", len(controller.AllTypes))
 	writeResponse(writer, result)
 }
 
 func (controller *SwitchTypeController) SwitchTypeById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		log.Printf("Error getting switch type id from request: %v", err)
+		http.Error(writer, "Request error", http.StatusBadRequest)
+		return
+	}
 
-	setup.CheckErr(err)
+	log.Printf("Fetch switch type by id: %d", id)
 
-	item := data.FetchSwitchType(id, controller.DB)
+	item, err := data.FetchSwitchType(id, controller.DB)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			log.Printf("Error getting switch type: %v", err)
+			http.Error(writer, "Data error", http.StatusInternalServerError)
+		} else {
+			log.Println("Switch type not found")
+			http.Error(writer, "Switch type not found", http.StatusNotFound)
+		}
+		return
+	}
 
 	result, err := json.Marshal(item)
-
-	setup.CheckErr(err)
+	if err != nil {
+		log.Printf("Error marshalling json for switch type: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
 
 	writeResponse(writer, result)
 }

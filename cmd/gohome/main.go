@@ -28,11 +28,24 @@ func main() {
 		panic(err)
 	}
 
+	file.Close()
+
+	// set up logging
+	logFile, logErr := os.OpenFile("gohome_log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if logErr != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	defer logFile.Close()
+	log.SetOutput(logFile)
+
 	db := setup.InitDb()
 
 	viewController := controllers.ViewController{DB: db}
 	sensorTypeController := controllers.SensorTypeController{DB: db}
 	switchTypeController := controllers.SwitchTypeController{DB: db}
+	nodeController := controllers.NodeController{DB: db}
 
 	//register application routes
 	//each app section should have its own handlers to register with the
@@ -46,6 +59,7 @@ func main() {
 	viewController.RegisterViewEndpoints()
 	sensorTypeController.RegisterSensorTypeEndpoints()
 	switchTypeController.RegisterSwitchTypeEndpoints()
+	nodeController.RegisterNodeEndpoints()
 
 	defer db.Close()
 
