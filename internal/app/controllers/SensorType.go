@@ -19,12 +19,12 @@ type SensorTypeController struct {
 }
 
 func (controller *SensorTypeController) RegisterSensorTypeEndpoints() {
-	routing.AddRouteWithMethod("/sensorType", "GET", controller.AllSensorTypes)
-	routing.AddRouteWithMethod("/sensorType/{id}", "GET", controller.SensorTypeById)
-	routing.AddRouteWithMethod("/sensorType/data/{id}", "GET", controller.SensorTypeDataById)
+	routing.AddRouteWithMethod("/sensorType", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/sensorType/{id}", "GET", controller.GetById)
+	routing.AddRouteWithMethod("/sensorType/data/{id}", "GET", controller.DataById)
 }
 
-func (controller *SensorTypeController) AllSensorTypes(writer http.ResponseWriter, request *http.Request) {
+func (controller *SensorTypeController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all sensor types")
 
 	if len(controller.AllTypes) == 0 {
@@ -49,7 +49,7 @@ func (controller *SensorTypeController) AllSensorTypes(writer http.ResponseWrite
 	writeResponse(writer, result)
 }
 
-func (controller *SensorTypeController) SensorTypeById(writer http.ResponseWriter, request *http.Request) {
+func (controller *SensorTypeController) GetById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -82,7 +82,7 @@ func (controller *SensorTypeController) SensorTypeById(writer http.ResponseWrite
 	writeResponse(writer, result)
 }
 
-func (controller *SensorTypeController) SensorTypeDataById(writer http.ResponseWriter, request *http.Request) {
+func (controller *SensorTypeController) DataById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {

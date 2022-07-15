@@ -152,6 +152,8 @@ func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 		return err
 	}
 
+	defer stmt.Close()
+
 	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
@@ -160,8 +162,6 @@ func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 	}
 
 	controlPoint.Id = int(lastInsertId)
-
-	defer stmt.Close()
 
 	return nil
 }

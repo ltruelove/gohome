@@ -19,11 +19,11 @@ type SwitchTypeController struct {
 }
 
 func (controller *SwitchTypeController) RegisterSwitchTypeEndpoints() {
-	routing.AddRouteWithMethod("/switchType", "GET", controller.AllSwitchTypes)
-	routing.AddRouteWithMethod("/switchType/{id}", "GET", controller.SwitchTypeById)
+	routing.AddRouteWithMethod("/switchType", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/switchType/{id}", "GET", controller.GetById)
 }
 
-func (controller *SwitchTypeController) AllSwitchTypes(writer http.ResponseWriter, request *http.Request) {
+func (controller *SwitchTypeController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all switch types")
 
 	if len(controller.AllTypes) == 0 {
@@ -48,7 +48,7 @@ func (controller *SwitchTypeController) AllSwitchTypes(writer http.ResponseWrite
 	writeResponse(writer, result)
 }
 
-func (controller *SwitchTypeController) SwitchTypeById(writer http.ResponseWriter, request *http.Request) {
+func (controller *SwitchTypeController) GetById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {

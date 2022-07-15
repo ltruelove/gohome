@@ -8,10 +8,14 @@ import (
 	"github.com/ltruelove/gohome/internal/app/setup"
 )
 
-func VerifyNodeIdIsNew(nodeId int, db *sql.DB) bool {
-	_, err := FetchNode(nodeId, db)
+func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
+	item, err := FetchNode(nodeId, db)
+	if err != nil {
+		log.Println("Error fetching node switch")
+		return false, err
+	}
 
-	return err != nil
+	return item.Id > 0, nil
 }
 
 func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
@@ -60,105 +64,166 @@ func FetchNode(nodeId int, db *sql.DB) (models.Node, error) {
 	return node, nil
 }
 
-func FetchNodeSensors(nodeId int, db *sql.DB) []models.NodeSensor {
+func FetchNodeSensors(nodeId int, db *sql.DB) ([]models.NodeSensor, error) {
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		SensorTypeId,
 		Pin
 		Name FROM NodeSenor WHERE id = ?`)
-	setup.CheckErr(err)
-	defer stmt.Close()
+
+	if err != nil {
+		log.Printf("Error preparing select node sensors sql: %v", err)
+		return nil, err
+	}
 
 	var sensors []models.NodeSensor
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+
+	if err != nil {
+		log.Println("Error querying for node sensors")
+		return nil, err
+	}
+
+	defer stmt.Close()
 
 	for rows.Next() {
 		var sensor models.NodeSensor
 		sensor.NodeId = nodeId
 
-		rows.Scan(&sensor.Id,
+		err = rows.Scan(&sensor.Id,
 			&sensor.SensorTypeId,
 			&sensor.Pin,
 			&sensor.Name)
 
+		if err != nil {
+			log.Println("Error scanning node sensor")
+			return nil, err
+		}
+
 		sensors = append(sensors, sensor)
 	}
 
-	return sensors
+	return sensors, nil
 }
 
-func FetchNodeSwitches(nodeId int, db *sql.DB) []models.NodeSwitch {
+func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		SwitchTypeId,
 		Pin
 		Name FROM NodeSenor WHERE id = ?`)
-	setup.CheckErr(err)
-	defer stmt.Close()
+
+	if err != nil {
+		log.Printf("Error preparing select node switches sql: %v", err)
+		return nil, err
+	}
 
 	var nodeSwitches []models.NodeSwitch
 
 	rows, err := stmt.Query()
-	setup.CheckErr(err)
+
+	if err != nil {
+		log.Println("Error querying for node switches")
+		return nil, err
+	}
+
+	defer stmt.Close()
 
 	for rows.Next() {
 		var nodeSwitch models.NodeSwitch
 		nodeSwitch.NodeId = nodeId
 
-		rows.Scan(&nodeSwitch.Id,
+		err = rows.Scan(&nodeSwitch.Id,
 			&nodeSwitch.SwitchTypeId,
 			&nodeSwitch.Pin,
 			&nodeSwitch.Name)
 
+		if err != nil {
+			log.Println("Error scanning node sensor")
+			return nil, err
+		}
+
 		nodeSwitches = append(nodeSwitches, nodeSwitch)
 	}
 
-	return nodeSwitches
+	return nodeSwitches, nil
 }
 
-func CreateNode(node *models.Node, db *sql.DB) {
+func CreateNode(item *models.Node, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO Node
 	(Id, Name, Mac)
 	VALUES (?, ?, ?)`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing create node sql")
+		return err
+	}
 
-	_, err = stmt.Exec(node.Id,
-		node.Name,
-		node.Mac)
+	result, err := stmt.Exec(item.Id,
+		item.Name,
+		item.Mac)
+
+	if err != nil {
+		log.Println("Error creating node")
+		return err
+	}
 
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted node")
+		return err
+	}
+
+	item.Id = int(lastInsertId)
+
+	return nil
 }
 
-func UpdateNode(node *models.Node, db *sql.DB) {
+func UpdateNode(node *models.Node, db *sql.DB) error {
 	stmt, err := db.Prepare(`UPDATE Node
 	SET Name = ?, Mac = ?
 	WHERE id = ?`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing update node sql")
+		return err
+	}
 
 	_, err = stmt.Exec(node.Name,
 		node.Mac,
 		node.Id)
 
+	if err != nil {
+		log.Println("Error updating node")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }
 
-func DeleteNode(nodeId int, db *sql.DB) {
+func DeleteNode(nodeId int, db *sql.DB) error {
 	stmt, err := db.Prepare(`DELETE FROM Node
 	WHERE id = ?`)
 
-	setup.CheckErr(err)
+	if err != nil {
+		log.Println("Error preparing delete node sql")
+		return err
+	}
 
 	_, err = stmt.Exec(nodeId)
 
+	if err != nil {
+		log.Println("Error deleting node")
+		return err
+	}
+
 	defer stmt.Close()
 
-	setup.CheckErr(err)
+	return nil
 }

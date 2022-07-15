@@ -3,12 +3,14 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
@@ -17,11 +19,11 @@ type NodeController struct {
 }
 
 func (controller *NodeController) RegisterNodeEndpoints() {
-	routing.AddRouteWithMethod("/node", "GET", controller.AllNodes)
-	routing.AddRouteWithMethod("/node/{id}", "GET", controller.NodeById)
+	routing.AddRouteWithMethod("/node", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
 }
 
-func (controller *NodeController) AllNodes(writer http.ResponseWriter, request *http.Request) {
+func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all nodes request initiated")
 
 	allItems, err := data.FetchAllNodes(controller.DB)
@@ -44,7 +46,7 @@ func (controller *NodeController) AllNodes(writer http.ResponseWriter, request *
 	writeResponse(writer, result)
 }
 
-func (controller *NodeController) NodeById(writer http.ResponseWriter, request *http.Request) {
+func (controller *NodeController) GetById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -75,4 +77,124 @@ func (controller *NodeController) NodeById(writer http.ResponseWriter, request *
 	log.Println("Node found")
 
 	writeResponse(writer, result)
+}
+
+func (controller *NodeController) Create(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Create node request made")
+
+	decoder := json.NewDecoder(request.Body)
+	var item models.Node
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node data: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = item.IsValid(false)
+
+	if err != nil {
+		vError := fmt.Sprintf("Validation error: %v", err)
+		log.Println(vError)
+		http.Error(writer, vError, http.StatusBadRequest)
+		return
+	}
+
+	err = data.CreateNode(&item, controller.DB)
+
+	if err != nil {
+		log.Printf("Error creating a node: %v", err)
+		http.Error(writer, "There was an error creating the record", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(item)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling node data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, result)
+}
+
+func (controller *NodeController) Update(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Update node request made")
+
+	decoder := json.NewDecoder(request.Body)
+	var item models.Node
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node data: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = item.IsValid(true)
+
+	if err != nil {
+		vError := fmt.Sprintf("Validation error: %v", err)
+		log.Println(vError)
+		http.Error(writer, vError, http.StatusBadRequest)
+		return
+	}
+
+	isNew, err := data.VerifyNodeIdIsNew(item.Id, controller.DB)
+
+	if err != nil {
+		log.Printf("Error checking node id: %v", err)
+		http.Error(writer, "Error checking id", http.StatusInternalServerError)
+		return
+	}
+
+	if isNew {
+		log.Printf("Node for id %d doesn't exist", item.Id)
+		http.Error(writer, "Node not found", http.StatusNotFound)
+		return
+	}
+
+	err = data.UpdateNode(&item, controller.DB)
+
+	if err != nil {
+		log.Printf("Error updating a node: %v", err)
+		http.Error(writer, "There was an error updating the record", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (controller *NodeController) Delete(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Delete a node")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node id for delete")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	isNew, err := data.VerifyNodeIdIsNew(id, controller.DB)
+
+	if err != nil {
+		log.Printf("Error checking node id: %v", err)
+		http.Error(writer, "Error checking id", http.StatusInternalServerError)
+		return
+	}
+
+	if isNew {
+		log.Printf("Node for id %d doesn't exist", id)
+		http.Error(writer, "Node not found", http.StatusNotFound)
+		return
+	}
+
+	err = data.DeleteNode(id, controller.DB)
+
+	if err != nil {
+		log.Printf("There was an error attempting to delete a node: %v", err)
+		http.Error(writer, "There was an error attempting to delete a node", http.StatusInternalServerError)
+	}
 }

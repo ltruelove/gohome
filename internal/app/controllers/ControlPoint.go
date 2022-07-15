@@ -19,16 +19,16 @@ type ControlPointController struct {
 }
 
 func (controller *ControlPointController) RegisterControlPointEndpoints() {
-	routing.AddRouteWithMethod("/controlPoint", "GET", controller.AllControlPoints)
-	routing.AddRouteWithMethod("/controlPoint/{id}", "GET", controller.ControlPointById)
-	routing.AddRouteWithMethod("/controlPoint", "POST", controller.CreateControlPoint)
-	routing.AddRouteWithMethod("/controlPoint", "PUT", controller.UpdateControlPoint)
-	routing.AddRouteWithMethod("/controlPoint/{id}", "DELETE", controller.DeleteControlPoint)
-	routing.AddRouteWithMethod("/controlPoint/register", "POST", controller.RegisterControlPoint)
+	routing.AddRouteWithMethod("/controlPoint", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/controlPoint/{id}", "GET", controller.GetById)
+	routing.AddRouteWithMethod("/controlPoint", "POST", controller.Create)
+	routing.AddRouteWithMethod("/controlPoint", "PUT", controller.Update)
+	routing.AddRouteWithMethod("/controlPoint/{id}", "DELETE", controller.Delete)
+	routing.AddRouteWithMethod("/controlPoint/register", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint/ipUpdate", "PUT", controller.UpdateControlPointIp)
 }
 
-func (controller *ControlPointController) AllControlPoints(writer http.ResponseWriter, request *http.Request) {
+func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllControlPoints(controller.DB)
@@ -51,7 +51,7 @@ func (controller *ControlPointController) AllControlPoints(writer http.ResponseW
 	writeResponse(writer, result)
 }
 
-func (controller *ControlPointController) ControlPointById(writer http.ResponseWriter, request *http.Request) {
+func (controller *ControlPointController) GetById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -82,47 +82,7 @@ func (controller *ControlPointController) ControlPointById(writer http.ResponseW
 	writeResponse(writer, result)
 }
 
-func (controller *ControlPointController) RegisterControlPoint(writer http.ResponseWriter, request *http.Request) {
-	log.Println("Register control point request made")
-	decoder := json.NewDecoder(request.Body)
-	var item models.ControlPoint
-
-	err := decoder.Decode(&item)
-	if err != nil {
-		log.Printf("Error decoding the controlPoint data: %v", err)
-		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
-		return
-	}
-
-	err = item.IsValid(false)
-
-	if err != nil {
-		vError := fmt.Sprintf("Validation error: %v", err)
-		log.Println(vError)
-		http.Error(writer, vError, http.StatusBadRequest)
-		return
-	}
-
-	err = data.CreateControlPoint(&item, controller.DB)
-
-	if err != nil {
-		log.Printf("Error creating a controlPoint: %v", err)
-		http.Error(writer, "There was an error creating the record", http.StatusInternalServerError)
-		return
-	}
-
-	result, err := json.Marshal(item)
-
-	if err != nil {
-		log.Printf("An error occurred marshalling controlPoint data: %v", err)
-		http.Error(writer, "Data error", http.StatusInternalServerError)
-		return
-	}
-
-	writeResponse(writer, result)
-}
-
-func (controller *ControlPointController) CreateControlPoint(writer http.ResponseWriter, request *http.Request) {
+func (controller *ControlPointController) Create(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Create control point request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -208,7 +168,7 @@ func (controller *ControlPointController) UpdateControlPointIp(writer http.Respo
 	}
 }
 
-func (controller *ControlPointController) UpdateControlPoint(writer http.ResponseWriter, request *http.Request) {
+func (controller *ControlPointController) Update(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Update control point request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -253,7 +213,7 @@ func (controller *ControlPointController) UpdateControlPoint(writer http.Respons
 	}
 }
 
-func (controller *ControlPointController) DeleteControlPoint(writer http.ResponseWriter, request *http.Request) {
+func (controller *ControlPointController) Delete(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Delete a controlPoint")
 
 	vars := mux.Vars(request)

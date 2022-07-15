@@ -1,5 +1,5 @@
 package models
 
-type model interface {
+type Model interface {
 	IsValid(checkId bool) (bool, error)
 }

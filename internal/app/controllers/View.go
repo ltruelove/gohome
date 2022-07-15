@@ -18,14 +18,14 @@ type ViewController struct {
 }
 
 func (controller *ViewController) RegisterViewEndpoints() {
-	routing.AddRouteWithMethod("/view", "GET", controller.AllViews)
-	routing.AddRouteWithMethod("/view/{id}", "GET", controller.ViewById)
-	routing.AddRouteWithMethod("/view", "POST", controller.CreateView)
-	routing.AddRouteWithMethod("/view", "PUT", controller.UpdateView)
-	routing.AddRouteWithMethod("/view/{id}", "DELETE", controller.DeleteView)
+	routing.AddRouteWithMethod("/view", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/view/{id}", "GET", controller.GetById)
+	routing.AddRouteWithMethod("/view", "POST", controller.Create)
+	routing.AddRouteWithMethod("/view", "PUT", controller.Update)
+	routing.AddRouteWithMethod("/view/{id}", "DELETE", controller.Delete)
 }
 
-func (controller *ViewController) AllViews(writer http.ResponseWriter, request *http.Request) {
+func (controller *ViewController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all views request initiated")
 
 	allItems, err := data.FetchAllViews(controller.DB)
@@ -48,7 +48,7 @@ func (controller *ViewController) AllViews(writer http.ResponseWriter, request *
 	writeResponse(writer, result)
 }
 
-func (controller *ViewController) ViewById(writer http.ResponseWriter, request *http.Request) {
+func (controller *ViewController) GetById(writer http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -79,7 +79,7 @@ func (controller *ViewController) ViewById(writer http.ResponseWriter, request *
 	writeResponse(writer, result)
 }
 
-func (controller *ViewController) CreateView(writer http.ResponseWriter, request *http.Request) {
+func (controller *ViewController) Create(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
 	var item models.View
 
@@ -99,7 +99,7 @@ func (controller *ViewController) CreateView(writer http.ResponseWriter, request
 	}
 }
 
-func (controller *ViewController) UpdateView(writer http.ResponseWriter, request *http.Request) {
+func (controller *ViewController) Update(writer http.ResponseWriter, request *http.Request) {
 	decoder := json.NewDecoder(request.Body)
 	var item models.View
 
@@ -119,7 +119,7 @@ func (controller *ViewController) UpdateView(writer http.ResponseWriter, request
 	}
 }
 
-func (controller *ViewController) DeleteView(writer http.ResponseWriter, request *http.Request) {
+func (controller *ViewController) Delete(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Delete a view")
 
 	vars := mux.Vars(request)
