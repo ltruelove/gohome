@@ -21,6 +21,9 @@ type NodeController struct {
 func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node", "GET", controller.GetAll)
 	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
+	routing.AddRouteWithMethod("/node", "POST", controller.Create)
+	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
+	routing.AddRouteWithMethod("/node", "DELETE", controller.Delete)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
