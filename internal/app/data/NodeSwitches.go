@@ -88,7 +88,7 @@ func FetchNodeSwitch(nodeId int, db *sql.DB) (models.NodeSwitch, error) {
 	return nodeSwitch, nil
 }
 
-func CreateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) error {
+func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSwitch
 	(Id, NodeId, SwitchTypeId, Name, Pin)
 	VALUES (?, ?, ?, ?, ?)`)
@@ -98,18 +98,27 @@ func CreateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) error {
 		return err
 	}
 
-	_, err = stmt.Exec(nodeSwitch.Id,
-		nodeSwitch.NodeId,
-		nodeSwitch.SwitchTypeId,
-		nodeSwitch.Name,
-		nodeSwitch.Pin)
+	result, err := stmt.Exec(item.Id,
+		item.NodeId,
+		item.SwitchTypeId,
+		item.Name,
+		item.Pin)
 
 	if err != nil {
-		log.Println("Error creating node switch")
+		log.Println("Error creating node sensor")
 		return err
 	}
 
 	defer stmt.Close()
+
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted node sensor")
+		return err
+	}
+
+	item.Id = int(lastInsertId)
 
 	return nil
 }

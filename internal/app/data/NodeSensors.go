@@ -88,7 +88,7 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 	return sensor, nil
 }
 
-func CreateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
+func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSensor
 	(Id, NodeId, SensorTypeId, Name, Pin)
 	VALUES (?, ?, ?, ?, ?)`)
@@ -98,11 +98,11 @@ func CreateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
 		return err
 	}
 
-	_, err = stmt.Exec(sensor.Id,
-		sensor.NodeId,
-		sensor.SensorTypeId,
-		sensor.Name,
-		sensor.Pin)
+	result, err := stmt.Exec(item.Id,
+		item.NodeId,
+		item.SensorTypeId,
+		item.Name,
+		item.Pin)
 
 	if err != nil {
 		log.Println("Error creating node sensor")
@@ -110,6 +110,15 @@ func CreateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
 	}
 
 	defer stmt.Close()
+
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted node sensor")
+		return err
+	}
+
+	item.Id = int(lastInsertId)
 
 	return nil
 }

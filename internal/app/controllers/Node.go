@@ -10,6 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/dto"
+	"github.com/ltruelove/gohome/internal/app/handler"
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -24,6 +26,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node", "POST", controller.Create)
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/node", "DELETE", controller.Delete)
+	routing.AddRouteWithMethod("/node/register", "POST", controller.Register)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -200,4 +203,36 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 		log.Printf("There was an error attempting to delete a node: %v", err)
 		http.Error(writer, "There was an error attempting to delete a node", http.StatusInternalServerError)
 	}
+}
+
+func (controller *NodeController) Register(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Register node request made")
+
+	decoder := json.NewDecoder(request.Body)
+	var item dto.RegsiterNode
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node data: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = handler.RegisterNode(&item, controller.DB)
+
+	if err != nil {
+		log.Printf("Error registering a node: %v", err)
+		http.Error(writer, "There was an error registering the node", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(item)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling node data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, result)
 }
