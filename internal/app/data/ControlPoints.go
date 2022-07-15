@@ -108,23 +108,79 @@ func FetchControlPoint(controlPointId int, db *sql.DB) (models.ControlPoint, err
 	return controlPoint, nil
 }
 
+func FetchControlPointByMac(macAddress string, db *sql.DB) (models.ControlPoint, error) {
+	var controlPoint models.ControlPoint
+
+	stmt, err := db.Prepare("SELECT Id, Name, IpAddress, Mac FROM ControlPoint WHERE Mac = ?")
+	if err != nil {
+		log.Printf("Error preparing fetch control point by Mac sql: %v", err)
+		return controlPoint, err
+	}
+
+	err = stmt.QueryRow(macAddress).Scan(&controlPoint.Id,
+		&controlPoint.Name,
+		&controlPoint.IpAddress,
+		&controlPoint.Mac)
+
+	defer stmt.Close()
+
+	if err != nil {
+		log.Println("Error querying for control point by Mac")
+		return controlPoint, err
+	}
+
+	return controlPoint, nil
+}
+
 func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO ControlPoint
-	(Id, Name, IpAddress, Mac)
-	VALUES (?, ?, ?, ?)`)
+	(Name, IpAddress, Mac)
+	VALUES (?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create control point sql")
 		return err
 	}
 
-	_, err = stmt.Exec(controlPoint.Id,
+	result, err := stmt.Exec(controlPoint.Id,
 		controlPoint.Name,
 		controlPoint.IpAddress,
 		controlPoint.Mac)
 
 	if err != nil {
 		log.Println("Error creating control point")
+		return err
+	}
+
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted control point")
+		return err
+	}
+
+	controlPoint.Id = int(lastInsertId)
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func UpdateControlPointIp(controlPoint *models.ControlPoint, db *sql.DB) error {
+	stmt, err := db.Prepare(`UPDATE ControlPoint
+	SET IpAddress = ?
+	WHERE id = ?`)
+
+	if err != nil {
+		log.Println("Error preparing update control point IP Address sql")
+		return err
+	}
+
+	_, err = stmt.Exec(controlPoint.IpAddress,
+		controlPoint.Id)
+
+	if err != nil {
+		log.Println("Error updating control point IP Address")
 		return err
 	}
 

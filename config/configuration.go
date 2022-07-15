@@ -12,6 +12,7 @@ type Configuration struct {
 	SoilThreshold int    `json:"soilThreshold"`
 	TickerActive  bool   `json:"tickerActive"`
 	WebDir        string `json:"webDir"`
+	LogFile       string `json:"logFile"`
 }
 
 func (c Configuration) ValidatePin(pin string) bool {

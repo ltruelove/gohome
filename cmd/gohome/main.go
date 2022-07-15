@@ -31,7 +31,7 @@ func main() {
 	file.Close()
 
 	// set up logging
-	logFile, logErr := os.OpenFile("gohome_log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFile, logErr := os.OpenFile(Config.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if logErr != nil {
 		log.Fatalf("error opening file: %v", err)
