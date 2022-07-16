@@ -12,13 +12,13 @@ type NodeSwitch struct {
 	NodeId                 int    `json:"NodeId"`
 	SwitchTypeId           int    `json:"SwitchTypeId"`
 	Name                   string `json:"Name"`
-	Pin                    string `json:"Pin"`
+	Pin                    int    `json:"Pin"`
 	MomentaryPressDuration int    `json:"MomentaryPressDuration"`
 	IsClosedOn             bool   `json:"IsClosedOn"`
 }
 
 func (item *NodeSwitch) IsValid(checkId bool) error {
-	var isValid = false
+	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 
@@ -56,7 +56,7 @@ func (item *NodeSwitch) IsValid(checkId bool) error {
 		isValid = false
 	}
 
-	if strings.TrimSpace(item.Pin) == "" {
+	if item.Pin < 0 {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "Pin cannot be empty")
 		} else {

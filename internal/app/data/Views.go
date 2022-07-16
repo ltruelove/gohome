@@ -167,16 +167,15 @@ func FetchViewSwitchData(viewId int, db *sql.DB) ([]models.ViewNodeSwitchData, e
 
 func CreateView(view *models.View, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO View
-	(Id, Name)
-	VALUES (?, ?)`)
+	(Name)
+	VALUES (?)`)
 
 	if err != nil {
 		log.Println("Error preparing create view sql")
 		return err
 	}
 
-	_, err = stmt.Exec(view.Id,
-		view.Name)
+	_, err = stmt.Exec(view.Name)
 
 	if err != nil {
 		log.Println("Error creating view")

@@ -206,6 +206,9 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) Register(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token, Authorization, X-Requested-With")
+
 	log.Println("Register node request made")
 
 	decoder := json.NewDecoder(request.Body)

@@ -12,11 +12,11 @@ type NodeSensor struct {
 	NodeId       int    `json:"NodeId"`
 	SensorTypeId int    `json:"SensorTypeId"`
 	Name         string `json:"Name"`
-	Pin          string `json:"Pin"`
+	Pin          int    `json:"Pin"`
 }
 
 func (item *NodeSensor) IsValid(checkId bool) error {
-	var isValid = false
+	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 
@@ -54,7 +54,7 @@ func (item *NodeSensor) IsValid(checkId bool) error {
 		isValid = false
 	}
 
-	if strings.TrimSpace(item.Pin) == "" {
+	if item.Pin < 0 {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "Pin cannot be empty")
 		} else {

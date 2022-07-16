@@ -15,7 +15,7 @@ type ControlPoint struct {
 }
 
 func (item *ControlPoint) IsValid(checkId bool) error {
-	var isValid = false
+	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 
@@ -62,7 +62,7 @@ func (item *ControlPoint) IsValid(checkId bool) error {
 }
 
 func (item *ControlPoint) IsIpAddressValid() error {
-	var isValid = false
+	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 

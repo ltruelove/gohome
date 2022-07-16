@@ -25,6 +25,8 @@ func (controller *SensorTypeController) RegisterSensorTypeEndpoints() {
 }
 
 func (controller *SensorTypeController) GetAll(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	log.Println("Fetch all sensor types")
 
 	if len(controller.AllTypes) == 0 {
@@ -50,6 +52,8 @@ func (controller *SensorTypeController) GetAll(writer http.ResponseWriter, reque
 }
 
 func (controller *SensorTypeController) GetById(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
@@ -83,6 +87,8 @@ func (controller *SensorTypeController) GetById(writer http.ResponseWriter, requ
 }
 
 func (controller *SensorTypeController) DataById(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {

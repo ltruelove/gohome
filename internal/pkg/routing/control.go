@@ -17,5 +17,5 @@ func AddGenericRoute(path string, handler func(writer http.ResponseWriter, reque
 }
 
 func AddRouteWithMethod(path string, method string, handler func(writer http.ResponseWriter, request *http.Request)) {
-	AppRouter.HandleFunc(path, handler).Methods(method)
+	AppRouter.HandleFunc(path, handler).Methods(method, "OPTIONS")
 }

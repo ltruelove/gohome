@@ -90,7 +90,7 @@ func FetchNodeSwitch(nodeId int, db *sql.DB) (models.NodeSwitch, error) {
 
 func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSwitch
-	(Id, NodeId, SwitchTypeId, Name, Pin)
+	(NodeId, SwitchTypeId, Name, Pin)
 	VALUES (?, ?, ?, ?, ?)`)
 
 	if err != nil {
@@ -98,8 +98,7 @@ func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 		return err
 	}
 
-	result, err := stmt.Exec(item.Id,
-		item.NodeId,
+	result, err := stmt.Exec(item.NodeId,
 		item.SwitchTypeId,
 		item.Name,
 		item.Pin)

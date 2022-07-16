@@ -6,6 +6,7 @@ import (
 
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/dto"
+	"github.com/ltruelove/gohome/internal/app/models"
 )
 
 func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
@@ -23,7 +24,10 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 		return err
 	}
 
+	updatedSensors := []models.NodeSensor{}
 	for _, item := range dto.Sensors {
+		item.NodeId = dto.Node.Id
+
 		err = item.IsValid(false)
 
 		if err != nil {
@@ -37,9 +41,16 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 			log.Println("Error creating node sensor for register")
 			return err
 		}
+
+		updatedSensors = append(updatedSensors, item)
 	}
 
+	dto.Sensors = updatedSensors
+
+	updatedSwitches := []models.NodeSwitch{}
 	for _, item := range dto.Switches {
+		item.NodeId = dto.Node.Id
+
 		err = item.IsValid(false)
 
 		if err != nil {
@@ -52,7 +63,11 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 			log.Println("Error creating node switch for register")
 			return err
 		}
+
+		updatedSwitches = append(updatedSwitches, item)
 	}
+
+	dto.Switches = updatedSwitches
 
 	return nil
 }

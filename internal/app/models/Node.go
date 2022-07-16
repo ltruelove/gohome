@@ -14,7 +14,7 @@ type Node struct {
 }
 
 func (item *Node) IsValid(checkId bool) error {
-	var isValid = false
+	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 

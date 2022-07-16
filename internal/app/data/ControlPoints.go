@@ -142,8 +142,7 @@ func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 		return err
 	}
 
-	result, err := stmt.Exec(controlPoint.Id,
-		controlPoint.Name,
+	result, err := stmt.Exec(controlPoint.Name,
 		controlPoint.IpAddress,
 		controlPoint.Mac)
 

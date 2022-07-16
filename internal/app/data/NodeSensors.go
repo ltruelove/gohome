@@ -90,16 +90,15 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 
 func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSensor
-	(Id, NodeId, SensorTypeId, Name, Pin)
-	VALUES (?, ?, ?, ?, ?)`)
+	(NodeId, SensorTypeId, Name, Pin)
+	VALUES (?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node sensor sql")
 		return err
 	}
 
-	result, err := stmt.Exec(item.Id,
-		item.NodeId,
+	result, err := stmt.Exec(item.NodeId,
 		item.SensorTypeId,
 		item.Name,
 		item.Pin)

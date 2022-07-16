@@ -24,6 +24,8 @@ func (controller *SwitchTypeController) RegisterSwitchTypeEndpoints() {
 }
 
 func (controller *SwitchTypeController) GetAll(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	log.Println("Fetch all switch types")
 
 	if len(controller.AllTypes) == 0 {
@@ -49,6 +51,8 @@ func (controller *SwitchTypeController) GetAll(writer http.ResponseWriter, reque
 }
 
 func (controller *SwitchTypeController) GetById(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {

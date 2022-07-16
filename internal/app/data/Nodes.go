@@ -152,16 +152,15 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
 
 func CreateNode(item *models.Node, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO Node
-	(Id, Name, Mac)
-	VALUES (?, ?, ?)`)
+	(Name, Mac)
+	VALUES (?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node sql")
 		return err
 	}
 
-	result, err := stmt.Exec(item.Id,
-		item.Name,
+	result, err := stmt.Exec(item.Name,
 		item.Mac)
 
 	if err != nil {
