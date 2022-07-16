@@ -237,5 +237,6 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 		return
 	}
 
+	log.Println("Register node request succeeded")
 	writeResponse(writer, result)
 }

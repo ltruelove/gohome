@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/controllers"
@@ -31,7 +33,9 @@ func main() {
 	file.Close()
 
 	// set up logging
-	logFile, logErr := os.OpenFile(Config.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	currentTime := time.Now()
+	datedLogFile := fmt.Sprintf("%s_%s", currentTime.Format("2006-01-02"), Config.LogFile)
+	logFile, logErr := os.OpenFile(datedLogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 
 	if logErr != nil {
 		log.Fatalf("error opening file: %v", err)
