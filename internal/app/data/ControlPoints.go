@@ -14,7 +14,7 @@ func VerifyControlPointIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 		return false, err
 	}
 
-	return node.Id > 0, nil
+	return node.Id < 1, nil
 }
 
 func FetchAllControlPoints(db *sql.DB) ([]models.ControlPoint, error) {

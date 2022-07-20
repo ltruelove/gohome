@@ -13,6 +13,7 @@ type NodeSensor struct {
 	SensorTypeId int    `json:"SensorTypeId"`
 	Name         string `json:"Name"`
 	Pin          int    `json:"Pin"`
+	DHTType      int    `json:"DHTType"`
 }
 
 func (item *NodeSensor) IsValid(checkId bool) error {

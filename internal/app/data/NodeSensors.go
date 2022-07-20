@@ -23,7 +23,8 @@ func FetchAllNodeSensors(db *sql.DB) ([]models.NodeSensor, error) {
 		NodeId,
 		SensorTypeId,
 		Name,
-		Pin FROM NodeSensor`)
+		Pin,
+		DHTType FROM NodeSensor`)
 	if err != nil {
 		log.Println("Error preparing all node sensors sql")
 		return nil, err
@@ -46,7 +47,8 @@ func FetchAllNodeSensors(db *sql.DB) ([]models.NodeSensor, error) {
 			&sensor.NodeId,
 			&sensor.SensorTypeId,
 			&sensor.Name,
-			&sensor.Pin)
+			&sensor.Pin,
+			&sensor.DHTType)
 
 		if err != nil {
 			log.Println("Error scanning node sensor")
@@ -66,8 +68,9 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 		Id,
 		NodeId,
 		SensorTypeId,
-		Name
-		Pin FROM NodeSensor WHERE id = ?`)
+		Name,
+		Pin,
+		DHTType FROM NodeSensor WHERE id = ?`)
 	if err != nil {
 		log.Println("Error preparing fetch node sensor sql")
 		return sensor, err
@@ -77,7 +80,8 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 		&sensor.NodeId,
 		&sensor.SensorTypeId,
 		&sensor.Name,
-		&sensor.Pin)
+		&sensor.Pin,
+		&sensor.DHTType)
 	if err != nil {
 		log.Println("Error querying for node sensor")
 		return sensor, err
@@ -90,8 +94,8 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 
 func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSensor
-	(NodeId, SensorTypeId, Name, Pin)
-	VALUES (?, ?, ?, ?)`)
+	(NodeId, SensorTypeId, Name, Pin, DHTType)
+	VALUES (?, ?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node sensor sql")
@@ -101,7 +105,8 @@ func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 	result, err := stmt.Exec(item.NodeId,
 		item.SensorTypeId,
 		item.Name,
-		item.Pin)
+		item.Pin,
+		item.DHTType)
 
 	if err != nil {
 		log.Println("Error creating node sensor")
@@ -124,7 +129,7 @@ func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 
 func UpdateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
 	stmt, err := db.Prepare(`UPDATE NodeSensor
-	SET NodeId = ?, SensorTypeId = ?, Name = ?, Pin = ?
+	SET NodeId = ?, SensorTypeId = ?, Name = ?, Pin = ?, DHTType = ?
 	WHERE id = ?`)
 
 	if err != nil {
@@ -136,7 +141,8 @@ func UpdateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
 		sensor.SensorTypeId,
 		sensor.Name,
 		sensor.Pin,
-		sensor.Id)
+		sensor.Id,
+		sensor.DHTType)
 
 	if err != nil {
 		log.Println("Error updating node sensor")

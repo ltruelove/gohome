@@ -25,7 +25,7 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 	routing.AddRouteWithMethod("/controlPoint", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/controlPoint/{id}", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/controlPoint/register", "POST", controller.Create)
-	routing.AddRouteWithMethod("/controlPoint/ipUpdate", "PUT", controller.UpdateControlPointIp)
+	routing.AddRouteWithMethod("/controlPoint/ipUpdate", "POST", controller.UpdateControlPointIp)
 }
 
 func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -84,6 +84,9 @@ func (controller *ControlPointController) GetById(writer http.ResponseWriter, re
 
 func (controller *ControlPointController) Create(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Create control point request made")
+
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token, Authorization, X-Requested-With")
 
 	decoder := json.NewDecoder(request.Body)
 	var item models.ControlPoint

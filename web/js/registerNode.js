@@ -10,6 +10,12 @@ var switchTypes = [];
 var sensors = [];
 var switches = [];
 
+const DEF_DELAY = 1000;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms || DEF_DELAY));
+}
+
 $(document).ready(function() {
     if(typeof(apiHost) === 'undefined'){
         alert("Host is not set!");
@@ -37,6 +43,10 @@ $(document).ready(function() {
         }
     });
 
+    $('#sensorTypeOptions').on('change', function(){
+        checkSensorTypes(this.value);
+    });
+
     $('#addTypeButton').click(function(event){
         event.preventDefault();
         addType();
@@ -44,10 +54,12 @@ $(document).ready(function() {
 
     $('#switchTypes').hide();
     $('.switchOptions').hide();
+    $('.dhtTypes').hide();
 
     getSensorTypes();
     getSwitchTypes();
     clearTypeNameAndPin();
+    checkSensorTypes($('#sensorTypeOptions :selected').val());
 });
 
 function registerNode() {
@@ -70,14 +82,84 @@ function registerNode() {
     });
 }
 
-function registerSuccess(data){
+async function registerSuccess(data){
     console.log(data);
+
+    var res = await saveNodeId(data.Node.Id);
+    await sleep(200);
+
+    for(var i = 0; i < data.Sensors.length; i++){
+        var sensor = data.Sensors[i];
+
+        switch(sensor.SensorTypeId){
+            case 1:
+                res = await saveDht(sensor.Pin, sensor.DHTType);
+                await sleep(200);
+            break;
+            default:
+            break;
+        }
+    }
+
+    res = await callRestart();
+    await sleep(200);
+    console.log(res);
+}
+
+function saveNodeId(nodeId){
+    return $.ajax({
+        type: "POST",
+        url: "/setNodeId",
+        data: "nodeId=" + nodeId,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function saveDht(dhtPin, dhtType){
+    return $.ajax({
+        type: "POST",
+        url: "/setDht",
+        data: "pin=" + dhtPin + "&dhtType=" + dhtType,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function callRestart(){
+    return $.get("/restart", function(data){
+        console.log(data);
+    });
+}
+
+function genericSuccess(data){
+    console.log(data);
+}
+
+function genericFailure(req, msg, err){
+    console.log(req);
+    console.log(msg);
+    console.log(err);
 }
 
 function registerError(request, status, error){
     console.log(request);
     console.log(status);
     console.log(error);
+}
+
+function checkSensorTypes(sensorVal){
+    if($('#sensorTypeOptions').is(':hidden')){
+        return;
+    }
+
+    if(sensorVal == 1){
+        $('.dhtTypes').show();
+    }else{
+        $('.dhtTypes').hide();
+    }
 }
 
 function clearTypeNameAndPin(){
@@ -99,6 +181,7 @@ function addSensor(){
     var name = $('#typeName').val();
     var sensorVal = $('#sensorTypeOptions :selected').val();
     var pinNumber = $('#pin').val();
+    var dhtType = $('input[name="dhtType"]:checked').val();
 
     if(name === "" || pinNumber === ""){
         alert("Name and pin are required");
@@ -108,7 +191,8 @@ function addSensor(){
     var sensor = {
         "Name" : name,
         "SensorTypeId" : parseInt(sensorVal),
-        "Pin" : parseInt(pinNumber)
+        "Pin" : parseInt(pinNumber),
+        "DHTType" : parseInt(dhtType)
     };
 
     sensors.push(sensor);
@@ -145,7 +229,7 @@ function addSwitch(){
 
     var switchType = {
         "Name" : name,
-        "SensorTypeId" : parseInt(switchVal),
+        "SwitchTypeId" : parseInt(switchVal),
         "Pin" : parseInt(pinNumber),
         "MomentaryPressDuration" : $('#MomentaryPressDuration').val(),
         "IsClosedOn" : $('input[name="sType"]:checked').val()
@@ -175,7 +259,6 @@ function removeSwitch(index){
 
 function getSensorTypes() {
     $.get(apiHost + "/sensorType", function( data ) {
-        console.log(data);
         if(data === null || data.length < 1){
             alert("No sensor types found");
             return;
@@ -185,12 +268,13 @@ function getSensorTypes() {
             var sensorType = data[i];
             $('<option/>', {value: sensorType.Id }).text(sensorType.Name).appendTo('#sensorTypeOptions');
         }
+
+        checkSensorTypes($('#sensorTypeOptions :selected').val());
     });
 }
 
 function getSwitchTypes() {
     $.get(apiHost + "/switchType", function( data ) {
-        console.log(data);
         if(data === null || data.length < 1){
             alert("No switch types found");
             return;
