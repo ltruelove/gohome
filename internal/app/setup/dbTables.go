@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "ControlPointNodes" (
 	"ControlPointId"	INTEGER NOT NULL,
 	"NodeId"	INTEGER NOT NULL,
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
-	FOREIGN KEY("ControlPointId") REFERENCES "NodeControlPoint"("Id"),
+	FOREIGN KEY("ControlPointId") REFERENCES "ControlPoint"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );
 
