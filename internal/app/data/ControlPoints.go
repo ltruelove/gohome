@@ -48,6 +48,40 @@ func FetchAllControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
 	return controlPoints, nil
 }
 
+func FetchAllAvailableControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
+	// Only select control points that aren't maxed out for nodes, 20 is the max
+	stmt, err := db.Prepare(`SELECT Id, Name, IpAddress, Mac
+	FROM ControlPoint AS c
+	WHERE  (SELECT COUNT(Id) FROM ControlPointNodes WHERE ControlPointId = c.Id) < 20`)
+	if err != nil {
+		log.Println("Error preparing all control points sql")
+		return nil, err
+	}
+
+	var controlPoints []models.ControlPoint
+
+	rows, err := stmt.Query()
+	if err != nil {
+		log.Println("Error querying for all control points")
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	for rows.Next() {
+		var controlPoint models.ControlPoint
+
+		rows.Scan(&controlPoint.Id,
+			&controlPoint.Name,
+			&controlPoint.IpAddress,
+			&controlPoint.Mac)
+
+		controlPoints = append(controlPoints, controlPoint)
+	}
+
+	return controlPoints, nil
+}
+
 func FetchAllControlPointNodes(db *sql.DB, controlPointId int) ([]models.Node, error) {
 	stmt, err := db.Prepare(`SELECT
 			Node.Id,

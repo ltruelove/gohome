@@ -20,6 +20,7 @@ type ControlPointController struct {
 
 func (controller *ControlPointController) RegisterControlPointEndpoints() {
 	routing.AddRouteWithMethod("/controlPoint", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/controlPoint/Available", "GET", controller.GetAll)
 	routing.AddRouteWithMethod("/controlPoint/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/controlPoint", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint", "PUT", controller.Update)
@@ -34,6 +35,31 @@ func (controller *ControlPointController) GetAll(writer http.ResponseWriter, req
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllControlPoints(controller.DB)
+
+	if err != nil {
+		log.Printf("An error occurred fetching all controlPoints: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(allItems)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling controlPoint data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Found %d controlPoints", len(allItems))
+	writeResponse(writer, result)
+}
+
+func (controller *ControlPointController) GetAllAvailable(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	log.Println("Fetch all controlPoints request initiated")
+
+	allItems, err := data.FetchAllAvailableControlPoints(controller.DB)
 
 	if err != nil {
 		log.Printf("An error occurred fetching all controlPoints: %v", err)
