@@ -285,7 +285,7 @@ function removeSwitch(index){
 }
 
 function getControlPoints() {
-    $.get(apiHost + "/controlPoint", function( data ) {
+    $.get(apiHost + "/controlPoint/Available", function( data ) {
         if(data === null || data.length < 1){
             alert("No control points found. Please add a control point before adding a node.");
             return;
