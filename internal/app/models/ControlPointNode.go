@@ -1,7 +1,7 @@
 package models
 
 type ControlPointNode struct {
-	Id               int `json:"Id"`
-	NodeId           int `json:"NodeId"`
-	NodeControllerId int `json:"NodeControllerId"`
+	Id             int `json:"Id"`
+	ControlPointId int `json:"ControlPointId"`
+	NodeId         int `json:"NodeId"`
 }

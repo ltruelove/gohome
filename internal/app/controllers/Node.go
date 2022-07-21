@@ -221,11 +221,33 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 		return
 	}
 
+	controlPoint, err := data.FetchControlPoint(item.ControlPoint.Id, controller.DB)
+
+	if err != nil {
+		log.Printf("Could not find requested control point: %v", err)
+		http.Error(writer, "Control point not found", http.StatusNotFound)
+		return
+	}
+
+	item.ControlPoint = controlPoint
+
 	err = handler.RegisterNode(&item, controller.DB)
 
 	if err != nil {
 		log.Printf("Error registering a node: %v", err)
 		http.Error(writer, "There was an error registering the node", http.StatusInternalServerError)
+		return
+	}
+
+	controlPointNode := models.ControlPointNode{}
+	controlPointNode.ControlPointId = item.ControlPoint.Id
+	controlPointNode.NodeId = item.Node.Id
+
+	err = data.AddNodeToControlPoint(&controlPointNode, controller.DB)
+
+	if err != nil {
+		log.Printf("An error occurred adding the node to the control point: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
 		return
 	}
 

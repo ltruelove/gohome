@@ -233,3 +233,35 @@ func DeleteControlPoint(controlPointId int, db *sql.DB) error {
 
 	return nil
 }
+
+func AddNodeToControlPoint(controlPointNode *models.ControlPointNode, db *sql.DB) error {
+	stmt, err := db.Prepare(`INSERT INTO ControlPointNodes
+	(ControlPointId, NodeId)
+	VALUES (?, ?)`)
+
+	if err != nil {
+		log.Println("Error preparing create control point node sql")
+		return err
+	}
+
+	result, err := stmt.Exec(controlPointNode.ControlPointId,
+		controlPointNode.NodeId)
+
+	if err != nil {
+		log.Println("Error adding node to control point ")
+		return err
+	}
+
+	defer stmt.Close()
+
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted control point node")
+		return err
+	}
+
+	controlPointNode.Id = int(lastInsertId)
+
+	return nil
+}

@@ -56,6 +56,7 @@ $(document).ready(function() {
     $('.switchOptions').hide();
     $('.dhtTypes').hide();
 
+    getControlPoints();
     getSensorTypes();
     getSwitchTypes();
     clearTypeNameAndPin();
@@ -63,10 +64,20 @@ $(document).ready(function() {
 });
 
 function registerNode() {
+    var selectedControlPointId = $('#nodeControlPoint :selected').val();
+
+    if(!selectedControlPointId){
+        alert("You must select a control point");
+        return false;
+    }
+
     var registrationDto = {
         "Node" : {
             "Name" : $('#nodeName').val(),
             "Mac" : $('#mac').val()
+        },
+        "ControlPoint" : {
+            "Id" : parseInt($('#nodeControlPoint :selected').val())
         },
         "Sensors" : sensors,
         "Switches" : switches
@@ -86,6 +97,11 @@ async function registerSuccess(data){
     console.log(data);
 
     var res = await saveNodeId(data.Node.Id);
+    console.log(res);
+    await sleep(200);
+
+    var res = await saveControlPointMac(data.ControlPoint.Mac);
+    console.log(res);
     await sleep(200);
 
     for(var i = 0; i < data.Sensors.length; i++){
@@ -104,6 +120,17 @@ async function registerSuccess(data){
     res = await callRestart();
     await sleep(200);
     console.log(res);
+}
+
+function saveControlPointMac(controlPointMac){
+    return $.ajax({
+        type: "POST",
+        url: "/setControlPointMac",
+        data: "controlPointMac=" + controlPointMac,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
 }
 
 function saveNodeId(nodeId){
@@ -255,6 +282,20 @@ function drawSwitchList(){
 function removeSwitch(index){
     switches.splice(index, 1);
     drawSwitchList();
+}
+
+function getControlPoints() {
+    $.get(apiHost + "/controlPoint", function( data ) {
+        if(data === null || data.length < 1){
+            alert("No control points found. Please add a control point before adding a node.");
+            return;
+        }
+
+        for(var i = 0; i < data.length; i++){
+            var controlPoint = data[i];
+            $('<option/>', {value: controlPoint.Id }).text(controlPoint.Name).appendTo('#nodeControlPoint');
+        }
+    });
 }
 
 function getSensorTypes() {

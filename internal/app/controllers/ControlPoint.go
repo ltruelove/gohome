@@ -29,6 +29,8 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 }
 
 func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllControlPoints(controller.DB)
