@@ -12,7 +12,7 @@
                 <div class="col-sm-6">
                     <p>Name: <span data-bind="text: Name"></span></p>
                     <p>ID: <span data-bind="text: Id"></span></p>
-                    <p>IP Address: <span data-bind="text: IpAddress"></span></p>
+                    <p>IP Address: <a data-bind="attr: {href: 'http://' + IpAddress}" target="_blank"><span data-bind="text: IpAddress"></span></a></p>
                     <p>MAC Address: <span data-bind="text: Mac"></span></p>
 					<button data-bind="click: function(){$root.deleteControlPoint(Id)}">Delete</button>
                 </div>
