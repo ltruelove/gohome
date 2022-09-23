@@ -112,6 +112,10 @@ async function registerSuccess(data){
                 res = await saveDht(sensor.Pin, sensor.DHTType);
                 await sleep(200);
             break;
+            case 2:
+                res = await saveMoisture(sensor.Pin, sensor.DHTType);
+                await sleep(200);
+            break;
             default:
             break;
         }
@@ -149,6 +153,17 @@ function saveDht(dhtPin, dhtType){
         type: "POST",
         url: "/setDht",
         data: "pin=" + dhtPin + "&dhtType=" + dhtType,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function saveMoisture(pin){
+    return $.ajax({
+        type: "POST",
+        url: "/setMoisture",
+        data: "pin=" + pin,
         success: genericSuccess,
         error: genericFailure,
         dataType: "json"
@@ -225,6 +240,7 @@ function addSensor(){
     sensors.push(sensor);
     clearTypeNameAndPin();
     drawSensorList();
+    $('#sensorTypeOptions option[value="'+ sensorVal +'"]').prop("disabled", true);
 }
 
 function drawSensorList(){
@@ -240,7 +256,10 @@ function drawSensorList(){
 }
 
 function removeSensor(index){
-    sensors.splice(index, 1);
+    var removedSensor = sensors.splice(index, 1);
+
+    $('#sensorTypeOptions option[value="'+ removedSensor.SensorTypeId +'"]').prop("disabled", false);
+
     drawSensorList();
 }
 
@@ -307,6 +326,13 @@ function getSensorTypes() {
 
         for(var i = 0; i < data.length; i++){
             var sensorType = data[i];
+
+            // if the device already has a pin defined for DHT, skip DHT
+            if(dhtPin && dhtPin > 0){
+                if(sensorType.Id === 1){
+                    continue;
+                }
+            }
             $('<option/>', {value: sensorType.Id }).text(sensorType.Name).appendTo('#sensorTypeOptions');
         }
 
