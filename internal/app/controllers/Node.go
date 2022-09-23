@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,6 +28,15 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/node", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/node/register", "POST", controller.Register)
+	routing.AddRouteWithMethod("/nodes", "GET", AllNodesHandler)
+}
+
+func AllNodesHandler(writer http.ResponseWriter, request *http.Request) {
+	p := &models.Page{
+		Title: "All GoHome Nodes",
+	}
+	t, _ := template.ParseFiles(Config.WebDir + "/html/nodes.html")
+	t.Execute(writer, p)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {

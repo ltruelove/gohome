@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<title>{{.Title}}</title>
+		<link href="/dependency/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet"/>
+		<script src="/dependency/bootstrap-3.3.7-dist/js/jquery-3.1.0.js"></script>
+		<script src="/dependency/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+	</head>
+
+	<body>
+		<div id="bodyDiv" class="container">
+            <div class="row" data-bind="foreach: nodes">
+                <div class="col-sm-6">
+                    <p>Name: <span data-bind="text: Name"></span></p>
+                    <p>ID: <span data-bind="text: Id"></span></p>
+                    <p>MAC Address: <span data-bind="text: Mac"></span></p>
+					<button data-bind="click: function(){$root.deleteNode(Id)}">Delete</button>
+                </div>
+            </div>
+        </div>
+
+		<script src="/dependency/bootstrap-3.3.7-dist/js/knockout-3.4.0.js"></script>
+		<script src="/js/nodes.js"></script>
+	</body>
+</html>
