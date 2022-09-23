@@ -26,7 +26,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/node", "POST", controller.Create)
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
-	routing.AddRouteWithMethod("/node", "DELETE", controller.Delete)
+	routing.AddRouteWithMethod("/node/{id}", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/node/register", "POST", controller.Register)
 	routing.AddRouteWithMethod("/nodes", "GET", AllNodesHandler)
 }

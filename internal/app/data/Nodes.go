@@ -15,7 +15,7 @@ func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 		return false, err
 	}
 
-	return item.Id > 0, nil
+	return item.Id < 1, nil
 }
 
 func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
