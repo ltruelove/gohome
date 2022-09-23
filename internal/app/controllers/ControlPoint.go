@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -27,6 +28,15 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 	routing.AddRouteWithMethod("/controlPoint/{id}", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/controlPoint/register", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint/ipUpdate", "POST", controller.UpdateControlPointIp)
+	routing.AddRouteWithMethod("/controlPoints", "GET", AllControlPointsHandler)
+}
+
+func AllControlPointsHandler(writer http.ResponseWriter, request *http.Request) {
+	p := &models.Page{
+		Title: "All GoHome Control Points",
+	}
+	t, _ := template.ParseFiles(Config.WebDir + "/html/controlPoints.html")
+	t.Execute(writer, p)
 }
 
 func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -132,6 +142,14 @@ func (controller *ControlPointController) Create(writer http.ResponseWriter, req
 		vError := fmt.Sprintf("Validation error: %v", err)
 		log.Println(vError)
 		http.Error(writer, vError, http.StatusBadRequest)
+		return
+	}
+
+	existingControlPoint, err := data.FetchControlPointByMac(item.Mac, controller.DB)
+
+	if err == nil && existingControlPoint.Mac == "" {
+		log.Printf("Error creating a control point: %v", err)
+		http.Error(writer, "The control point already exists.", http.StatusConflict)
 		return
 	}
 
