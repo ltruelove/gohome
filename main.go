@@ -57,9 +57,6 @@ func main() {
 	//routing package which now lives outside main in internal/pkg
 	controllers.RegisterHomeControllers(Config)
 	controllers.RegisterPinControllers(Config)
-	controllers.RegisterGardenControllers(Config)
-	controllers.RegisterGarageControllers(Config)
-	controllers.RegisterElectricControllers()
 
 	viewController.RegisterViewEndpoints()
 	sensorTypeController.RegisterSensorTypeEndpoints()
