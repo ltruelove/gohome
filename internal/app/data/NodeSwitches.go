@@ -91,17 +91,17 @@ func FetchNodeSwitch(nodeId int, db *sql.DB) (models.NodeSwitch, error) {
 func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSwitch
 	(NodeId, SwitchTypeId, Name, Pin)
-	VALUES (?, ?, ?, ?, ?)`)
+	VALUES (?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node switch sql")
 		return err
 	}
 
-	result, err := stmt.Exec(item.NodeId,
-		item.SwitchTypeId,
-		item.Name,
-		item.Pin)
+	result, err := stmt.Exec(&item.NodeId,
+		&item.SwitchTypeId,
+		&item.Name,
+		&item.Pin)
 
 	if err != nil {
 		log.Println("Error creating node sensor")

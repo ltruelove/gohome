@@ -13,7 +13,8 @@
                     <p>Name: <span data-bind="text: Name"></span></p>
                     <p>ID: <span data-bind="text: Id"></span></p>
                     <p>MAC Address: <span data-bind="text: Mac"></span></p>
-					<button data-bind="click: function(){$root.deleteNode(Id)}">Delete</button>
+					<button data-bind="click: function(){$root.deleteNode(Id)}">Delete</button><br />
+					<a data-bind="attr:{href: '/node/switches/' + Id}">Switches</a>
                 </div>
             </div>
         </div>

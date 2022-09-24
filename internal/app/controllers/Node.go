@@ -29,6 +29,10 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/{id}", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/node/register", "POST", controller.Register)
 	routing.AddRouteWithMethod("/nodes", "GET", AllNodesHandler)
+	routing.AddRouteWithMethod("/node/sensors/{id}", "GET", AllNodeSensorsHandler)
+	routing.AddRouteWithMethod("/node/switches/{id}", "GET", AllNodeSwitchesHandler)
+	routing.AddRouteWithMethod("/node/switchesByNode/{id}", "GET", controller.GetAllNodeSwitches)
+
 }
 
 func AllNodesHandler(writer http.ResponseWriter, request *http.Request) {
@@ -36,6 +40,32 @@ func AllNodesHandler(writer http.ResponseWriter, request *http.Request) {
 		Title: "All GoHome Nodes",
 	}
 	t, _ := template.ParseFiles(Config.WebDir + "/html/nodes.html")
+	t.Execute(writer, p)
+}
+
+func AllNodeSensorsHandler(writer http.ResponseWriter, request *http.Request) {
+	p := &models.Page{
+		Title: "Sensors For Selected Node",
+	}
+	t, _ := template.ParseFiles(Config.WebDir + "/html/nodeSensorList.html")
+	t.Execute(writer, p)
+}
+
+func AllNodeSwitchesHandler(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Printf("An error occurred fetching a node by id: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	p := &models.Page{
+		Title:    "Switches For Selected Node",
+		RecordId: id,
+	}
+	t, _ := template.ParseFiles(Config.WebDir + "/html/nodeSwitchList.html")
 	t.Execute(writer, p)
 }
 
@@ -270,5 +300,37 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 	}
 
 	log.Println("Register node request succeeded")
+	writeResponse(writer, result)
+}
+
+func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Fetch all node switches request initiated")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node id for delete")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	allItems, err := data.FetchNodeSwitches(id, controller.DB)
+
+	if err != nil {
+		log.Printf("An error occurred fetching all node switches: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(allItems)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling node data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Found %d nodes", len(allItems))
 	writeResponse(writer, result)
 }

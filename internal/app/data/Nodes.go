@@ -19,7 +19,7 @@ func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 }
 
 func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
-	stmt, err := db.Prepare(`SELECT Id, Name FROM Node`)
+	stmt, err := db.Prepare(`SELECT Id, Name, Mac FROM Node`)
 
 	if err != nil {
 		log.Println(err)
@@ -38,7 +38,8 @@ func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
 	for rows.Next() {
 		var node models.Node
 		rows.Scan(&node.Id,
-			&node.Name)
+			&node.Name,
+			&node.Mac)
 		nodes = append(nodes, node)
 	}
 	defer stmt.Close()
@@ -68,8 +69,8 @@ func FetchNodeSensors(nodeId int, db *sql.DB) ([]models.NodeSensor, error) {
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		SensorTypeId,
-		Pin
-		Name FROM NodeSenor WHERE id = ?`)
+		Pin,
+		Name FROM NodeSenor WHERE NodeId = ?`)
 
 	if err != nil {
 		log.Printf("Error preparing select node sensors sql: %v", err)
@@ -111,8 +112,8 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		SwitchTypeId,
-		Pin
-		Name FROM NodeSenor WHERE id = ?`)
+		Pin,
+		Name FROM NodeSwitch WHERE NodeId = ?`)
 
 	if err != nil {
 		log.Printf("Error preparing select node switches sql: %v", err)
@@ -121,7 +122,7 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
 
 	var nodeSwitches []models.NodeSwitch
 
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(nodeId)
 
 	if err != nil {
 		log.Println("Error querying for node switches")
@@ -140,7 +141,7 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
 			&nodeSwitch.Name)
 
 		if err != nil {
-			log.Println("Error scanning node sensor")
+			log.Println("Error scanning node switch")
 			return nil, err
 		}
 
@@ -160,8 +161,8 @@ func CreateNode(item *models.Node, db *sql.DB) error {
 		return err
 	}
 
-	result, err := stmt.Exec(item.Name,
-		item.Mac)
+	result, err := stmt.Exec(&item.Name,
+		&item.Mac)
 
 	if err != nil {
 		log.Println("Error creating node")
@@ -192,9 +193,9 @@ func UpdateNode(node *models.Node, db *sql.DB) error {
 		return err
 	}
 
-	_, err = stmt.Exec(node.Name,
-		node.Mac,
-		node.Id)
+	_, err = stmt.Exec(&node.Name,
+		&node.Mac,
+		&node.Id)
 
 	if err != nil {
 		log.Println("Error updating node")

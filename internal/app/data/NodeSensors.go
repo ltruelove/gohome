@@ -102,11 +102,11 @@ func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 		return err
 	}
 
-	result, err := stmt.Exec(item.NodeId,
-		item.SensorTypeId,
-		item.Name,
-		item.Pin,
-		item.DHTType)
+	result, err := stmt.Exec(&item.NodeId,
+		&item.SensorTypeId,
+		&item.Name,
+		&item.Pin,
+		&item.DHTType)
 
 	if err != nil {
 		log.Println("Error creating node sensor")

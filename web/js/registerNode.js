@@ -32,6 +32,7 @@ $(document).ready(function() {
     $('input[name="sType"]').change(function() {
         if (this.value == 'sensor') {
             $('#sensorTypes').show();
+            $('.dhtTypes').show();
 
             $('#switchTypes').hide();
             $('.switchOptions').hide();
@@ -40,6 +41,7 @@ $(document).ready(function() {
             $('.switchOptions').show();
 
             $('#sensorTypes').hide();
+            $('.dhtTypes').hide();
         }
     });
 
@@ -113,7 +115,24 @@ async function registerSuccess(data){
                 await sleep(200);
             break;
             case 2:
-                res = await saveMoisture(sensor.Pin, sensor.DHTType);
+                res = await saveMoisture(sensor.Pin);
+                await sleep(200);
+            break;
+            default:
+            break;
+        }
+    }
+
+    for(var i = 0; i < data.Switches.length; i++){
+        var switchData = data.Switches[i];
+
+        switch(switchData.SwitchTypeId){
+            case 1:
+                res = await saveMomentary(switchData.Pin);
+                await sleep(200);
+            break;
+            case 2:
+                res = await saveToggle(switchData.Pin);
                 await sleep(200);
             break;
             default:
@@ -163,6 +182,28 @@ function saveMoisture(pin){
     return $.ajax({
         type: "POST",
         url: "/setMoisture",
+        data: "pin=" + pin,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function saveMomentary(pin){
+    return $.ajax({
+        type: "POST",
+        url: "/setMomentary",
+        data: "pin=" + pin,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function saveToggle(pin){
+    return $.ajax({
+        type: "POST",
+        url: "/setToggle",
         data: "pin=" + pin,
         success: genericSuccess,
         error: genericFailure,
@@ -277,8 +318,8 @@ function addSwitch(){
         "Name" : name,
         "SwitchTypeId" : parseInt(switchVal),
         "Pin" : parseInt(pinNumber),
-        "MomentaryPressDuration" : $('#MomentaryPressDuration').val(),
-        "IsClosedOn" : $('input[name="sType"]:checked').val()
+        "MomentaryPressDuration" : parseInt($('#MomentaryPressDuration').val()),
+        "IsClosedOn" : $('input[name="IsClosedOn"]:checked').val() !== "1" ? false : true
     };
 
     switches.push(switchType);

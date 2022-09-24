@@ -1,6 +1,7 @@
 package models
 
 type Page struct {
-	Title string
-	Body  []byte
+	Title    string
+	RecordId int
+	Body     []byte
 }
