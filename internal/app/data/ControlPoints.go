@@ -142,6 +142,37 @@ func FetchControlPoint(controlPointId int, db *sql.DB) (models.ControlPoint, err
 	return controlPoint, nil
 }
 
+func FetchControlPointByNode(nodeId int, db *sql.DB) (models.ControlPoint, error) {
+	var controlPoint models.ControlPoint
+
+	stmt, err := db.Prepare(`SELECT
+	cp.Id,
+	cp.Name,
+	cp.IpAddress,
+	cp.Mac FROM ControlPointNodes AS cpn
+	INNER JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId
+	WHERE cpn.NodeId = ?`)
+
+	if err != nil {
+		log.Printf("Error preparing fetch control point by node sql: %v", err)
+		return controlPoint, err
+	}
+
+	err = stmt.QueryRow(nodeId).Scan(&controlPoint.Id,
+		&controlPoint.Name,
+		&controlPoint.IpAddress,
+		&controlPoint.Mac)
+
+	defer stmt.Close()
+
+	if err != nil {
+		log.Println("Error querying for control point")
+		return controlPoint, err
+	}
+
+	return controlPoint, nil
+}
+
 func FetchControlPointByMac(macAddress string, db *sql.DB) (models.ControlPoint, error) {
 	var controlPoint models.ControlPoint
 

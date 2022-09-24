@@ -59,21 +59,21 @@ func FetchAllNodeSwitches(db *sql.DB) ([]models.NodeSwitch, error) {
 	return nodeSwitches, nil
 }
 
-func FetchNodeSwitch(nodeId int, db *sql.DB) (models.NodeSwitch, error) {
+func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
 	var nodeSwitch models.NodeSwitch
 
 	stmt, err := db.Prepare(`SELECT
 		Id,
 		NodeId,
 		SwitchTypeId,
-		Name
+		Name,
 		Pin FROM NodeSwitch WHERE id = ?`)
 	if err != nil {
 		log.Println("Error preparing fetch node switch sql")
 		return nodeSwitch, err
 	}
 
-	err = stmt.QueryRow(nodeId).Scan(&nodeSwitch.Id,
+	err = stmt.QueryRow(id).Scan(&nodeSwitch.Id,
 		&nodeSwitch.NodeId,
 		&nodeSwitch.SwitchTypeId,
 		&nodeSwitch.Name,

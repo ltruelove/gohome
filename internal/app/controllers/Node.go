@@ -32,7 +32,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/sensors/{id}", "GET", AllNodeSensorsHandler)
 	routing.AddRouteWithMethod("/node/switches/{id}", "GET", AllNodeSwitchesHandler)
 	routing.AddRouteWithMethod("/node/switchesByNode/{id}", "GET", controller.GetAllNodeSwitches)
-
+	routing.AddRouteWithMethod("/node/switch/toggle/{id}", "GET", controller.ToggleNodeSwitch)
 }
 
 func AllNodesHandler(writer http.ResponseWriter, request *http.Request) {
@@ -333,4 +333,51 @@ func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter,
 
 	log.Printf("Found %d nodes", len(allItems))
 	writeResponse(writer, result)
+}
+
+func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Fetch all node switches request initiated")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node switch id")
+		http.Error(writer, "Could not resolve node switch id", http.StatusBadRequest)
+		return
+	}
+
+	nodeSwitch, err := data.FetchNodeSwitch(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node switch")
+		http.Error(writer, "Could not resolve node switch", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(nodeSwitch.NodeId, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get control point by node")
+		http.Error(writer, "Could not resolve control point for node switch", http.StatusBadRequest)
+		return
+	}
+
+	_, err = http.Get("http://" + nodeControlPoint.IpAddress + "/toggleNodeSwitch?mac=" + node.Mac)
+
+	if err != nil {
+		log.Println("Could not complete the toggle request." + err.Error())
+		http.Error(writer, "There was a error making the toggle request.", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, []byte("Toggle successful"))
 }

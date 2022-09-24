@@ -15,6 +15,12 @@
                     <p>ID: <span data-bind="text: Id"></span></p>
                     <p>NodeId: <span data-bind="text: NodeId"></span></p>
                     <p>Pin: <span data-bind="text: Pin"></span></p>
+					<div data-bind="if: SwitchTypeId === 2">
+					<button data-bind="click: function(){$root.toggleSwitch(Id)}">Toggle</button>
+					</div>
+					<div data-bind="if: SwitchTypeId === 1">
+						<button data-bind="click: function(){$root.pressButton(Id)}">Press</button>
+					</div>
                 </div>
             </div>
         </div>
