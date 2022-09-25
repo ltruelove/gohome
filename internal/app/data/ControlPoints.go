@@ -88,7 +88,7 @@ func FetchAllControlPointNodes(controlPointId int, db *sql.DB) ([]dto.ControlPoi
 			Node.Id,
 			Node.Name,
 			Node.Mac,
-			cpn.Id AS ControlPointNodeId
+			cpn.Id AS RelationId
 		FROM ControlPointNodes AS cpn
 		INNER JOIN Node ON Node.Id = cpn.NodeId
 		WHERE cpn.ControlPointId = ?`)
@@ -114,7 +114,7 @@ func FetchAllControlPointNodes(controlPointId int, db *sql.DB) ([]dto.ControlPoi
 		rows.Scan(&record.Id,
 			&record.Name,
 			&record.Mac,
-			&record.ControlPointNodeId)
+			&record.RelationId)
 
 		nodes = append(nodes, record)
 	}
