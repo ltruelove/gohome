@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,50 +25,14 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/node", "POST", controller.Create)
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
-	routing.AddRouteWithMethod("/node/{id}", "DELETE", controller.Delete)
+	routing.AddRouteWithMethod("/node/{id}/delete", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/node/register", "POST", controller.Register)
-	routing.AddRouteWithMethod("/nodes", "GET", AllNodesHandler)
-	routing.AddRouteWithMethod("/node/sensors/{id}", "GET", AllNodeSensorsHandler)
-	routing.AddRouteWithMethod("/node/switches/{id}", "GET", AllNodeSwitchesHandler)
 	routing.AddRouteWithMethod("/node/switchesByNode/{id}", "GET", controller.GetAllNodeSwitches)
 	routing.AddRouteWithMethod("/node/switch/toggle/{id}", "GET", controller.ToggleNodeSwitch)
 }
 
-func AllNodesHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &models.Page{
-		Title: "All GoHome Nodes",
-	}
-	t, _ := template.ParseFiles(Config.WebDir + "/html/nodes.html")
-	t.Execute(writer, p)
-}
-
-func AllNodeSensorsHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &models.Page{
-		Title: "Sensors For Selected Node",
-	}
-	t, _ := template.ParseFiles(Config.WebDir + "/html/nodeSensorList.html")
-	t.Execute(writer, p)
-}
-
-func AllNodeSwitchesHandler(writer http.ResponseWriter, request *http.Request) {
-	vars := mux.Vars(request)
-	id, err := strconv.Atoi(vars["id"])
-
-	if err != nil {
-		log.Printf("An error occurred fetching a node by id: %v", err)
-		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
-		return
-	}
-
-	p := &models.Page{
-		Title:    "Switches For Selected Node",
-		RecordId: id,
-	}
-	t, _ := template.ParseFiles(Config.WebDir + "/html/nodeSwitchList.html")
-	t.Execute(writer, p)
-}
-
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Fetch all nodes request initiated")
 
 	allItems, err := data.FetchAllNodes(controller.DB)
@@ -93,6 +56,8 @@ func (controller *NodeController) GetAll(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) GetById(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -126,6 +91,7 @@ func (controller *NodeController) GetById(writer http.ResponseWriter, request *h
 }
 
 func (controller *NodeController) Create(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Create node request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -167,6 +133,7 @@ func (controller *NodeController) Create(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) Update(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Update node request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -212,6 +179,16 @@ func (controller *NodeController) Update(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) Delete(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	writer.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
+
+	if request.Method == "OPTIONS" {
+		log.Println("OPTIONS request")
+		writer.WriteHeader(http.StatusOK)
+		writeResponse(writer, []byte(""))
+		return
+	}
+
 	log.Println("Delete a node")
 
 	vars := mux.Vars(request)
@@ -223,19 +200,21 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	isNew, err := data.VerifyNodeIdIsNew(id, controller.DB)
+	/*
+		isNew, err := data.VerifyNodeIdIsNew(id, controller.DB)
 
-	if err != nil {
-		log.Printf("Error checking node id: %v", err)
-		http.Error(writer, "Error checking id", http.StatusInternalServerError)
-		return
-	}
+		if err != nil {
+			log.Printf("Error checking node id: %v", err)
+			http.Error(writer, "Error checking id", http.StatusInternalServerError)
+			return
+		}
 
-	if isNew {
-		log.Printf("Node for id %d doesn't exist", id)
-		http.Error(writer, "Node not found", http.StatusNotFound)
-		return
-	}
+		if isNew {
+			log.Printf("Node for id %d doesn't exist", id)
+			http.Error(writer, "Node not found", http.StatusNotFound)
+			return
+		}
+	*/
 
 	err = data.DeleteNode(id, controller.DB)
 
@@ -304,6 +283,7 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 }
 
 func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Fetch all node switches request initiated")
 
 	vars := mux.Vars(request)
@@ -336,6 +316,7 @@ func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter,
 }
 
 func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Fetch all node switches request initiated")
 
 	vars := mux.Vars(request)

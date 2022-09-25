@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"strconv"
@@ -28,15 +27,7 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 	routing.AddRouteWithMethod("/controlPoint/{id}", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/controlPoint/register", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint/ipUpdate", "POST", controller.UpdateControlPointIp)
-	routing.AddRouteWithMethod("/controlPoints", "GET", AllControlPointsHandler)
-}
-
-func AllControlPointsHandler(writer http.ResponseWriter, request *http.Request) {
-	p := &models.Page{
-		Title: "All GoHome Control Points",
-	}
-	t, _ := template.ParseFiles(Config.WebDir + "/html/controlPoints.html")
-	t.Execute(writer, p)
+	routing.AddRouteWithMethod("/controlPoint/nodes/{id}", "GET", controller.GetAllNodes)
 }
 
 func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -89,7 +80,42 @@ func (controller *ControlPointController) GetAllAvailable(writer http.ResponseWr
 	writeResponse(writer, result)
 }
 
+func (controller *ControlPointController) GetAllNodes(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Printf("An error occurred fetching a controlPoint by id: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	log.Println("Fetch all controlPoint nodes request initiated")
+
+	allItems, err := data.FetchAllControlPointNodes(id, controller.DB)
+
+	if err != nil {
+		log.Printf("An error occurred fetching all controlPoint nodes: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(allItems)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling controlPoint node data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Found %d controlPoint nodes", len(allItems))
+	writeResponse(writer, result)
+}
+
 func (controller *ControlPointController) GetById(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -173,6 +199,7 @@ func (controller *ControlPointController) Create(writer http.ResponseWriter, req
 }
 
 func (controller *ControlPointController) UpdateControlPointIp(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Update control point IP Address request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -218,6 +245,7 @@ func (controller *ControlPointController) UpdateControlPointIp(writer http.Respo
 }
 
 func (controller *ControlPointController) Update(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Update control point request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -263,6 +291,7 @@ func (controller *ControlPointController) Update(writer http.ResponseWriter, req
 }
 
 func (controller *ControlPointController) Delete(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Delete a controlPoint")
 
 	vars := mux.Vars(request)

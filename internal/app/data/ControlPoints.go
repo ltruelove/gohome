@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/ltruelove/gohome/internal/app/dto"
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
@@ -82,20 +83,22 @@ func FetchAllAvailableControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
 	return controlPoints, nil
 }
 
-func FetchAllControlPointNodes(db *sql.DB, controlPointId int) ([]models.Node, error) {
+func FetchAllControlPointNodes(controlPointId int, db *sql.DB) ([]dto.ControlPointNode, error) {
 	stmt, err := db.Prepare(`SELECT
 			Node.Id,
 			Node.Name,
-			Node.Mac
-		FROM ControlPointNodes
-		INNER JOIN Node ON Node.Id = ControlPointNodes.NodeId
-		WHERE ControlPointNodes.ControlPointId = ?`)
+			Node.Mac,
+			cpn.Id AS ControlPointNodeId
+		FROM ControlPointNodes AS cpn
+		INNER JOIN Node ON Node.Id = cpn.NodeId
+		WHERE cpn.ControlPointId = ?`)
+
 	if err != nil {
 		log.Println("Error preparing all control point nodes sql")
 		return nil, err
 	}
 
-	var nodes []models.Node
+	var nodes []dto.ControlPointNode
 
 	rows, err := stmt.Query(controlPointId)
 	if err != nil {
@@ -106,13 +109,14 @@ func FetchAllControlPointNodes(db *sql.DB, controlPointId int) ([]models.Node, e
 	defer stmt.Close()
 
 	for rows.Next() {
-		var node models.Node
+		var record dto.ControlPointNode
 
-		rows.Scan(&node.Id,
-			&node.Name,
-			&node.Mac)
+		rows.Scan(&record.Id,
+			&record.Name,
+			&record.Mac,
+			&record.ControlPointNodeId)
 
-		nodes = append(nodes, node)
+		nodes = append(nodes, record)
 	}
 
 	return nodes, nil
@@ -327,6 +331,69 @@ func AddNodeToControlPoint(controlPointNode *models.ControlPointNode, db *sql.DB
 	}
 
 	controlPointNode.Id = int(lastInsertId)
+
+	return nil
+}
+
+func RemoveNodeFromControlPoint(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM ControlPointNodes
+	WHERE NodeId = ?`)
+
+	if err != nil {
+		log.Println("Error preparing delete control point node sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error removing the node from the control point ")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteControlPointNode(id int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM ControlPointNodes
+	WHERE id = ?`)
+
+	if err != nil {
+		log.Println("Error preparing delete control point node sql")
+		return err
+	}
+
+	_, err = stmt.Exec(id)
+
+	if err != nil {
+		log.Println("Error removing the node from the control point ")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteControlPointNodeByNodeId(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM ControlPointNodes
+	WHERE NodeId = ?`)
+
+	if err != nil {
+		log.Println("Error preparing delete control point node sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error removing the node from the control point ")
+		return err
+	}
+
+	defer stmt.Close()
 
 	return nil
 }

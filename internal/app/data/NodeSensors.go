@@ -174,3 +174,24 @@ func DeleteNodeSensor(sensorId int, db *sql.DB) error {
 
 	return nil
 }
+
+func DeleteAllNodeSensors(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM NodeSensor
+	WHERE NodeId = ?`)
+
+	if err != nil {
+		log.Println("Error preparing delete node sensor sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error deleting node sensor")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}

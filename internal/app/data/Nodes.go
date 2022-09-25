@@ -48,14 +48,15 @@ func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
 }
 
 func FetchNode(nodeId int, db *sql.DB) (models.Node, error) {
-	stmt, err := db.Prepare("SELECT Id, Name FROM Node WHERE id = ?")
+	stmt, err := db.Prepare("SELECT Id, Name, Mac FROM Node WHERE id = ?")
 	setup.CheckErr(err)
 	defer stmt.Close()
 
 	var node models.Node
 
 	err = stmt.QueryRow(nodeId).Scan(&node.Id,
-		&node.Name)
+		&node.Name,
+		&node.Mac)
 
 	if err != nil {
 		log.Println(err)
@@ -208,8 +209,25 @@ func UpdateNode(node *models.Node, db *sql.DB) error {
 }
 
 func DeleteNode(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM Node
-	WHERE id = ?`)
+	err := DeleteControlPointNodeByNodeId(nodeId, db)
+
+	if err != nil {
+		log.Printf("Error deleting the control point node: %v", err)
+	}
+
+	err = DeleteAllNodeSensors(nodeId, db)
+
+	if err != nil {
+		log.Printf("Error deleting the node sensors: %v", err)
+	}
+
+	err = DeleteAllNodeSwitches(nodeId, db)
+
+	if err != nil {
+		log.Printf("Error deleting the node switches: %v", err)
+	}
+
+	stmt, err := db.Prepare(`DELETE FROM Node WHERE id = ?;`)
 
 	if err != nil {
 		log.Println("Error preparing delete node sql")

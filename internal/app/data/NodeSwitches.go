@@ -168,3 +168,24 @@ func DeleteNodeSwitch(nodeSwitchId int, db *sql.DB) error {
 
 	return nil
 }
+
+func DeleteAllNodeSwitches(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM NodeSwitch
+	WHERE NodeId = ?`)
+
+	if err != nil {
+		log.Println("Error preparing delete node switch sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error deleting node switch")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
