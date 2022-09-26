@@ -132,7 +132,7 @@ async function registerSuccess(data){
                 await sleep(200);
             break;
             case 2:
-                res = await saveToggle(switchData.Pin);
+                res = await saveToggle(switchData.Pin, switchData.IsClosedOn);
                 await sleep(200);
             break;
             default:
@@ -200,11 +200,11 @@ function saveMomentary(pin){
     });
 }
 
-function saveToggle(pin){
+function saveToggle(pin, isClosedOn){
     return $.ajax({
         type: "POST",
         url: "/setToggle",
-        data: "pin=" + pin,
+        data: "pin=" + pin + "&IsClosedOn=" + isClosedOn,
         success: genericSuccess,
         error: genericFailure,
         dataType: "json"
