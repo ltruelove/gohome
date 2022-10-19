@@ -319,7 +319,6 @@ func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter,
 func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Toggle node switch request initiated")
-	log.Println(request.Body)
 
 	decoder := json.NewDecoder(request.Body)
 	var pinRequest models.PinRequest
@@ -371,7 +370,9 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 		return
 	}
 
-	_, err = http.Get("http://" + nodeControlPoint.IpAddress + "/toggleNodeSwitch?mac=" + node.Mac)
+	toggleRequestUrl := fmt.Sprintf("http://%s/toggleNodeSwitch?mac=%s", nodeControlPoint.IpAddress, node.Mac)
+	log.Println(toggleRequestUrl)
+	_, err = http.Get(toggleRequestUrl)
 
 	if err != nil {
 		log.Println("Could not complete the toggle request." + err.Error())
@@ -385,11 +386,9 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Press node switch request initiated")
-	log.Println(request.Body)
 
 	decoder := json.NewDecoder(request.Body)
 	var pinRequest models.PinRequest
-
 	err := decoder.Decode(&pinRequest)
 
 	if err != nil {
@@ -439,6 +438,7 @@ func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, re
 
 	url := fmt.Sprintf("http://%s/pressMomentary?mac=%s&MomentaryPressDuration=%d",
 		nodeControlPoint.IpAddress, node.Mac, nodeSwitch.MomentaryPressDuration)
+	log.Println(url)
 
 	_, err = http.Get(url)
 

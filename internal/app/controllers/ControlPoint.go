@@ -24,7 +24,7 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 	routing.AddRouteWithMethod("/controlPoint/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/controlPoint", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint", "PUT", controller.Update)
-	routing.AddRouteWithMethod("/controlPoint/{id}", "DELETE", controller.Delete)
+	routing.AddRouteWithMethod("/controlPoint/{id}/delete", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/controlPoint/register", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint/ipUpdate", "POST", controller.UpdateControlPointIp)
 	routing.AddRouteWithMethod("/controlPoint/nodes/{id}", "GET", controller.GetAllNodes)

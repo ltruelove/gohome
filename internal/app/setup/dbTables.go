@@ -46,8 +46,8 @@ CREATE TABLE IF NOT EXISTS "NodeSwitch" (
 	"SwitchTypeId"	INTEGER NOT NULL,
 	"Name"	TEXT NOT NULL,
 	"Pin"	INTEGER NOT NULL,
-	"MomentaryPressDuration"	INTEGER,
-	"IsClosedOn"	INTEGER,
+	"MomentaryPressDuration"	INTEGER DEFAULT 100,
+	"IsClosedOn"	INTEGER DEFAULT 1,
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
 	FOREIGN KEY("SwitchTypeId") REFERENCES "SwitchType"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)

@@ -67,7 +67,9 @@ func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
 		NodeId,
 		SwitchTypeId,
 		Name,
-		Pin FROM NodeSwitch WHERE id = ?`)
+		Pin,
+		MomentaryPressDuration,
+		IsClosedOn FROM NodeSwitch WHERE id = ?`)
 	if err != nil {
 		log.Println("Error preparing fetch node switch sql")
 		return nodeSwitch, err
@@ -77,7 +79,10 @@ func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
 		&nodeSwitch.NodeId,
 		&nodeSwitch.SwitchTypeId,
 		&nodeSwitch.Name,
-		&nodeSwitch.Pin)
+		&nodeSwitch.Pin,
+		&nodeSwitch.MomentaryPressDuration,
+		&nodeSwitch.IsClosedOn)
+
 	if err != nil {
 		log.Println("Error querying for node switch")
 		return nodeSwitch, err
@@ -90,8 +95,8 @@ func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
 
 func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO NodeSwitch
-	(NodeId, SwitchTypeId, Name, Pin)
-	VALUES (?, ?, ?, ?)`)
+	(NodeId, SwitchTypeId, Name, Pin, MomentaryPressDuration, IsClosedOn)
+	VALUES (?, ?, ?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node switch sql")
@@ -101,7 +106,9 @@ func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	result, err := stmt.Exec(&item.NodeId,
 		&item.SwitchTypeId,
 		&item.Name,
-		&item.Pin)
+		&item.Pin,
+		&item.MomentaryPressDuration,
+		&item.IsClosedOn)
 
 	if err != nil {
 		log.Println("Error creating node sensor")
@@ -124,7 +131,7 @@ func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 
 func UpdateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) error {
 	stmt, err := db.Prepare(`UPDATE NodeSwitch
-	SET NodeId = ?, SwitchTypeId = ?, Name = ?, Pin = ?
+	SET NodeId = ?, SwitchTypeId = ?, Name = ?, Pin = ?, MomentaryPressDuration = ?, IsClosedOn = ?
 	WHERE id = ?`)
 
 	if err != nil {
@@ -136,7 +143,9 @@ func UpdateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) error {
 		nodeSwitch.SwitchTypeId,
 		nodeSwitch.Name,
 		nodeSwitch.Pin,
-		nodeSwitch.Id)
+		nodeSwitch.Id,
+		nodeSwitch.MomentaryPressDuration,
+		nodeSwitch.IsClosedOn)
 
 	if err != nil {
 		log.Println("Error updating node switch")

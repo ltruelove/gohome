@@ -148,6 +148,8 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error
 		ns.SwitchTypeId,
 		ns.Pin,
 		ns.Name,
+		ns.MomentaryPressDuration,
+		ns.IsClosedOn,
 		st.Name AS SwitchTypeName
 		FROM NodeSwitch AS ns
 		INNER JOIN SwitchType AS st ON st.Id = ns.SwitchTypeId
@@ -177,6 +179,8 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error
 			&nodeSwitch.SwitchTypeId,
 			&nodeSwitch.Pin,
 			&nodeSwitch.Name,
+			&nodeSwitch.MomentaryPressDuration,
+			&nodeSwitch.IsClosedOn,
 			&nodeSwitch.SwitchTypeName)
 
 		if err != nil {
