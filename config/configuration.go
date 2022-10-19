@@ -5,14 +5,9 @@ import (
 )
 
 type Configuration struct {
-	Pin           string `json:"pin"`
-	DoorIp        string `json:"doorIp"`
-	GardenIp      string `json:"gardenIp"`
-	WaterIp       string `json:"waterIp"`
-	SoilThreshold int    `json:"soilThreshold"`
-	TickerActive  bool   `json:"tickerActive"`
-	WebDir        string `json:"webDir"`
-	LogFile       string `json:"logFile"`
+	Pin     string `json:"pin"`
+	WebDir  string `json:"webDir"`
+	LogFile string `json:"logFile"`
 }
 
 func (c Configuration) ValidatePin(pin string) bool {

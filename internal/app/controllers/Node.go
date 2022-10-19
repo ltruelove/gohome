@@ -28,7 +28,8 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/{id}/delete", "DELETE", controller.Delete)
 	routing.AddRouteWithMethod("/node/register", "POST", controller.Register)
 	routing.AddRouteWithMethod("/node/switchesByNode/{id}", "GET", controller.GetAllNodeSwitches)
-	routing.AddRouteWithMethod("/node/switch/toggle/{id}", "GET", controller.ToggleNodeSwitch)
+	routing.AddRouteWithMethod("/node/switch/toggle/{id}", "POST", controller.ToggleNodeSwitch)
+	routing.AddRouteWithMethod("/node/switch/press/{id}", "POST", controller.PressNodeSwitch)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -317,7 +318,25 @@ func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter,
 
 func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	log.Println("Fetch all node switches request initiated")
+	log.Println("Toggle node switch request initiated")
+	log.Println(request.Body)
+
+	decoder := json.NewDecoder(request.Body)
+	var pinRequest models.PinRequest
+
+	err := decoder.Decode(&pinRequest)
+
+	if err != nil {
+		log.Println("Could not decode pin for toggle request")
+		http.Error(writer, "Could not decode pin for toggle request", http.StatusBadRequest)
+		return
+	}
+
+	if !Config.ValidatePin(pinRequest.PinCode) {
+		log.Println("Invalid PIN used in toggle request")
+		http.Error(writer, "Invalid PIN given", http.StatusBadRequest)
+		return
+	}
 
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
@@ -353,6 +372,75 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 	}
 
 	_, err = http.Get("http://" + nodeControlPoint.IpAddress + "/toggleNodeSwitch?mac=" + node.Mac)
+
+	if err != nil {
+		log.Println("Could not complete the toggle request." + err.Error())
+		http.Error(writer, "There was a error making the toggle request.", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, []byte("Toggle successful"))
+}
+
+func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, request *http.Request) {
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	log.Println("Press node switch request initiated")
+	log.Println(request.Body)
+
+	decoder := json.NewDecoder(request.Body)
+	var pinRequest models.PinRequest
+
+	err := decoder.Decode(&pinRequest)
+
+	if err != nil {
+		log.Println("Could not decode pin for toggle request")
+		http.Error(writer, "Could not decode pin for toggle request", http.StatusBadRequest)
+		return
+	}
+
+	if !Config.ValidatePin(pinRequest.PinCode) {
+		log.Println("Invalid PIN used in toggle request")
+		http.Error(writer, "Invalid PIN given", http.StatusBadRequest)
+		return
+	}
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node switch id")
+		http.Error(writer, "Could not resolve node switch id", http.StatusBadRequest)
+		return
+	}
+
+	nodeSwitch, err := data.FetchNodeSwitch(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node switch")
+		http.Error(writer, "Could not resolve node switch", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(nodeSwitch.NodeId, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get control point by node")
+		http.Error(writer, "Could not resolve control point for node switch", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("http://%s/pressMomentary?mac=%s&MomentaryPressDuration=%d",
+		nodeControlPoint.IpAddress, node.Mac, nodeSwitch.MomentaryPressDuration)
+
+	_, err = http.Get(url)
 
 	if err != nil {
 		log.Println("Could not complete the toggle request." + err.Error())

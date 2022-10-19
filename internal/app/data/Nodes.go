@@ -6,6 +6,7 @@ import (
 
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/app/setup"
+	"github.com/ltruelove/gohome/internal/app/viewModels"
 )
 
 func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
@@ -47,16 +48,43 @@ func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
 	return nodes, nil
 }
 
-func FetchNode(nodeId int, db *sql.DB) (models.Node, error) {
-	stmt, err := db.Prepare("SELECT Id, Name, Mac FROM Node WHERE id = ?")
+func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
+	stmt, err := db.Prepare(`SELECT
+	n.Id,
+	n.Name,
+	n.Mac,
+	cp.Id,
+	cp.IpAddress,
+	cp.Name
+	FROM Node AS n
+	INNER JOIN ControlPointNodes AS cpn ON cpn.NodeId = n.Id
+	INNER JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId
+	WHERE n.Id = ?`)
 	setup.CheckErr(err)
 	defer stmt.Close()
 
-	var node models.Node
+	var node viewModels.NodeVM
 
 	err = stmt.QueryRow(nodeId).Scan(&node.Id,
 		&node.Name,
-		&node.Mac)
+		&node.Mac,
+		&node.ControlPointId,
+		&node.ControlPointIP,
+		&node.ControlPointName)
+
+	if err != nil {
+		log.Println(err)
+		return node, err
+	}
+
+	node.Sensors, err = FetchNodeSensors(node.Id, db)
+
+	if err != nil {
+		log.Println(err)
+		return node, err
+	}
+
+	node.Switches, err = FetchNodeSwitches(node.Id, db)
 
 	if err != nil {
 		log.Println(err)
@@ -66,21 +94,25 @@ func FetchNode(nodeId int, db *sql.DB) (models.Node, error) {
 	return node, nil
 }
 
-func FetchNodeSensors(nodeId int, db *sql.DB) ([]models.NodeSensor, error) {
+func FetchNodeSensors(nodeId int, db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		SensorTypeId,
-		Pin,
-		Name FROM NodeSenor WHERE NodeId = ?`)
+		ns.Id,
+		ns.SensorTypeId,
+		ns.Pin,
+		ns.Name,
+		st.Name AS SensorTypeName
+		FROM NodeSensor AS ns
+		INNER JOIN SensorType AS st ON st.Id = ns.SensorTypeId
+		WHERE ns.NodeId = ?`)
 
 	if err != nil {
 		log.Printf("Error preparing select node sensors sql: %v", err)
 		return nil, err
 	}
 
-	var sensors []models.NodeSensor
+	var sensors []viewModels.NodeSensorVM
 
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(nodeId)
 
 	if err != nil {
 		log.Println("Error querying for node sensors")
@@ -90,13 +122,14 @@ func FetchNodeSensors(nodeId int, db *sql.DB) ([]models.NodeSensor, error) {
 	defer stmt.Close()
 
 	for rows.Next() {
-		var sensor models.NodeSensor
+		var sensor viewModels.NodeSensorVM
 		sensor.NodeId = nodeId
 
 		err = rows.Scan(&sensor.Id,
 			&sensor.SensorTypeId,
 			&sensor.Pin,
-			&sensor.Name)
+			&sensor.Name,
+			&sensor.SensorTypeName)
 
 		if err != nil {
 			log.Println("Error scanning node sensor")
@@ -109,19 +142,23 @@ func FetchNodeSensors(nodeId int, db *sql.DB) ([]models.NodeSensor, error) {
 	return sensors, nil
 }
 
-func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
+func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		SwitchTypeId,
-		Pin,
-		Name FROM NodeSwitch WHERE NodeId = ?`)
+		ns.Id,
+		ns.SwitchTypeId,
+		ns.Pin,
+		ns.Name,
+		st.Name AS SwitchTypeName
+		FROM NodeSwitch AS ns
+		INNER JOIN SwitchType AS st ON st.Id = ns.SwitchTypeId
+		WHERE ns.NodeId = ?`)
 
 	if err != nil {
 		log.Printf("Error preparing select node switches sql: %v", err)
 		return nil, err
 	}
 
-	var nodeSwitches []models.NodeSwitch
+	var nodeSwitches []viewModels.NodeSwitchVM
 
 	rows, err := stmt.Query(nodeId)
 
@@ -133,13 +170,14 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
 	defer stmt.Close()
 
 	for rows.Next() {
-		var nodeSwitch models.NodeSwitch
+		var nodeSwitch viewModels.NodeSwitchVM
 		nodeSwitch.NodeId = nodeId
 
 		err = rows.Scan(&nodeSwitch.Id,
 			&nodeSwitch.SwitchTypeId,
 			&nodeSwitch.Pin,
-			&nodeSwitch.Name)
+			&nodeSwitch.Name,
+			&nodeSwitch.SwitchTypeName)
 
 		if err != nil {
 			log.Println("Error scanning node switch")
