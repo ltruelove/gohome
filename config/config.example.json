@@ -1,9 +1,6 @@
 {
     "pin":"9999",
-    "doorIp":"127.0.0.1",
-    "gardenIp":"127.0.0.1",
-    "waterIp":"127.0.0.1",
-    "soilThreshold":100,
-    "tickerActive":false,
-    "webDir":"web"
+    "webDir":"web",
+    "logFile" : "gohome_log.log",
+    "port" : "8000"
 }

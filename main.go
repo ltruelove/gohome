@@ -72,6 +72,6 @@ func main() {
 	//use mux to handle http requests
 	http.Handle("/", routing.AppRouter)
 
-	log.Fatal(http.ListenAndServe(":8082", nil))
+	log.Fatal(http.ListenAndServe(":"+Config.Port, nil))
 
 }
