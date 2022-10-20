@@ -11,12 +11,14 @@ import (
 func VerifyViewIdIsNew(viewId int, db *sql.DB) (bool, error) {
 	view, err := FetchView(viewId, db)
 
+	log.Printf("view found with id: %d, and name: %s", view.Id, view.Name)
+
 	if err != nil {
 		log.Println("Error fetching view")
 		return false, err
 	}
 
-	return view.Id > 0, nil
+	return view.Id < 1, nil
 }
 
 func FetchAllViews(db *sql.DB) ([]models.View, error) {
@@ -55,7 +57,8 @@ func FetchAllViews(db *sql.DB) ([]models.View, error) {
 
 func FetchView(viewId int, db *sql.DB) (models.View, error) {
 	var item models.View
-	stmt, err := db.Prepare("SELECT Id, Name FROM View WHERE id = ?")
+	log.Printf("Fetching view for id: %d", viewId)
+	stmt, err := db.Prepare("SELECT Id, Name FROM View WHERE Id = ?")
 	if err != nil {
 		log.Println("Error preparing fetch view sql")
 		return item, err
