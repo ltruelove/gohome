@@ -33,7 +33,6 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Fetch all nodes request initiated")
 
 	allItems, err := data.FetchAllNodes(controller.DB)
@@ -57,8 +56,6 @@ func (controller *NodeController) GetAll(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) GetById(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -92,7 +89,6 @@ func (controller *NodeController) GetById(writer http.ResponseWriter, request *h
 }
 
 func (controller *NodeController) Create(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Create node request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -134,7 +130,6 @@ func (controller *NodeController) Create(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) Update(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Update node request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -180,9 +175,6 @@ func (controller *NodeController) Update(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) Delete(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
-
 	if request.Method == "OPTIONS" {
 		log.Println("OPTIONS request")
 		writer.WriteHeader(http.StatusOK)
@@ -201,22 +193,6 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	/*
-		isNew, err := data.VerifyNodeIdIsNew(id, controller.DB)
-
-		if err != nil {
-			log.Printf("Error checking node id: %v", err)
-			http.Error(writer, "Error checking id", http.StatusInternalServerError)
-			return
-		}
-
-		if isNew {
-			log.Printf("Node for id %d doesn't exist", id)
-			http.Error(writer, "Node not found", http.StatusNotFound)
-			return
-		}
-	*/
-
 	err = data.DeleteNode(id, controller.DB)
 
 	if err != nil {
@@ -226,9 +202,6 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 }
 
 func (controller *NodeController) Register(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token, Authorization, X-Requested-With")
-
 	log.Println("Register node request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -284,9 +257,6 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 }
 
 func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	log.Println("Fetch all node switches request initiated")
-
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -317,7 +287,6 @@ func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter,
 }
 
 func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Toggle node switch request initiated")
 
 	decoder := json.NewDecoder(request.Body)
@@ -384,7 +353,6 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 }
 
 func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Press node switch request initiated")
 
 	decoder := json.NewDecoder(request.Body)

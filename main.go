@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/controllers"
 	"github.com/ltruelove/gohome/internal/app/setup"
@@ -72,6 +73,9 @@ func main() {
 	//use mux to handle http requests
 	http.Handle("/", routing.AppRouter)
 
-	log.Fatal(http.ListenAndServe(":"+Config.Port, nil))
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
+	log.Fatal(http.ListenAndServe(":"+Config.Port, handlers.CORS(originsOk, headersOk, methodsOk)(routing.AppRouter)))
 }

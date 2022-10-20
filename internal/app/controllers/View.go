@@ -97,6 +97,16 @@ func (controller *ViewController) Create(writer http.ResponseWriter, request *ht
 		http.Error(writer, "There was an error creating the record", http.StatusInternalServerError)
 		return
 	}
+
+	result, err := json.Marshal(item)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling view data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, result)
 }
 
 func (controller *ViewController) Update(writer http.ResponseWriter, request *http.Request) {

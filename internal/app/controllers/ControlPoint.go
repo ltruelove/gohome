@@ -31,8 +31,6 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 }
 
 func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllControlPoints(controller.DB)
@@ -56,8 +54,6 @@ func (controller *ControlPointController) GetAll(writer http.ResponseWriter, req
 }
 
 func (controller *ControlPointController) GetAllAvailable(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllAvailableControlPoints(controller.DB)
@@ -81,8 +77,6 @@ func (controller *ControlPointController) GetAllAvailable(writer http.ResponseWr
 }
 
 func (controller *ControlPointController) GetAllNodes(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -115,7 +109,6 @@ func (controller *ControlPointController) GetAllNodes(writer http.ResponseWriter
 }
 
 func (controller *ControlPointController) GetById(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	vars := mux.Vars(request)
 	id, err := strconv.Atoi(vars["id"])
 
@@ -148,9 +141,6 @@ func (controller *ControlPointController) GetById(writer http.ResponseWriter, re
 
 func (controller *ControlPointController) Create(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Create control point request made")
-
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token, Authorization, X-Requested-With")
 
 	decoder := json.NewDecoder(request.Body)
 	var item models.ControlPoint
@@ -199,7 +189,6 @@ func (controller *ControlPointController) Create(writer http.ResponseWriter, req
 }
 
 func (controller *ControlPointController) UpdateControlPointIp(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Update control point IP Address request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -245,7 +234,6 @@ func (controller *ControlPointController) UpdateControlPointIp(writer http.Respo
 }
 
 func (controller *ControlPointController) Update(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Update control point request made")
 
 	decoder := json.NewDecoder(request.Body)
@@ -291,7 +279,6 @@ func (controller *ControlPointController) Update(writer http.ResponseWriter, req
 }
 
 func (controller *ControlPointController) Delete(writer http.ResponseWriter, request *http.Request) {
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	log.Println("Delete a controlPoint")
 
 	vars := mux.Vars(request)
