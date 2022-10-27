@@ -81,12 +81,10 @@ CREATE TABLE IF NOT EXISTS "ViewNodeSensorData" (
 	"NodeId"	INTEGER NOT NULL,
 	"ViewId"	INTEGER NOT NULL,
 	"NodeSensorId"	INTEGER NOT NULL,
-	"SensorTypeDataId"	INTEGER NOT NULL,
 	"Name"	TEXT NOT NULL,
-	UNIQUE("NodeId","ViewId","NodeSensorId","SensorTypeDataId"),
+	UNIQUE("NodeId","ViewId","NodeSensorId"),
 	FOREIGN KEY("NodeId") REFERENCES "Node"("Id"),
 	FOREIGN KEY("ViewId") REFERENCES "View"("Id"),
-	FOREIGN KEY("SensorTypeDataId") REFERENCES "SensorTypeData"("Id"),
 	FOREIGN KEY("NodeSensorId") REFERENCES "NodeSensor"("Id"),
 	PRIMARY KEY("Id" AUTOINCREMENT)
 );

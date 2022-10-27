@@ -52,6 +52,8 @@ func main() {
 	switchTypeController := controllers.SwitchTypeController{DB: db}
 	nodeController := controllers.NodeController{DB: db}
 	controlPointController := controllers.ControlPointController{DB: db}
+	switchController := controllers.NodeSwitchController{DB: db}
+	sensorController := controllers.NodeSensorController{DB: db}
 
 	//register application routes
 	//each app section should have its own handlers to register with the
@@ -64,6 +66,8 @@ func main() {
 	switchTypeController.RegisterSwitchTypeEndpoints()
 	nodeController.RegisterNodeEndpoints()
 	controlPointController.RegisterControlPointEndpoints()
+	switchController.RegisterNodeSwitchEndpoints()
+	sensorController.RegisterNodeSensorEndpoints()
 
 	defer db.Close()
 

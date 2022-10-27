@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/viewModels"
 )
 
 func VerifyNodeSensorIdIsNew(nodeId int, db *sql.DB) (bool, error) {
@@ -17,20 +18,24 @@ func VerifyNodeSensorIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 	return node.Id > 0, nil
 }
 
-func FetchAllNodeSensors(db *sql.DB) ([]models.NodeSensor, error) {
+func FetchAllNodeSensors(db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		NodeId,
-		SensorTypeId,
-		Name,
-		Pin,
-		DHTType FROM NodeSensor`)
+		ns.Id,
+		ns.NodeId,
+		ns.SensorTypeId,
+		ns.Name,
+		ns.Pin,
+		ns.DHTType,
+		st.Name AS SensorTypeName
+		FROM NodeSensor AS ns
+		INNER JOIN SensorType AS st ON st.Id = ns.SensorTypeId`)
+
 	if err != nil {
 		log.Println("Error preparing all node sensors sql")
 		return nil, err
 	}
 
-	var sensors []models.NodeSensor
+	var sensors []viewModels.NodeSensorVM
 
 	rows, err := stmt.Query()
 	if err != nil {
@@ -41,14 +46,15 @@ func FetchAllNodeSensors(db *sql.DB) ([]models.NodeSensor, error) {
 	defer stmt.Close()
 
 	for rows.Next() {
-		var sensor models.NodeSensor
+		var sensor viewModels.NodeSensorVM
 
 		err := rows.Scan(&sensor.Id,
 			&sensor.NodeId,
 			&sensor.SensorTypeId,
 			&sensor.Name,
 			&sensor.Pin,
-			&sensor.DHTType)
+			&sensor.DHTType,
+			&sensor.SensorTypeName)
 
 		if err != nil {
 			log.Println("Error scanning node sensor")

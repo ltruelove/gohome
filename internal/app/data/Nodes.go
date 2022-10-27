@@ -19,15 +19,24 @@ func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 	return item.Id < 1, nil
 }
 
-func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
-	stmt, err := db.Prepare(`SELECT Id, Name, Mac FROM Node`)
+func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
+	stmt, err := db.Prepare(`SELECT
+	n.Id,
+	n.Name,
+	n.Mac,
+	cp.Id AS ControlPointId,
+	cp.IpAddress AS ControlPointIp,
+	cp.Name AS ControlPointName
+	FROM Node AS n
+	INNER JOIN ControlPointNodes AS cpn ON CPN.NodeId = n.Id
+	INNER JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	var nodes []models.Node
+	var nodes []viewModels.NodeVM
 
 	rows, err := stmt.Query()
 
@@ -37,10 +46,26 @@ func FetchAllNodes(db *sql.DB) ([]models.Node, error) {
 	}
 
 	for rows.Next() {
-		var node models.Node
+		var node viewModels.NodeVM
 		rows.Scan(&node.Id,
 			&node.Name,
-			&node.Mac)
+			&node.Mac,
+			&node.ControlPointId,
+			&node.ControlPointIP,
+			&node.ControlPointName)
+
+		node.Sensors, err = FetchNodeSensors(node.Id, db)
+
+		if err != nil {
+			log.Println(err)
+		}
+
+		node.Switches, err = FetchNodeSwitches(node.Id, db)
+
+		if err != nil {
+			log.Println(err)
+		}
+
 		nodes = append(nodes, node)
 	}
 	defer stmt.Close()

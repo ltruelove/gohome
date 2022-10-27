@@ -6,6 +6,7 @@ import (
 
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/app/setup"
+	"github.com/ltruelove/gohome/internal/app/viewModels"
 )
 
 func VerifyViewIdIsNew(viewId int, db *sql.DB) (bool, error) {
@@ -59,6 +60,7 @@ func FetchView(viewId int, db *sql.DB) (models.View, error) {
 	var item models.View
 	log.Printf("Fetching view for id: %d", viewId)
 	stmt, err := db.Prepare("SELECT Id, Name FROM View WHERE Id = ?")
+
 	if err != nil {
 		log.Println("Error preparing fetch view sql")
 		return item, err
@@ -77,23 +79,30 @@ func FetchView(viewId int, db *sql.DB) (models.View, error) {
 	return item, nil
 }
 
-func FetchViewSensorData(viewId int, db *sql.DB) ([]models.ViewNodeSensorData, error) {
+func FetchViewSensorData(viewId int, db *sql.DB) ([]viewModels.ViewNodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		NodeId,
-		ViewId,
-		NodeSensorId,
-		SensorTypeDataId,
-		Name FROM ViewNodeSensorData WHERE ViewId = ?`)
+		d.Id,
+		d.NodeId,
+		d.ViewId,
+		d.NodeSensorId,
+		d.Name,
+		n.Name As NodeName,
+		ns.Name AS SensorName,
+		st.Name AS SensorTypeName
+		FROM ViewNodeSensorData AS d
+		INNER JOIN Node AS n ON n.Id = d.NodeId
+		INNER JOIN NodeSensor AS ns ON ns.Id = d.NodeSensorId
+		INNER JOIN SensorType AS st on st.Id = ns.SensorTypeId
+		WHERE d.ViewId = ?`)
 
 	if err != nil {
 		log.Println("Error preparing fetch view sql")
 		return nil, err
 	}
 
-	var sensorDataList []models.ViewNodeSensorData
+	var sensorDataList []viewModels.ViewNodeSensorVM
 
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(viewId)
 
 	if err != nil {
 		log.Println("Error querying for view")
@@ -103,14 +112,16 @@ func FetchViewSensorData(viewId int, db *sql.DB) ([]models.ViewNodeSensorData, e
 	defer stmt.Close()
 
 	for rows.Next() {
-		var sensorDataItem models.ViewNodeSensorData
+		var sensorDataItem viewModels.ViewNodeSensorVM
 
 		err := rows.Scan(&sensorDataItem.Id,
 			&sensorDataItem.NodeId,
 			&sensorDataItem.ViewId,
 			&sensorDataItem.NodeSensorId,
-			&sensorDataItem.SensorTypeDataId,
-			&sensorDataItem.Name)
+			&sensorDataItem.Name,
+			&sensorDataItem.NodeName,
+			&sensorDataItem.SensorName,
+			&sensorDataItem.SensorTypeName)
 
 		if err != nil {
 			log.Println("Error scanning view")
@@ -123,22 +134,32 @@ func FetchViewSensorData(viewId int, db *sql.DB) ([]models.ViewNodeSensorData, e
 	return sensorDataList, nil
 }
 
-func FetchViewSwitchData(viewId int, db *sql.DB) ([]models.ViewNodeSwitchData, error) {
+func FetchViewSwitchData(viewId int, db *sql.DB) ([]viewModels.ViewNodeSwitchVM, error) {
+	log.Printf("Finding all switches for view with id %d", viewId)
+
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		NodeId,
-		ViewId,
-		NodeSwitchId,
-		Name FROM ViewNodeSwitchData WHERE ViewId = ?`)
+		d.Id,
+		d.NodeId,
+		d.ViewId,
+		d.NodeSwitchId,
+		d.Name,
+		n.Name AS NodeName,
+		ns.Name AS SwitchName,
+		st.Name AS SwitchTypeName
+		FROM ViewNodeSwitchData AS d
+		INNER JOIN Node AS n ON n.Id = d.NodeId
+		INNER JOIN NodeSwitch AS ns on ns.Id = d.NodeSwitchId
+		INNER JOIN SwitchType AS st on st.Id = ns.SwitchTypeId
+		WHERE d.ViewId = ?`)
 
 	if err != nil {
-		log.Println("Error preparing fetch view sql")
+		log.Println("Error preparing fetch view switch data sql")
 		return nil, err
 	}
 
-	var switchDataList []models.ViewNodeSwitchData
+	var switchDataList []viewModels.ViewNodeSwitchVM
 
-	rows, err := stmt.Query()
+	rows, err := stmt.Query(viewId)
 
 	if err != nil {
 		log.Println("Error querying for view")
@@ -149,13 +170,16 @@ func FetchViewSwitchData(viewId int, db *sql.DB) ([]models.ViewNodeSwitchData, e
 	setup.CheckErr(err)
 
 	for rows.Next() {
-		var switchDataItem models.ViewNodeSwitchData
+		var switchDataItem viewModels.ViewNodeSwitchVM
 
 		err := rows.Scan(&switchDataItem.Id,
 			&switchDataItem.NodeId,
 			&switchDataItem.ViewId,
 			&switchDataItem.NodeSwitchId,
-			&switchDataItem.Name)
+			&switchDataItem.Name,
+			&switchDataItem.NodeName,
+			&switchDataItem.SwitchName,
+			&switchDataItem.SwitchTypeName)
 
 		if err != nil {
 			log.Println("Error scanning view")
@@ -165,6 +189,7 @@ func FetchViewSwitchData(viewId int, db *sql.DB) ([]models.ViewNodeSwitchData, e
 		switchDataList = append(switchDataList, switchDataItem)
 	}
 
+	log.Printf("Found %d switches", len(switchDataList))
 	return switchDataList, nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/viewModels"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
@@ -23,6 +24,10 @@ func (controller *ViewController) RegisterViewEndpoints() {
 	routing.AddRouteWithMethod("/view", "POST", controller.Create)
 	routing.AddRouteWithMethod("/view", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/view/{id}", "DELETE", controller.Delete)
+	routing.AddRouteWithMethod("/view/node/sensor", "POST", controller.AddNodeSensorToView)
+	routing.AddRouteWithMethod("/view/node/sensor/{id}", "DELETE", controller.RemoveNodeSensorFromView)
+	routing.AddRouteWithMethod("/view/node/switch", "POST", controller.AddNodeSwitchToView)
+	routing.AddRouteWithMethod("/view/node/switch/{id}", "DELETE", controller.RemoveNodeSwitchFromView)
 }
 
 func (controller *ViewController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -68,7 +73,25 @@ func (controller *ViewController) GetById(writer http.ResponseWriter, request *h
 		return
 	}
 
-	result, err := json.Marshal(item)
+	var viewModel = viewModels.ViewVM{Id: item.Id, Name: item.Name}
+
+	viewModel.Sensors, err = data.FetchViewSensorData(id, controller.DB)
+
+	if err != nil {
+		log.Printf("An error occurred fetching all view sensors: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	viewModel.Switches, err = data.FetchViewSwitchData(id, controller.DB)
+
+	if err != nil {
+		log.Printf("An error occurred fetching all view switches: %v", err)
+		http.Error(writer, "Unknown error has occured", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(viewModel)
 
 	if err != nil {
 		log.Printf("An error occurred marshalling view data: %v", err)
@@ -160,5 +183,119 @@ func (controller *ViewController) Delete(writer http.ResponseWriter, request *ht
 	if err != nil {
 		log.Printf("There was an error attempting to delete a view: %v", err)
 		http.Error(writer, "There was an error attempting to delete a view", http.StatusInternalServerError)
+	}
+}
+
+func (controller *ViewController) AddNodeSensorToView(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var item models.ViewNodeSensorData
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node sensor data: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = data.CreateViewNodeSensorData(&item, controller.DB)
+
+	if err != nil {
+		log.Printf("Error creating a view node sensor: %v", err)
+		http.Error(writer, "There was an error creating the record", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(item)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling view node sensor data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, result)
+}
+
+func (controller *ViewController) RemoveNodeSensorFromView(writer http.ResponseWriter, request *http.Request) {
+	if request.Method == "OPTIONS" {
+		log.Println("OPTIONS request")
+		writer.WriteHeader(http.StatusOK)
+		writeResponse(writer, []byte(""))
+		return
+	}
+
+	log.Println("Delete a view node sensor")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get view node sensor id for delete")
+		http.Error(writer, "Could not resolve view node sensor id", http.StatusBadRequest)
+		return
+	}
+
+	err = data.DeleteViewNodeSensorData(id, controller.DB)
+
+	if err != nil {
+		log.Printf("There was an error attempting to delete a view node sensor: %v", err)
+		http.Error(writer, "There was an error attempting to delete a view node sensor", http.StatusInternalServerError)
+	}
+}
+
+func (controller *ViewController) AddNodeSwitchToView(writer http.ResponseWriter, request *http.Request) {
+	decoder := json.NewDecoder(request.Body)
+	var item models.ViewNodeSwitchData
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node switch data: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = data.CreateViewNodeSwitchData(&item, controller.DB)
+
+	if err != nil {
+		log.Printf("Error creating a view node switch: %v", err)
+		http.Error(writer, "There was an error creating the record", http.StatusInternalServerError)
+		return
+	}
+
+	result, err := json.Marshal(item)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling view node switch data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, result)
+}
+
+func (controller *ViewController) RemoveNodeSwitchFromView(writer http.ResponseWriter, request *http.Request) {
+	if request.Method == "OPTIONS" {
+		log.Println("OPTIONS request")
+		writer.WriteHeader(http.StatusOK)
+		writeResponse(writer, []byte(""))
+		return
+	}
+
+	log.Println("Delete a view node switch")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get view node switch id for delete")
+		http.Error(writer, "Could not resolve view node switch id", http.StatusBadRequest)
+		return
+	}
+
+	err = data.DeleteViewNodeSwitchData(id, controller.DB)
+
+	if err != nil {
+		log.Printf("There was an error attempting to delete a view node switch: %v", err)
+		http.Error(writer, "There was an error attempting to delete a view node switch", http.StatusInternalServerError)
 	}
 }

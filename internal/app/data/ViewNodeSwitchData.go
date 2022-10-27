@@ -82,7 +82,7 @@ func FetchViewNodeSwitchData(id int, db *sql.DB) (models.ViewNodeSwitchData, err
 func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO ViewNodeSwitchData
 	(NodeId, ViewId, NodeSwitchId, Name)
-	VALUES (?, ?, ?, ?, ?)`)
+	VALUES (?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node switch data sql")

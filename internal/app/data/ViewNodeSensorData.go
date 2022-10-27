@@ -13,7 +13,6 @@ const defaultViewNodeSensorDataSelect string = `SELECT
 	NodeId,
 	ViewId,
 	NodeSensorId,
-	SensorTypeDataId,
 	Name
 	FROM View`
 
@@ -38,7 +37,6 @@ func FetchAllViewNodeSensorData(db *sql.DB) ([]models.ViewNodeSensorData, error)
 			&item.NodeId,
 			&item.ViewId,
 			&item.NodeSensorId,
-			&item.SensorTypeDataId,
 			&item.Name)
 
 		if err != nil {
@@ -68,7 +66,6 @@ func FetchViewNodeSensorData(id int, db *sql.DB) (models.ViewNodeSensorData, err
 		&item.NodeId,
 		&item.ViewId,
 		&item.NodeSensorId,
-		&item.SensorTypeDataId,
 		&item.Name)
 
 	if err != nil {
@@ -81,24 +78,32 @@ func FetchViewNodeSensorData(id int, db *sql.DB) (models.ViewNodeSensorData, err
 
 func CreateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO ViewNodeSensorData
-	(NodeId, ViewId, NodeSensorId, SensorTypeDataId, Name)
-	VALUES (?, ?, ?, ?, ?, ?)`)
+	(NodeId, ViewId, NodeSensorId, Name)
+	VALUES (?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Println("Error preparing create node sensor data sql")
 		return err
 	}
 
-	_, err = stmt.Exec(item.NodeId,
+	result, err := stmt.Exec(item.NodeId,
 		item.ViewId,
 		item.NodeSensorId,
-		item.SensorTypeDataId,
 		item.Name)
 
 	if err != nil {
 		log.Println("Error creating node sensor data")
 		return err
 	}
+
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted view node sensor")
+		return err
+	}
+
+	item.Id = int(lastInsertId)
 
 	defer stmt.Close()
 
@@ -107,7 +112,7 @@ func CreateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error
 
 func UpdateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error {
 	stmt, err := db.Prepare(`UPDATE ViewNodeSensorData
-	SET NodeId = ?, ViewId = ?, NodeSensorId = ?, SensorTypeDataId = ?, Name = ?
+	SET NodeId = ?, ViewId = ?, NodeSensorId = ?, Name = ?
 	WHERE id = ?`)
 
 	if err != nil {
@@ -118,7 +123,6 @@ func UpdateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error
 	_, err = stmt.Exec(item.NodeId,
 		item.ViewId,
 		item.NodeSensorId,
-		item.SensorTypeDataId,
 		item.Name,
 		item.Id)
 

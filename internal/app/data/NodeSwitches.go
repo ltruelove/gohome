@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/viewModels"
 )
 
 func VerifyNodeSwitchIdIsNew(nodeId int, db *sql.DB) (bool, error) {
@@ -17,19 +18,24 @@ func VerifyNodeSwitchIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 	return item.Id > 0, nil
 }
 
-func FetchAllNodeSwitches(db *sql.DB) ([]models.NodeSwitch, error) {
+func FetchAllNodeSwitches(db *sql.DB) ([]viewModels.NodeSwitchVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		NodeId,
-		SwitchTypeId,
-		Name,
-		Pin FROM NodeSwitch`)
+		ns.Id,
+		ns.NodeId,
+		ns.SwitchTypeId,
+		ns.Name,
+		ns.Pin,
+		ns.MomentaryPressDuration,
+		ns.IsClosedOn,
+		st.Name AS SwitchTypeName
+		FROM NodeSwitch AS ns
+		INNER JOIN SwitchType AS st ON st.Id = ns.SwitchTypeId`)
 	if err != nil {
 		log.Println("Error preparing all node switches sql")
 		return nil, err
 	}
 
-	var nodeSwitches []models.NodeSwitch
+	var nodeSwitches []viewModels.NodeSwitchVM
 
 	rows, err := stmt.Query()
 	if err != nil {
@@ -40,13 +46,16 @@ func FetchAllNodeSwitches(db *sql.DB) ([]models.NodeSwitch, error) {
 	defer stmt.Close()
 
 	for rows.Next() {
-		var nodeSwitch models.NodeSwitch
+		var nodeSwitch viewModels.NodeSwitchVM
 
 		err := rows.Scan(&nodeSwitch.Id,
 			&nodeSwitch.NodeId,
 			&nodeSwitch.SwitchTypeId,
 			&nodeSwitch.Name,
-			&nodeSwitch.Pin)
+			&nodeSwitch.Pin,
+			&nodeSwitch.MomentaryPressDuration,
+			&nodeSwitch.IsClosedOn,
+			&nodeSwitch.SwitchTypeName)
 
 		if err != nil {
 			log.Println("Error scanning node switch")
