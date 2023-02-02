@@ -7,11 +7,16 @@ import (
 	"strings"
 )
 
+// swagger:model ControlPoint
 type ControlPoint struct {
-	Id        int    `json:"Id"`
-	Name      string `json:"Name"`
+	// Id of the Control Point
+	Id int `json:"Id"`
+	// Name of the Control Point
+	Name string `json:"Name"`
+	// IP Address of the Control Point
 	IpAddress string `json:"IpAddress"`
-	Mac       string `json:"Mac"`
+	// MAC Address of the Control Point
+	Mac string `json:"Mac"`
 }
 
 func (item *ControlPoint) IsValid(checkId bool) error {

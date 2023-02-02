@@ -17,6 +17,10 @@ import (
 
 var Config config.Configuration
 
+// @title GoHome API
+// @version 2.0
+// @description API for managing GoHome Control Points and Nodes
+// @BasePath /
 func main() {
 	// parse config settings
 	file, err := os.Open("config/config.json")

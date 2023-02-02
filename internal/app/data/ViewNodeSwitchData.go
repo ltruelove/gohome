@@ -89,7 +89,7 @@ func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error
 		return err
 	}
 
-	_, err = stmt.Exec(item.NodeId,
+	result, err := stmt.Exec(item.NodeId,
 		item.ViewId,
 		item.NodeSwitchId,
 		item.Name)
@@ -98,6 +98,15 @@ func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error
 		log.Println("Error creating node switch data")
 		return err
 	}
+
+	lastInsertId, err := result.LastInsertId()
+
+	if err != nil {
+		log.Println("Error getting the id of the inserted view node sensor")
+		return err
+	}
+
+	item.Id = int(lastInsertId)
 
 	defer stmt.Close()
 

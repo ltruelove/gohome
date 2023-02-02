@@ -7,14 +7,22 @@ import (
 	"strings"
 )
 
+// swagger:model NodeSwitch
 type NodeSwitch struct {
-	Id                     int    `json:"Id"`
-	NodeId                 int    `json:"NodeId"`
-	SwitchTypeId           int    `json:"SwitchTypeId"`
-	Name                   string `json:"Name"`
-	Pin                    int    `json:"Pin"`
-	MomentaryPressDuration int    `json:"MomentaryPressDuration"`
-	IsClosedOn             bool   `json:"IsClosedOn"`
+	// The ID of the node switch
+	Id int `json:"Id"`
+	// The ID of the node the switch belongs to
+	NodeId int `json:"NodeId"`
+	// The ID of the type of switch the node switch is
+	SwitchTypeId int `json:"SwitchTypeId"`
+	// The name of the node switch
+	Name string `json:"Name"`
+	// The I/O pin the switch is attached to
+	Pin int `json:"Pin"`
+	// The time in milliseconds to hold a momentary button down
+	MomentaryPressDuration int `json:"MomentaryPressDuration"`
+	// Is a closed circuit considered "on"
+	IsClosedOn bool `json:"IsClosedOn"`
 }
 
 func (item *NodeSwitch) IsValid(checkId bool) error {

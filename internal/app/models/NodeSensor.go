@@ -7,13 +7,20 @@ import (
 	"strings"
 )
 
+// swagger:model NodeSensor
 type NodeSensor struct {
-	Id           int    `json:"Id"`
-	NodeId       int    `json:"NodeId"`
-	SensorTypeId int    `json:"SensorTypeId"`
-	Name         string `json:"Name"`
-	Pin          int    `json:"Pin"`
-	DHTType      int    `json:"DHTType"`
+	// The ID of the node sensor
+	Id int `json:"Id"`
+	// The ID of the node the sensor is attached to
+	NodeId int `json:"NodeId"`
+	// The ID of the type of sensor the node sensor is
+	SensorTypeId int `json:"SensorTypeId"`
+	// The name of the node sensor
+	Name string `json:"Name"`
+	// The I/O pin the sensor is attached to
+	Pin int `json:"Pin"`
+	// The type of DHT sensor if it's a DHT sensor (11 for 11, 22 for 22)
+	DHTType int `json:"DHTType"`
 }
 
 func (item *NodeSensor) IsValid(checkId bool) error {

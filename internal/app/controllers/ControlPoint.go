@@ -1,3 +1,12 @@
+//  Comapany ltruelove:
+//   version: 0.0.1
+//   title: GoHome API
+//  Schemes: http
+//  Host: 127.0.0.1:8082
+//  BasePath: /
+//  Produces:
+//    - application/json
+// swagger:meta
 package controllers
 
 import (
@@ -20,7 +29,7 @@ type ControlPointController struct {
 
 func (controller *ControlPointController) RegisterControlPointEndpoints() {
 	routing.AddRouteWithMethod("/controlPoint", "GET", controller.GetAll)
-	routing.AddRouteWithMethod("/controlPoint/Available", "GET", controller.GetAll)
+	routing.AddRouteWithMethod("/controlPoint/Available", "GET", controller.GetAllAvailable)
 	routing.AddRouteWithMethod("/controlPoint/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/controlPoint", "POST", controller.Create)
 	routing.AddRouteWithMethod("/controlPoint", "PUT", controller.Update)
@@ -31,6 +40,19 @@ func (controller *ControlPointController) RegisterControlPointEndpoints() {
 }
 
 func (controller *ControlPointController) GetAll(writer http.ResponseWriter, request *http.Request) {
+	// swagger:route GET /controlPoint control point getAllControlPoints
+	//
+	// Fetches all control points
+	//
+	//	Produces:
+	//	- application/json
+	//
+	//	Schemes: http
+	//
+	//	Responses:
+	//		200: success
+	//		500: internaServerError
+
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllControlPoints(controller.DB)
@@ -54,6 +76,18 @@ func (controller *ControlPointController) GetAll(writer http.ResponseWriter, req
 }
 
 func (controller *ControlPointController) GetAllAvailable(writer http.ResponseWriter, request *http.Request) {
+	// swagger:route GET /controlPoint/Available available control point getAllControlPoints
+	//
+	// Fetches all control points that are not at the max limit of 20 nodes
+	//
+	//	Produces:
+	//	- application/json
+	//
+	//	Schemes: http
+	//
+	//	Responses:
+	//		200: success
+	//		500: internaServerError
 	log.Println("Fetch all controlPoints request initiated")
 
 	allItems, err := data.FetchAllAvailableControlPoints(controller.DB)

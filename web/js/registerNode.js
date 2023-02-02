@@ -118,6 +118,14 @@ async function registerSuccess(data){
                 res = await saveMoisture(sensor.Pin);
                 await sleep(200);
             break;
+            case 3:
+                res = await saveMagnetic(sensor.Pin);
+                await sleep(200);
+            break;
+            case 4:
+                res = await saveResistor(sensor.Pin);
+                await sleep(200);
+            break;
             default:
             break;
         }
@@ -182,6 +190,28 @@ function saveMoisture(pin){
     return $.ajax({
         type: "POST",
         url: "/setMoisture",
+        data: "pin=" + pin,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function saveMagnetic(pin){
+    return $.ajax({
+        type: "POST",
+        url: "/setMagnetic",
+        data: "pin=" + pin,
+        success: genericSuccess,
+        error: genericFailure,
+        dataType: "json"
+    });
+}
+
+function saveResistor(pin){
+    return $.ajax({
+        type: "POST",
+        url: "/setResistor",
         data: "pin=" + pin,
         success: genericSuccess,
         error: genericFailure,

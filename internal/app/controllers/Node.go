@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -23,6 +24,7 @@ type NodeController struct {
 func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node", "GET", controller.GetAll)
 	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
+	routing.AddRouteWithMethod("/node/data/{id}", "GET", controller.GetNodeData)
 	routing.AddRouteWithMethod("/node", "POST", controller.Create)
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/node/{id}/delete", "DELETE", controller.Delete)
@@ -30,6 +32,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/switchesByNode/{id}", "GET", controller.GetAllNodeSwitches)
 	routing.AddRouteWithMethod("/node/switch/toggle/{id}", "POST", controller.ToggleNodeSwitch)
 	routing.AddRouteWithMethod("/node/switch/press/{id}", "POST", controller.PressNodeSwitch)
+	routing.AddRouteWithMethod("/node/update/{id}", "POST", controller.TriggerUpdate)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -411,10 +414,112 @@ func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, re
 	_, err = http.Get(url)
 
 	if err != nil {
-		log.Println("Could not complete the toggle request." + err.Error())
-		http.Error(writer, "There was a error making the toggle request.", http.StatusInternalServerError)
+		log.Println("Could not complete the button press request." + err.Error())
+		http.Error(writer, "There was a error making the button press request.", http.StatusInternalServerError)
 		return
 	}
 
-	writeResponse(writer, []byte("Toggle successful"))
+	writeResponse(writer, []byte("Button Press successful"))
+}
+
+func (controller *NodeController) TriggerUpdate(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Trigger node update request initiated")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node id")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get control point by node")
+		http.Error(writer, "Could not resolve control point for node", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("http://%s/triggerUpdate?mac=%s",
+		nodeControlPoint.IpAddress, node.Mac)
+	log.Println(url)
+
+	_, err = http.Get(url)
+
+	if err != nil {
+		log.Println("Could not complete the trigger update request." + err.Error())
+		http.Error(writer, "There was a error making the trigger update request.", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, []byte("Trigger update successful"))
+}
+
+func (controller *NodeController) GetNodeData(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Node data request initiated")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	log.Println("Id parsed")
+
+	if err != nil {
+		log.Println("Could not get node id")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(id, controller.DB)
+
+	log.Println("Node fetched")
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+
+	log.Println("Found control point")
+
+	if err != nil {
+		log.Println("Could not get control point by node")
+		http.Error(writer, "Could not resolve control point for node", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("http://%s/nodeData?nodeId=%d",
+		nodeControlPoint.IpAddress, node.Id)
+	log.Println(url)
+
+	log.Println("Requesting " + url)
+
+	resp, err := http.Get(url)
+
+	if err != nil {
+		log.Println("Could not complete the node data request." + err.Error())
+		http.Error(writer, "There was a error making the node data request.", http.StatusInternalServerError)
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Println("Could not complete the node data request." + err.Error())
+		http.Error(writer, "There was a error making the node data request.", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, bodyBytes)
 }

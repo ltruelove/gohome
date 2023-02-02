@@ -7,10 +7,14 @@ import (
 	"strings"
 )
 
+// swagger:model Node
 type Node struct {
-	Id   int    `json:"Id"`
+	// The ID of the Node
+	Id int `json:"Id"`
+	// The name of the Node
 	Name string `json:"Name"`
-	Mac  string `json:"Mac"`
+	// The MAC address of the Node
+	Mac string `json:"Mac"`
 }
 
 func (item *Node) IsValid(checkId bool) error {
