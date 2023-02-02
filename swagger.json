@@ -1,0 +1,216 @@
+{
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "Comapany ltruelove:",
+    "version": "0.0.1"
+  },
+  "host": "127.0.0.1:8082",
+  "basePath": "/",
+  "paths": {
+    "/controlPoint": {
+      "get": {
+        "description": "Fetches all control points",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http"
+        ],
+        "tags": [
+          "control",
+          "point"
+        ],
+        "operationId": "getAllControlPoints",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/success"
+          },
+          "500": {
+            "$ref": "#/responses/internaServerError"
+          }
+        }
+      }
+    },
+    "/controlPoint/Available": {
+      "get": {
+        "description": "Fetches all control points that are not at the max limit of 20 nodes",
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http"
+        ],
+        "tags": [
+          "available",
+          "control",
+          "point"
+        ],
+        "operationId": "getAllControlPoints",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/success"
+          },
+          "500": {
+            "$ref": "#/responses/internaServerError"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ControlPoint": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "description": "Id of the Control Point",
+          "type": "integer",
+          "format": "int64"
+        },
+        "IpAddress": {
+          "description": "IP Address of the Control Point",
+          "type": "string"
+        },
+        "Mac": {
+          "description": "MAC Address of the Control Point",
+          "type": "string"
+        },
+        "Name": {
+          "description": "Name of the Control Point",
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/ltruelove/gohome/internal/app/models"
+    },
+    "ControlPointNode": {
+      "type": "object",
+      "properties": {
+        "ControlPointId": {
+          "description": "Id of the Control Point",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "description": "Id of the Control Point Node",
+          "type": "integer",
+          "format": "int64"
+        },
+        "NodeId": {
+          "description": "Id of the Node",
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/ltruelove/gohome/internal/app/models"
+    },
+    "IpAddress": {
+      "type": "object",
+      "properties": {
+        "ip": {
+          "description": "The IP Address string",
+          "type": "string",
+          "x-go-name": "IP"
+        }
+      },
+      "x-go-package": "github.com/ltruelove/gohome/internal/app/models"
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "description": "The ID of the Node",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Mac": {
+          "description": "The MAC address of the Node",
+          "type": "string"
+        },
+        "Name": {
+          "description": "The name of the Node",
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/ltruelove/gohome/internal/app/models"
+    },
+    "NodeSensor": {
+      "type": "object",
+      "properties": {
+        "DHTType": {
+          "description": "The type of DHT sensor if it's a DHT sensor (11 for 11, 22 for 22)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Id": {
+          "description": "The ID of the node sensor",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Name": {
+          "description": "The name of the node sensor",
+          "type": "string"
+        },
+        "NodeId": {
+          "description": "The ID of the node the sensor is attached to",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Pin": {
+          "description": "The I/O pin the sensor is attached to",
+          "type": "integer",
+          "format": "int64"
+        },
+        "SensorTypeId": {
+          "description": "The ID of the type of sensor the node sensor is",
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/ltruelove/gohome/internal/app/models"
+    },
+    "NodeSwitch": {
+      "type": "object",
+      "properties": {
+        "Id": {
+          "description": "The ID of the node switch",
+          "type": "integer",
+          "format": "int64"
+        },
+        "IsClosedOn": {
+          "description": "Is a closed circuit considered \"on\"",
+          "type": "boolean"
+        },
+        "MomentaryPressDuration": {
+          "description": "The time in milliseconds to hold a momentary button down",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Name": {
+          "description": "The name of the node switch",
+          "type": "string"
+        },
+        "NodeId": {
+          "description": "The ID of the node the switch belongs to",
+          "type": "integer",
+          "format": "int64"
+        },
+        "Pin": {
+          "description": "The I/O pin the switch is attached to",
+          "type": "integer",
+          "format": "int64"
+        },
+        "SwitchTypeId": {
+          "description": "The ID of the type of switch the node switch is",
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "x-go-package": "github.com/ltruelove/gohome/internal/app/models"
+    }
+  }
+}
