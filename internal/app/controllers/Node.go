@@ -196,11 +196,40 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 		return
 	}
 
+	// need to fetch the record before deleting it so it can be used later
+	node, err := data.FetchNode(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not find node")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not find node control point.")
+		http.Error(writer, "Could not resolve node control point from id", http.StatusBadRequest)
+		return
+	}
+
 	err = data.DeleteNode(id, controller.DB)
 
 	if err != nil {
 		log.Printf("There was an error attempting to delete a node: %v", err)
 		http.Error(writer, "There was an error attempting to delete a node", http.StatusInternalServerError)
+	}
+
+	url := fmt.Sprintf("http://%s/eraseNodeSettings?mac=%s",
+		nodeControlPoint.IpAddress, node.Mac)
+	log.Println(url)
+
+	_, err = http.Get(url)
+
+	if err != nil {
+		log.Println("Could not complete the erase settings request." + err.Error())
+		http.Error(writer, "There was a error making the erase settings request.", http.StatusInternalServerError)
+		return
 	}
 }
 

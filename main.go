@@ -37,6 +37,8 @@ func main() {
 
 	file.Close()
 
+	//data.LogFileTicker(Config)
+
 	// set up logging
 	currentTime := time.Now()
 	datedLogFile := fmt.Sprintf("%s_%s", currentTime.Format("2006-01-02"), Config.LogFile)
