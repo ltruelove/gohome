@@ -25,6 +25,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node", "GET", controller.GetAll)
 	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/node/data/{id}", "GET", controller.GetNodeData)
+	routing.AddRouteWithMethod("/node/logs/{id}", "GET", controller.GetNodeLogData)
 	routing.AddRouteWithMethod("/node", "POST", controller.Create)
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/node/{id}/delete", "DELETE", controller.Delete)
@@ -33,6 +34,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/switch/toggle/{id}", "POST", controller.ToggleNodeSwitch)
 	routing.AddRouteWithMethod("/node/switch/press/{id}", "POST", controller.PressNodeSwitch)
 	routing.AddRouteWithMethod("/node/update/{id}", "POST", controller.TriggerUpdate)
+	routing.AddRouteWithMethod("/node/reading", "POST", controller.LogNodeReading)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -208,9 +210,7 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 	nodeControlPoint, err := data.FetchControlPointByNode(id, controller.DB)
 
 	if err != nil {
-		log.Println("Could not find node control point.")
-		http.Error(writer, "Could not resolve node control point from id", http.StatusBadRequest)
-		return
+		log.Println("Node not attached to a control point.")
 	}
 
 	err = data.DeleteNode(id, controller.DB)
@@ -530,7 +530,6 @@ func (controller *NodeController) GetNodeData(writer http.ResponseWriter, reques
 
 	url := fmt.Sprintf("http://%s/nodeData?nodeId=%d",
 		nodeControlPoint.IpAddress, node.Id)
-	log.Println(url)
 
 	log.Println("Requesting " + url)
 
@@ -545,10 +544,88 @@ func (controller *NodeController) GetNodeData(writer http.ResponseWriter, reques
 	bodyBytes, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println("Could not complete the node data request." + err.Error())
-		http.Error(writer, "There was a error making the node data request.", http.StatusInternalServerError)
+		log.Println("Could not read the node data." + err.Error())
+		http.Error(writer, "There was a error reading the node data.", http.StatusInternalServerError)
 		return
 	}
 
 	writeResponse(writer, bodyBytes)
+}
+
+func (controller *NodeController) LogNodeReading(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Node log data request initiated")
+
+	decoder := json.NewDecoder(request.Body)
+	var item models.NodeData
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node data: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = data.CreateNewLog(item, controller.DB)
+
+	if err != nil {
+		log.Println("Could not create log entry")
+		http.Error(writer, "Could not creaet log entry", http.StatusBadRequest)
+		return
+	}
+
+	writeResponse(writer, []byte("Log created"))
+}
+
+func (controller *NodeController) GetNodeLogData(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node id")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	logs, err := data.GetSensorLogData(node.Id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node log data")
+		http.Error(writer, "Could not get node log data", http.StatusInternalServerError)
+		return
+	}
+
+	var returnLogs []models.NodeSensorLog
+	for _, element := range logs {
+
+		element.TemperatureEntries, err = data.GetTempLogDataByLogId(element.Id, controller.DB)
+		element.MoistureEntries, err = data.GetMoistureLogDataByLogId(element.Id, controller.DB)
+		element.ResistorEntries, err = data.GetResistorLogDataByLogId(element.Id, controller.DB)
+		element.MagneticEntries, err = data.GetMagneticLogDataByLogId(element.Id, controller.DB)
+
+		if err != nil {
+			log.Println("Could not get node log sensor data")
+			http.Error(writer, "Could not get node log sensor data", http.StatusInternalServerError)
+			return
+		}
+
+		returnLogs = append(returnLogs, element)
+	}
+
+	result, err := json.Marshal(returnLogs)
+
+	if err != nil {
+		log.Printf("An error occurred marshalling node log data: %v", err)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, result)
 }

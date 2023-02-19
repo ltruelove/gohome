@@ -67,6 +67,56 @@ func FetchAllNodeSensors(db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 	return sensors, nil
 }
 
+func FetchAllNodeSensorsByNode(nodeId int, db *sql.DB) ([]viewModels.NodeSensorVM, error) {
+	stmt, err := db.Prepare(`SELECT
+		ns.Id,
+		ns.NodeId,
+		ns.SensorTypeId,
+		ns.Name,
+		ns.Pin,
+		ns.DHTType,
+		st.Name AS SensorTypeName
+		FROM NodeSensor AS ns
+		INNER JOIN SensorType AS st ON st.Id = ns.SensorTypeId
+		WHERE ns.NodeId = ?`)
+
+	if err != nil {
+		log.Println("Error preparing all node sensors by node sql")
+		return nil, err
+	}
+
+	var sensors []viewModels.NodeSensorVM
+
+	rows, err := stmt.Query(nodeId)
+	if err != nil {
+		log.Println("Error querying for all node sensors by node")
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	for rows.Next() {
+		var sensor viewModels.NodeSensorVM
+
+		err := rows.Scan(&sensor.Id,
+			&sensor.NodeId,
+			&sensor.SensorTypeId,
+			&sensor.Name,
+			&sensor.Pin,
+			&sensor.DHTType,
+			&sensor.SensorTypeName)
+
+		if err != nil {
+			log.Println("Error scanning node sensor")
+			return nil, err
+		}
+
+		sensors = append(sensors, sensor)
+	}
+
+	return sensors, nil
+}
+
 func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 	var sensor models.NodeSensor
 

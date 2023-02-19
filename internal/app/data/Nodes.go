@@ -28,8 +28,8 @@ func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
 	cp.IpAddress AS ControlPointIp,
 	cp.Name AS ControlPointName
 	FROM Node AS n
-	INNER JOIN ControlPointNodes AS cpn ON CPN.NodeId = n.Id
-	INNER JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId`)
+	LEFT JOIN ControlPointNodes AS cpn ON CPN.NodeId = n.Id
+	LEFT JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId`)
 
 	if err != nil {
 		log.Println(err)
@@ -78,12 +78,24 @@ func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 	n.Id,
 	n.Name,
 	n.Mac,
-	cp.Id,
-	cp.IpAddress,
-	cp.Name
+	CASE cp.Id
+		WHEN NOT NULL
+			THEN cp.Id
+		ELSE 0
+	END cpId,
+	CASE cp.IpAddress
+		WHEN NOT NULL
+			THEN cp.IpAddress
+		Else ''
+	END IpAddress,
+	CASE cp.Name
+		WHEN NOT NULL
+			THEN cp.Name
+		Else ''
+	END cpName
 	FROM Node AS n
-	INNER JOIN ControlPointNodes AS cpn ON cpn.NodeId = n.Id
-	INNER JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId
+	LEFT JOIN ControlPointNodes AS cpn ON cpn.NodeId = n.Id
+	LEFT JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId
 	WHERE n.Id = ?`)
 	setup.CheckErr(err)
 	defer stmt.Close()
