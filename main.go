@@ -16,12 +16,15 @@ import (
 )
 
 var Config config.Configuration
+var version = "0.0.1"
 
 // @title GoHome API
 // @version 2.0
 // @description API for managing GoHome Control Points and Nodes
 // @BasePath /
 func main() {
+	fmt.Println("Starting GoHome API version " + version)
+
 	// parse config settings
 	file, err := os.Open("config/config.json")
 	if err != nil {

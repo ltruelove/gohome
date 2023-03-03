@@ -171,13 +171,15 @@ func CreateNewResistorLog(logId int, data models.NodeData, db *sql.DB) error {
 	return err
 }
 
-func GetSensorLogData(nodeId int, db *sql.DB) ([]models.NodeSensorLog, error) {
+func GetSensorLogData(nodeId int, db *sql.DB, start time.Time, end time.Time) ([]models.NodeSensorLog, error) {
 	stmt, err := db.Prepare(`SELECT
 	 	Id,
 		NodeId,
 		DateLogged
 		FROM NodeSensorLog
 		WHERE NodeId = ?
+		AND DateLogged >= ?
+		AND DateLogged <= ?
 		ORDER BY DateLogged`)
 
 	if err != nil {
@@ -187,7 +189,7 @@ func GetSensorLogData(nodeId int, db *sql.DB) ([]models.NodeSensorLog, error) {
 
 	var sensorLogData []models.NodeSensorLog
 
-	rows, err := stmt.Query(nodeId)
+	rows, err := stmt.Query(nodeId, fmt.Sprintf(start.Format("20060102150405")), fmt.Sprintf(end.Format("20060102150405")))
 
 	if err != nil {
 		log.Println("Error querying for node sensor data")

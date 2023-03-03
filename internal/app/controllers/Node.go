@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/internal/app/data"
@@ -26,6 +27,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/{id}", "GET", controller.GetById)
 	routing.AddRouteWithMethod("/node/data/{id}", "GET", controller.GetNodeData)
 	routing.AddRouteWithMethod("/node/logs/{id}", "GET", controller.GetNodeLogData)
+	routing.AddRouteWithMethod("/node/restart", "GET", controller.TriggerRestart)
 	routing.AddRouteWithMethod("/node", "POST", controller.Create)
 	routing.AddRouteWithMethod("/node", "PUT", controller.Update)
 	routing.AddRouteWithMethod("/node/{id}/delete", "DELETE", controller.Delete)
@@ -594,7 +596,12 @@ func (controller *NodeController) GetNodeLogData(writer http.ResponseWriter, req
 		return
 	}
 
-	logs, err := data.GetSensorLogData(node.Id, controller.DB)
+	start := time.Now().Add(time.Duration(-8) * time.Hour).UTC()
+	end := time.Now().UTC()
+
+	logs, err := data.GetSensorLogData(node.Id, controller.DB, start, end)
+
+	log.Println(fmt.Sprintf("%d logs found in range", len(logs)))
 
 	if err != nil {
 		log.Println("Could not get node log data")
@@ -628,4 +635,47 @@ func (controller *NodeController) GetNodeLogData(writer http.ResponseWriter, req
 	}
 
 	writeResponse(writer, result)
+}
+
+func (controller *NodeController) TriggerRestart(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Trigger node restart request initiated")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node id")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get control point by node")
+		http.Error(writer, "Could not resolve control point for node", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("http://%s/triggerRestart?mac=%s",
+		nodeControlPoint.IpAddress, node.Mac)
+	log.Println(url)
+
+	_, err = http.Get(url)
+
+	if err != nil {
+		log.Println("Could not complete the trigger restart request." + err.Error())
+		http.Error(writer, "There was a error making the trigger update request.", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, []byte("Trigger restart successful"))
 }
