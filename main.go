@@ -54,7 +54,7 @@ func main() {
 	defer logFile.Close()
 	log.SetOutput(logFile)
 
-	db := setup.InitDb()
+	db := setup.InitDb(Config)
 
 	viewController := controllers.ViewController{DB: db}
 	sensorTypeController := controllers.SensorTypeController{DB: db}

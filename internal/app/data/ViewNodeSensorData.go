@@ -9,12 +9,12 @@ import (
 )
 
 const defaultViewNodeSensorDataSelect string = `SELECT
-	Id,
-	NodeId,
-	ViewId,
-	NodeSensorId,
-	Name
-	FROM View`
+	id,
+	nodeid,
+	viewid,
+	nodesensorid,
+	name
+	FROM view`
 
 func FetchAllViewNodeSensorData(db *sql.DB) ([]models.ViewNodeSensorData, error) {
 	stmt, err := db.Prepare(defaultViewNodeSensorDataSelect)
@@ -53,7 +53,7 @@ func FetchAllViewNodeSensorData(db *sql.DB) ([]models.ViewNodeSensorData, error)
 func FetchViewNodeSensorData(id int, db *sql.DB) (models.ViewNodeSensorData, error) {
 	var item models.ViewNodeSensorData
 
-	query := fmt.Sprintf("%s %s", defaultViewNodeSensorDataSelect, "WHERE id = ?")
+	query := fmt.Sprintf("%s %s", defaultViewNodeSensorDataSelect, "WHERE id = $1")
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		log.Println("Error preparing fetch node sensor data sql")
@@ -77,26 +77,26 @@ func FetchViewNodeSensorData(id int, db *sql.DB) (models.ViewNodeSensorData, err
 }
 
 func CreateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO ViewNodeSensorData
-	(NodeId, ViewId, NodeSensorId, Name)
-	VALUES (?, ?, ?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO viewnodesensordata
+	(nodeid, viewid, nodesensorid, name)
+	VALUES ($1, $2, $3, $4) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create node sensor data sql")
 		return err
 	}
 
-	result, err := stmt.Exec(item.NodeId,
+	lastInsertId := 0
+
+	err = stmt.QueryRow(item.NodeId,
 		item.ViewId,
 		item.NodeSensorId,
-		item.Name)
+		item.Name).Scan((&lastInsertId))
 
 	if err != nil {
 		log.Println("Error creating node sensor data")
 		return err
 	}
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted view node sensor")
@@ -111,9 +111,9 @@ func CreateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error
 }
 
 func UpdateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE ViewNodeSensorData
-	SET NodeId = ?, ViewId = ?, NodeSensorId = ?, Name = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE viewnodesensordata
+	SET nodeid = $1, viewid = $2, nodesensorid = $3, name = $4
+	WHERE id = $5`)
 
 	if err != nil {
 		log.Println("Error preparing update node sensor data sql")
@@ -137,8 +137,8 @@ func UpdateViewNodeSensorData(item *models.ViewNodeSensorData, db *sql.DB) error
 }
 
 func DeleteViewNodeSensorData(id int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM ViewNodeSensorData
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM viewnodesensordata
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete node sensor data sql")

@@ -19,7 +19,7 @@ func VerifyControlPointIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 }
 
 func FetchAllControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
-	stmt, err := db.Prepare(`SELECT Id, Name, IpAddress, Mac FROM ControlPoint`)
+	stmt, err := db.Prepare(`SELECT id, name, ipaddress, mac FROM controlpoint`)
 	if err != nil {
 		log.Println("Error preparing all control points sql")
 		return nil, err
@@ -51,9 +51,9 @@ func FetchAllControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
 
 func FetchAllAvailableControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
 	// Only select control points that aren't maxed out for nodes, 20 is the max
-	stmt, err := db.Prepare(`SELECT Id, Name, IpAddress, Mac
-	FROM ControlPoint AS c
-	WHERE  (SELECT COUNT(Id) FROM ControlPointNodes WHERE ControlPointId = c.Id) < 20`)
+	stmt, err := db.Prepare(`SELECT id, name, ipaddress, mac
+	FROM controlpoint AS c
+	WHERE  (SELECT COUNT(id) FROM controlpointnodes WHERE controlpointid = c.id) < 20`)
 	if err != nil {
 		log.Println("Error preparing all control points sql")
 		return nil, err
@@ -85,13 +85,13 @@ func FetchAllAvailableControlPoints(db *sql.DB) ([]models.ControlPoint, error) {
 
 func FetchAllControlPointNodes(controlPointId int, db *sql.DB) ([]dto.ControlPointNode, error) {
 	stmt, err := db.Prepare(`SELECT
-			Node.Id,
-			Node.Name,
-			Node.Mac,
-			cpn.Id AS RelationId
-		FROM ControlPointNodes AS cpn
-		INNER JOIN Node ON Node.Id = cpn.NodeId
-		WHERE cpn.ControlPointId = ?`)
+			node.id,
+			node.name,
+			node.mac,
+			cpn.id AS relationid
+		FROM controlpointnodes AS cpn
+		INNER JOIN node ON node.id = cpn.nodeid
+		WHERE cpn.controlpointid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing all control point nodes sql")
@@ -125,7 +125,7 @@ func FetchAllControlPointNodes(controlPointId int, db *sql.DB) ([]dto.ControlPoi
 func FetchControlPoint(controlPointId int, db *sql.DB) (models.ControlPoint, error) {
 	var controlPoint models.ControlPoint
 
-	stmt, err := db.Prepare("SELECT Id, Name, IpAddress, Mac FROM ControlPoint WHERE id = ?")
+	stmt, err := db.Prepare("SELECT id, name, ipaddress, mac FROM controlpoint WHERE id = $1")
 	if err != nil {
 		log.Printf("Error preparing fetch control point sql: %v", err)
 		return controlPoint, err
@@ -150,12 +150,12 @@ func FetchControlPointByNode(nodeId int, db *sql.DB) (models.ControlPoint, error
 	var controlPoint models.ControlPoint
 
 	stmt, err := db.Prepare(`SELECT
-	cp.Id,
-	cp.Name,
-	cp.IpAddress,
-	cp.Mac FROM ControlPointNodes AS cpn
-	INNER JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId
-	WHERE cpn.NodeId = ?`)
+	cp.id,
+	cp.name,
+	cp.ipaddress,
+	cp.mac FROM controlpointnodes AS cpn
+	INNER JOIN controlpoint AS cp ON cp.id = cpn.controlpointid
+	WHERE cpn.nodeid = $1`)
 
 	if err != nil {
 		log.Printf("Error preparing fetch control point by node sql: %v", err)
@@ -180,7 +180,7 @@ func FetchControlPointByNode(nodeId int, db *sql.DB) (models.ControlPoint, error
 func FetchControlPointByMac(macAddress string, db *sql.DB) (models.ControlPoint, error) {
 	var controlPoint models.ControlPoint
 
-	stmt, err := db.Prepare("SELECT Id, Name, IpAddress, Mac FROM ControlPoint WHERE Mac = ?")
+	stmt, err := db.Prepare("SELECT id, name, ipaddress, mac FROM controlpoint WHERE mac = $1")
 	if err != nil {
 		log.Printf("Error preparing fetch control point by Mac sql: %v", err)
 		return controlPoint, err
@@ -202,18 +202,20 @@ func FetchControlPointByMac(macAddress string, db *sql.DB) (models.ControlPoint,
 }
 
 func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO ControlPoint
-	(Name, IpAddress, Mac)
-	VALUES (?, ?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO controlpoint
+	(name, ipaddress, mac)
+	VALUES ($1, $2, $3) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create control point sql")
 		return err
 	}
 
-	result, err := stmt.Exec(controlPoint.Name,
+	lastInsertId := 0
+
+	err = stmt.QueryRow(controlPoint.Name,
 		controlPoint.IpAddress,
-		controlPoint.Mac)
+		controlPoint.Mac).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating control point")
@@ -221,8 +223,6 @@ func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 	}
 
 	defer stmt.Close()
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted control point")
@@ -235,9 +235,9 @@ func CreateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 }
 
 func UpdateControlPointIp(controlPoint *models.ControlPoint, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE ControlPoint
-	SET IpAddress = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE controlpoint
+	SET ipaddress = $1
+	WHERE id = $2`)
 
 	if err != nil {
 		log.Println("Error preparing update control point IP Address sql")
@@ -258,9 +258,9 @@ func UpdateControlPointIp(controlPoint *models.ControlPoint, db *sql.DB) error {
 }
 
 func UpdateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE ControlPoint
-	SET Name = ?, IpAddress = ?, Mac = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE controlpoint
+	SET name = $1, ipaddress = $2, mac = $3
+	WHERE id = $4`)
 
 	if err != nil {
 		log.Println("Error preparing update control point sql")
@@ -283,8 +283,8 @@ func UpdateControlPoint(controlPoint *models.ControlPoint, db *sql.DB) error {
 }
 
 func DeleteControlPoint(controlPointId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM ControlPoint
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM controlpoint
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete control point sql")
@@ -304,17 +304,19 @@ func DeleteControlPoint(controlPointId int, db *sql.DB) error {
 }
 
 func AddNodeToControlPoint(controlPointNode *models.ControlPointNode, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO ControlPointNodes
-	(ControlPointId, NodeId)
-	VALUES (?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO controlpointnodes
+	(controlpointid, nodeid)
+	VALUES ($1, $2) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create control point node sql")
 		return err
 	}
 
-	result, err := stmt.Exec(controlPointNode.ControlPointId,
-		controlPointNode.NodeId)
+	lastInsertId := 0
+
+	err = stmt.QueryRow(controlPointNode.ControlPointId,
+		controlPointNode.NodeId).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error adding node to control point ")
@@ -322,8 +324,6 @@ func AddNodeToControlPoint(controlPointNode *models.ControlPointNode, db *sql.DB
 	}
 
 	defer stmt.Close()
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted control point node")
@@ -336,8 +336,8 @@ func AddNodeToControlPoint(controlPointNode *models.ControlPointNode, db *sql.DB
 }
 
 func RemoveNodeFromControlPoint(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM ControlPointNodes
-	WHERE NodeId = ?`)
+	stmt, err := db.Prepare(`DELETE FROM controlpointnodes
+	WHERE nodeid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete control point node sql")
@@ -357,8 +357,8 @@ func RemoveNodeFromControlPoint(nodeId int, db *sql.DB) error {
 }
 
 func DeleteControlPointNode(id int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM ControlPointNodes
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM controlpointnodes
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete control point node sql")
@@ -378,8 +378,8 @@ func DeleteControlPointNode(id int, db *sql.DB) error {
 }
 
 func DeleteControlPointNodeByNodeId(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM ControlPointNodes
-	WHERE NodeId = ?`)
+	stmt, err := db.Prepare(`DELETE FROM controlpointnodes
+	WHERE nodeid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete control point node sql")

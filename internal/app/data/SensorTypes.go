@@ -37,7 +37,7 @@ func FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
 func FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
 	var sensor models.SensorType
 
-	stmt, err := db.Prepare("SELECT Id, Name FROM SensorType WHERE id = ?")
+	stmt, err := db.Prepare("SELECT id, name FROM sensortype WHERE id = $1")
 	if err != nil {
 		log.Println("Error preparing the fetch sensor type sql")
 		return sensor, err
@@ -57,11 +57,11 @@ func FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
 
 func FetchSensorTypeData(sensorTypeId int, db *sql.DB) ([]models.SensorTypeData, error) {
 	stmt, err := db.Prepare(`SELECT
-		Id, 
-		Name, 
-		ValueType 
-		FROM SensorTypeData 
-		WHERE SensorTypeId = ?`)
+		id, 
+		name, 
+		valuetype 
+		FROM sensortypedata 
+		WHERE sensortypeid = $1`)
 	if err != nil {
 		log.Println("Error preparing the fetch sensor type data sql")
 		return nil, err

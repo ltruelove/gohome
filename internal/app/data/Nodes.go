@@ -21,15 +21,15 @@ func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 
 func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
 	stmt, err := db.Prepare(`SELECT
-	n.Id,
-	n.Name,
-	n.Mac,
-	cp.Id AS ControlPointId,
-	cp.IpAddress AS ControlPointIp,
-	cp.Name AS ControlPointName
-	FROM Node AS n
-	LEFT JOIN ControlPointNodes AS cpn ON CPN.NodeId = n.Id
-	LEFT JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId`)
+	n.id,
+	n.name,
+	n.mac,
+	cp.id AS controlpointid,
+	cp.ipaddress AS controlpointip,
+	cp.name AS controlpointname
+	FROM node AS n
+	LEFT JOIN controlpointnodes AS cpn ON cpn.nodeid = n.id
+	LEFT JOIN controlpoint AS cp ON cp.id = cpn.controlpointid`)
 
 	if err != nil {
 		log.Println(err)
@@ -75,28 +75,17 @@ func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
 
 func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 	stmt, err := db.Prepare(`SELECT
-	n.Id,
-	n.Name,
-	n.Mac,
-	CASE cp.Id
-		WHEN NOT NULL
-			THEN cp.Id
-		ELSE 0
-	END cpId,
-	CASE cp.IpAddress
-		WHEN NOT NULL
-			THEN cp.IpAddress
-		Else ''
-	END IpAddress,
-	CASE cp.Name
-		WHEN NOT NULL
-			THEN cp.Name
-		Else ''
-	END cpName
-	FROM Node AS n
-	LEFT JOIN ControlPointNodes AS cpn ON cpn.NodeId = n.Id
-	LEFT JOIN ControlPoint AS cp ON cp.Id = cpn.ControlPointId
-	WHERE n.Id = ?`)
+	n.id,
+	n.name,
+	n.mac,
+	cp.id AS cpid,
+	cp.ipaddress AS ipaddress,
+	cp.name AS cpname
+	FROM node AS n
+	LEFT JOIN controlpointnodes AS cpn ON cpn.nodeid = n.id
+	LEFT JOIN controlpoint AS cp ON cp.id = cpn.controlpointid
+	WHERE n.id = $1`)
+	log.Println("fetching node")
 	setup.CheckErr(err)
 	defer stmt.Close()
 
@@ -113,6 +102,7 @@ func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 		log.Println(err)
 		return node, err
 	}
+	log.Println("node found")
 
 	node.Sensors, err = FetchNodeSensors(node.Id, db)
 
@@ -133,14 +123,14 @@ func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 
 func FetchNodeSensors(nodeId int, db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		ns.Id,
-		ns.SensorTypeId,
-		ns.Pin,
-		ns.Name,
-		st.Name AS SensorTypeName
-		FROM NodeSensor AS ns
-		INNER JOIN SensorType AS st ON st.Id = ns.SensorTypeId
-		WHERE ns.NodeId = ?`)
+		ns.id,
+		ns.sensortypeid,
+		ns.pin,
+		ns.name,
+		st.name AS sensortypename
+		FROM nodesensor AS ns
+		INNER JOIN sensortype AS st ON st.id = ns.sensortypeid
+		WHERE ns.nodeid = $1`)
 
 	if err != nil {
 		log.Printf("Error preparing select node sensors sql: %v", err)
@@ -181,16 +171,16 @@ func FetchNodeSensors(nodeId int, db *sql.DB) ([]viewModels.NodeSensorVM, error)
 
 func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		ns.Id,
-		ns.SwitchTypeId,
-		ns.Pin,
-		ns.Name,
-		ns.MomentaryPressDuration,
-		ns.IsClosedOn,
-		st.Name AS SwitchTypeName
-		FROM NodeSwitch AS ns
-		INNER JOIN SwitchType AS st ON st.Id = ns.SwitchTypeId
-		WHERE ns.NodeId = ?`)
+		ns.id,
+		ns.switchtypeid,
+		ns.pin,
+		ns.name,
+		ns.momentarypressduration,
+		ns.isclosedon,
+		st.name AS switchtypename
+		FROM nodeswitch AS ns
+		INNER JOIN switchtype AS st ON st.id = ns.switchtypeid
+		WHERE ns.nodeid = $1`)
 
 	if err != nil {
 		log.Printf("Error preparing select node switches sql: %v", err)
@@ -232,17 +222,19 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error
 }
 
 func CreateNode(item *models.Node, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO Node
-	(Name, Mac)
-	VALUES (?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO node
+	(name, mac)
+	VALUES ($1, $2) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create node sql")
 		return err
 	}
 
-	result, err := stmt.Exec(&item.Name,
-		&item.Mac)
+	lastInsertId := 0
+
+	err = stmt.QueryRow(&item.Name,
+		&item.Mac).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating node")
@@ -250,8 +242,6 @@ func CreateNode(item *models.Node, db *sql.DB) error {
 	}
 
 	defer stmt.Close()
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted node")
@@ -264,9 +254,9 @@ func CreateNode(item *models.Node, db *sql.DB) error {
 }
 
 func UpdateNode(node *models.Node, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE Node
-	SET Name = ?, Mac = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE node
+	set name = $1, mac = $2
+	WHERE id = $3`)
 
 	if err != nil {
 		log.Println("Error preparing update node sql")

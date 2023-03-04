@@ -9,6 +9,11 @@ type Configuration struct {
 	WebDir  string `json:"webDir"`
 	LogFile string `json:"logFile"`
 	Port    string `json:"port"`
+	DbHost  string `json:"dbhost"`
+	DbPort  int    `json:"dbport"`
+	DbUser  string `json:"dbuser"`
+	DbPass  string `json:"dbpass"`
+	DbName  string `json:"dbname"`
 }
 
 func (c Configuration) ValidatePin(pin string) bool {

@@ -2,5 +2,10 @@
     "pin":"9999",
     "webDir":"web",
     "logFile" : "gohome_log.log",
-    "port" : "8000"
+    "port" : "8000",
+    "dbhost" : "localhost",
+    "dbport" : 5432,
+    "dbuser" : "username",
+    "dbpass" : "password",
+    "dbname" : "gohome"
 }

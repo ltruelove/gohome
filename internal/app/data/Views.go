@@ -23,7 +23,7 @@ func VerifyViewIdIsNew(viewId int, db *sql.DB) (bool, error) {
 }
 
 func FetchAllViews(db *sql.DB) ([]models.View, error) {
-	stmt, err := db.Prepare(`SELECT Id, Name FROM View`)
+	stmt, err := db.Prepare(`SELECT id, name FROM view`)
 
 	if err != nil {
 		log.Println("Error preparing all views sql")
@@ -59,7 +59,7 @@ func FetchAllViews(db *sql.DB) ([]models.View, error) {
 func FetchView(viewId int, db *sql.DB) (models.View, error) {
 	var item models.View
 	log.Printf("Fetching view for id: %d", viewId)
-	stmt, err := db.Prepare("SELECT Id, Name FROM View WHERE Id = ?")
+	stmt, err := db.Prepare("SELECT id, name FROM view WHERE id = $1")
 
 	if err != nil {
 		log.Println("Error preparing fetch view sql")
@@ -81,19 +81,19 @@ func FetchView(viewId int, db *sql.DB) (models.View, error) {
 
 func FetchViewSensorData(viewId int, db *sql.DB) ([]viewModels.ViewNodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		d.Id,
-		d.NodeId,
-		d.ViewId,
-		d.NodeSensorId,
-		d.Name,
-		n.Name As NodeName,
-		ns.Name AS SensorName,
-		st.Name AS SensorTypeName
-		FROM ViewNodeSensorData AS d
-		INNER JOIN Node AS n ON n.Id = d.NodeId
-		INNER JOIN NodeSensor AS ns ON ns.Id = d.NodeSensorId
-		INNER JOIN SensorType AS st on st.Id = ns.SensorTypeId
-		WHERE d.ViewId = ?`)
+		d.id,
+		d.nodeid,
+		d.viewid,
+		d.nodesensorid,
+		d.name,
+		n.name As nodename,
+		ns.name AS sensorname,
+		st.name AS sensortypename
+		FROM viewnodesensordata AS d
+		INNER JOIN node AS n ON n.id = d.nodeid
+		INNER JOIN nodesensor AS ns ON ns.id = d.nodesensorid
+		INNER JOIN sensortype AS st on st.id = ns.sensortypeid
+		WHERE d.viewid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing fetch view sql")
@@ -138,19 +138,19 @@ func FetchViewSwitchData(viewId int, db *sql.DB) ([]viewModels.ViewNodeSwitchVM,
 	log.Printf("Finding all switches for view with id %d", viewId)
 
 	stmt, err := db.Prepare(`SELECT
-		d.Id,
-		d.NodeId,
-		d.ViewId,
-		d.NodeSwitchId,
-		d.Name,
-		n.Name AS NodeName,
-		ns.Name AS SwitchName,
-		st.Name AS SwitchTypeName
-		FROM ViewNodeSwitchData AS d
-		INNER JOIN Node AS n ON n.Id = d.NodeId
-		INNER JOIN NodeSwitch AS ns on ns.Id = d.NodeSwitchId
-		INNER JOIN SwitchType AS st on st.Id = ns.SwitchTypeId
-		WHERE d.ViewId = ?`)
+		d.id,
+		d.nodeid,
+		d.viewid,
+		d.nodeswitchid,
+		d.name,
+		n.name AS nodename,
+		ns.name AS switchname,
+		st.name AS switchtypename
+		FROM viewnodeswitchdata AS d
+		INNER JOIN node AS n ON n.id = d.nodeid
+		INNER JOIN nodeswitch AS ns ON ns.id = d.nodeswitchid
+		INNER JOIN switchtype AS st ON st.id = ns.switchtypeid
+		WHERE d.viewid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing fetch view switch data sql")
@@ -194,9 +194,9 @@ func FetchViewSwitchData(viewId int, db *sql.DB) ([]viewModels.ViewNodeSwitchVM,
 }
 
 func CreateView(view *models.View, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO View
-	(Name)
-	VALUES (?)`)
+	stmt, err := db.Prepare(`INSERT INTO view
+	(name)
+	VALUES ($1)`)
 
 	if err != nil {
 		log.Println("Error preparing create view sql")
@@ -216,9 +216,9 @@ func CreateView(view *models.View, db *sql.DB) error {
 }
 
 func UpdateView(view *models.View, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE View
-	SET Name = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE view
+	SET name = $1
+	WHERE id = $2`)
 
 	if err != nil {
 		log.Println("Error preparing update view sql")
@@ -239,8 +239,8 @@ func UpdateView(view *models.View, db *sql.DB) error {
 }
 
 func DeleteView(viewId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM View
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM view
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete view sql")

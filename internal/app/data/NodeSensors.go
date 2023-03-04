@@ -20,15 +20,15 @@ func VerifyNodeSensorIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 
 func FetchAllNodeSensors(db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		ns.Id,
-		ns.NodeId,
-		ns.SensorTypeId,
-		ns.Name,
-		ns.Pin,
-		ns.DHTType,
-		st.Name AS SensorTypeName
-		FROM NodeSensor AS ns
-		INNER JOIN SensorType AS st ON st.Id = ns.SensorTypeId`)
+		ns.id,
+		ns.nodeid,
+		ns.sensortypeid,
+		ns.name,
+		ns.pin,
+		ns.dhttype,
+		st.name AS sensortypename
+		FROM nodesensor AS ns
+		INNER JOIN sensortype AS st ON st.id = ns.sensortypeid`)
 
 	if err != nil {
 		log.Println("Error preparing all node sensors sql")
@@ -69,16 +69,16 @@ func FetchAllNodeSensors(db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 
 func FetchAllNodeSensorsByNode(nodeId int, db *sql.DB) ([]viewModels.NodeSensorVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		ns.Id,
-		ns.NodeId,
-		ns.SensorTypeId,
-		ns.Name,
-		ns.Pin,
-		ns.DHTType,
-		st.Name AS SensorTypeName
-		FROM NodeSensor AS ns
-		INNER JOIN SensorType AS st ON st.Id = ns.SensorTypeId
-		WHERE ns.NodeId = ?`)
+		ns.id,
+		ns.nodeid,
+		ns.sensortypeid,
+		ns.name,
+		ns.pin,
+		ns.dhttype,
+		st.name AS sensortypename
+		FROM nodesensor AS ns
+		INNER JOIN sensortype AS st ON st.id = ns.sensortypeid
+		WHERE ns.nodeid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing all node sensors by node sql")
@@ -121,12 +121,12 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 	var sensor models.NodeSensor
 
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		NodeId,
-		SensorTypeId,
-		Name,
-		Pin,
-		DHTType FROM NodeSensor WHERE id = ?`)
+		id,
+		nodeid,
+		sensortypeid,
+		name,
+		pin,
+		dhttype FROM nodesensor WHERE id = $1`)
 	if err != nil {
 		log.Println("Error preparing fetch node sensor sql")
 		return sensor, err
@@ -149,20 +149,22 @@ func FetchNodeSensor(nodeId int, db *sql.DB) (models.NodeSensor, error) {
 }
 
 func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO NodeSensor
-	(NodeId, SensorTypeId, Name, Pin, DHTType)
-	VALUES (?, ?, ?, ?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO nodesensor
+	(nodeid, sensortypeid, name, pin, dhttype)
+	VALUES ($1, $2, $3, $4, $5) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create node sensor sql")
 		return err
 	}
 
-	result, err := stmt.Exec(&item.NodeId,
+	lastInsertId := 0
+
+	err = stmt.QueryRow(&item.NodeId,
 		&item.SensorTypeId,
 		&item.Name,
 		&item.Pin,
-		&item.DHTType)
+		&item.DHTType).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating node sensor")
@@ -170,8 +172,6 @@ func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 	}
 
 	defer stmt.Close()
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted node sensor")
@@ -184,9 +184,9 @@ func CreateNodeSensor(item *models.NodeSensor, db *sql.DB) error {
 }
 
 func UpdateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE NodeSensor
-	SET NodeId = ?, SensorTypeId = ?, Name = ?, Pin = ?, DHTType = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE nodesensor
+	SET nodeid = $1, sensortypeid = $2, name = $3, pin = $4, dhttype = $5
+	WHERE id = $6`)
 
 	if err != nil {
 		log.Println("Error preparing update node sensor sql")
@@ -211,8 +211,8 @@ func UpdateNodeSensor(sensor *models.NodeSensor, db *sql.DB) error {
 }
 
 func DeleteNodeSensor(sensorId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM NodeSensor
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM nodesensor
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete node sensor sql")
@@ -232,8 +232,8 @@ func DeleteNodeSensor(sensorId int, db *sql.DB) error {
 }
 
 func DeleteAllNodeSensors(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM NodeSensor
-	WHERE NodeId = ?`)
+	stmt, err := db.Prepare(`DELETE FROM nodesensor
+	WHERE nodeid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete node sensor sql")

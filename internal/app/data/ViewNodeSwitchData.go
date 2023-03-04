@@ -10,12 +10,12 @@ import (
 )
 
 const defaultViewNodeSwitchDataSelect string = `SELECT
-	Id,
-	NodeId,
-	ViewId,
-	NodeSwitchId,
-	Name
-	FROM View`
+	id,
+	nodeid,
+	viewid,
+	nodeswitchid,
+	name
+	FROM view`
 
 func FetchAllViewNodeSwitchData(db *sql.DB) ([]models.ViewNodeSwitchData, error) {
 	stmt, err := db.Prepare(defaultViewNodeSwitchDataSelect)
@@ -56,7 +56,7 @@ func FetchAllViewNodeSwitchData(db *sql.DB) ([]models.ViewNodeSwitchData, error)
 func FetchViewNodeSwitchData(id int, db *sql.DB) (models.ViewNodeSwitchData, error) {
 	var item models.ViewNodeSwitchData
 
-	query := fmt.Sprintf("%s %s", defaultViewNodeSwitchDataSelect, "WHERE id = ?")
+	query := fmt.Sprintf("%s %s", defaultViewNodeSwitchDataSelect, "WHERE id = $1")
 	stmt, err := db.Prepare(query)
 	if err != nil {
 		log.Println("Error preparing fetch node switch data sql")
@@ -80,26 +80,26 @@ func FetchViewNodeSwitchData(id int, db *sql.DB) (models.ViewNodeSwitchData, err
 }
 
 func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO ViewNodeSwitchData
-	(NodeId, ViewId, NodeSwitchId, Name)
-	VALUES (?, ?, ?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO viewnodeswitchdata
+	(nodeid, viewid, nodeswitchid, name)
+	VALUES ($1, $2, $3, $4) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create node switch data sql")
 		return err
 	}
 
-	result, err := stmt.Exec(item.NodeId,
+	lastInsertId := 0
+
+	err = stmt.QueryRow(item.NodeId,
 		item.ViewId,
 		item.NodeSwitchId,
-		item.Name)
+		item.Name).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating node switch data")
 		return err
 	}
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted view node sensor")
@@ -114,9 +114,9 @@ func CreateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error
 }
 
 func UpdateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE ViewNodeSwitchData
-	SET NodeId = ?, ViewId = ?, NodeSwitchId = ?, Name = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE viewnodeswitchdata
+	SET nodeid = $1, viewid = $2, nodeswitchid = $3, name = $4
+	WHERE id = $5`)
 
 	if err != nil {
 		log.Println("Error preparing update node switch data sql")
@@ -142,8 +142,8 @@ func UpdateViewNodeSwitchData(item *models.ViewNodeSwitchData, db *sql.DB) error
 }
 
 func DeleteViewNodeSwitchData(id int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM ViewNodeSwitchData
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM viewnodeswitchdata
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete node switch data sql")

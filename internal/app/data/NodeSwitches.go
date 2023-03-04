@@ -20,16 +20,16 @@ func VerifyNodeSwitchIdIsNew(nodeId int, db *sql.DB) (bool, error) {
 
 func FetchAllNodeSwitches(db *sql.DB) ([]viewModels.NodeSwitchVM, error) {
 	stmt, err := db.Prepare(`SELECT
-		ns.Id,
-		ns.NodeId,
-		ns.SwitchTypeId,
-		ns.Name,
-		ns.Pin,
-		ns.MomentaryPressDuration,
-		ns.IsClosedOn,
-		st.Name AS SwitchTypeName
-		FROM NodeSwitch AS ns
-		INNER JOIN SwitchType AS st ON st.Id = ns.SwitchTypeId`)
+		ns.id,
+		ns.nodeid,
+		ns.switchtypeid,
+		ns.name,
+		ns.pin,
+		ns.momentarypressduration,
+		ns.isclosedon,
+		st.name AS switchtypename
+		FROM nodeswitch AS ns
+		INNER JOIN switchtype AS st ON st.id = ns.switchtypeid`)
 	if err != nil {
 		log.Println("Error preparing all node switches sql")
 		return nil, err
@@ -72,13 +72,13 @@ func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
 	var nodeSwitch models.NodeSwitch
 
 	stmt, err := db.Prepare(`SELECT
-		Id,
-		NodeId,
-		SwitchTypeId,
-		Name,
-		Pin,
-		MomentaryPressDuration,
-		IsClosedOn FROM NodeSwitch WHERE id = ?`)
+		id,
+		nodeid,
+		switchtypeid,
+		name,
+		pin,
+		momentarypressduration,
+		isclosedon FROM nodeswitch WHERE id = $1`)
 	if err != nil {
 		log.Println("Error preparing fetch node switch sql")
 		return nodeSwitch, err
@@ -103,21 +103,23 @@ func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
 }
 
 func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO NodeSwitch
-	(NodeId, SwitchTypeId, Name, Pin, MomentaryPressDuration, IsClosedOn)
-	VALUES (?, ?, ?, ?, ?, ?)`)
+	stmt, err := db.Prepare(`INSERT INTO nodeswitch
+	(nodeid, switchtypeid, name, pin, momentarypressduration, isclosedon)
+	VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create node switch sql")
 		return err
 	}
 
-	result, err := stmt.Exec(&item.NodeId,
+	lastInsertId := 0
+
+	err = stmt.QueryRow(&item.NodeId,
 		&item.SwitchTypeId,
 		&item.Name,
 		&item.Pin,
 		&item.MomentaryPressDuration,
-		&item.IsClosedOn)
+		&item.IsClosedOn).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating node sensor")
@@ -125,8 +127,6 @@ func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	}
 
 	defer stmt.Close()
-
-	lastInsertId, err := result.LastInsertId()
 
 	if err != nil {
 		log.Println("Error getting the id of the inserted node sensor")
@@ -139,9 +139,9 @@ func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 }
 
 func UpdateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE NodeSwitch
-	SET NodeId = ?, SwitchTypeId = ?, Name = ?, Pin = ?, MomentaryPressDuration = ?, IsClosedOn = ?
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`UPDATE nodeswitch
+	SET nodeid = $1, switchtypeid = $2, name = $3, pin = $4, momentarypressduration = $5, isclosedon = $6
+	WHERE id = $7`)
 
 	if err != nil {
 		log.Println("Error preparing update node switch sql")
@@ -167,8 +167,8 @@ func UpdateNodeSwitch(nodeSwitch *models.NodeSwitch, db *sql.DB) error {
 }
 
 func DeleteNodeSwitch(nodeSwitchId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM NodeSwitch
-	WHERE id = ?`)
+	stmt, err := db.Prepare(`DELETE FROM nodeswitch
+	WHERE id = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete node switch sql")
@@ -188,8 +188,8 @@ func DeleteNodeSwitch(nodeSwitchId int, db *sql.DB) error {
 }
 
 func DeleteAllNodeSwitches(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM NodeSwitch
-	WHERE NodeId = ?`)
+	stmt, err := db.Prepare(`DELETE FROM nodeswitch
+	WHERE nodeid = $1`)
 
 	if err != nil {
 		log.Println("Error preparing delete node switch sql")

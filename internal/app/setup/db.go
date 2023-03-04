@@ -2,19 +2,24 @@ package setup
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
+	"github.com/ltruelove/gohome/config"
 )
 
 // Creates the database if it doesn't exist and then opens it. Checks if tables exist, and if not
 // creates them. Adds static data if it doesn't exist.
-func InitDb() *sql.DB {
+func InitDb(config config.Configuration) *sql.DB {
 	//open/create db
-	db, sqlErr := sql.Open("sqlite3", "gohomedb.s3db")
+	//psqlconn := fmt.Sprintf("postgres://%s:%s@%s/gohome?sslmode=disable", config.DbUser, config.DbPass, config.DbHost)
+	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.DbHost, config.DbPort, config.DbUser, config.DbPass, config.DbName)
+	db, sqlErr := sql.Open("postgres", psqlconn)
 	CheckErr(sqlErr)
 
-	checkTables(db)
+	db.Exec(`set search_path='public'`)
+	//checkTables(db)
 	// TODO make sure data is not duped
 	//populateStaticData(db)
 

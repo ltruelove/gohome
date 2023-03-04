@@ -8,8 +8,8 @@ import (
 )
 
 func FetchAllSwitchTypes(db *sql.DB) ([]models.SwitchType, error) {
-	stmt, err := db.Prepare(`SELECT Id, Name
-	FROM SwitchType`)
+	stmt, err := db.Prepare(`SELECT id, name
+	FROM switchtype`)
 	if err != nil {
 		log.Println("Error preparing fetch all switch types sql")
 		return nil, err
@@ -37,7 +37,7 @@ func FetchAllSwitchTypes(db *sql.DB) ([]models.SwitchType, error) {
 func FetchSwitchType(nodeSwitchTypeId int, db *sql.DB) (models.SwitchType, error) {
 	var nodeSwitch models.SwitchType
 
-	stmt, err := db.Prepare("SELECT Id, Name FROM SwitchType WHERE id = ?")
+	stmt, err := db.Prepare("SELECT id, name FROM switchtype WHERE id = $1")
 	if err != nil {
 		log.Println("Error preparing fetch switch type sql")
 		return nodeSwitch, err
