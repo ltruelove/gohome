@@ -19,7 +19,7 @@ var Config config.Configuration
 var version = "0.0.1"
 
 // @title GoHome API
-// @version 2.0
+// @version 0.0.1
 // @description API for managing GoHome Control Points and Nodes
 // @BasePath /
 func main() {
