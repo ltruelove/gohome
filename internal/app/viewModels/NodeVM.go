@@ -4,6 +4,7 @@ type NodeVM struct {
 	Id               int            `json:"Id"`
 	Name             string         `json:"Name"`
 	Mac              string         `json:"Mac"`
+	IpAddress        string         `json:"IpAddress"`
 	ControlPointId   int            `json:"controlPointId"`
 	ControlPointIP   string         `json:"controlPointIp"`
 	ControlPointName string         `json:"controlPointName"`

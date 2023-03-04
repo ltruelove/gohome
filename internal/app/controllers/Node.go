@@ -37,6 +37,8 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 	routing.AddRouteWithMethod("/node/switch/press/{id}", "POST", controller.PressNodeSwitch)
 	routing.AddRouteWithMethod("/node/update/{id}", "POST", controller.TriggerUpdate)
 	routing.AddRouteWithMethod("/node/reading", "POST", controller.LogNodeReading)
+	routing.AddRouteWithMethod("/node/ipUpdate", "POST", controller.UpdateNodeIp)
+	routing.AddRouteWithMethod("/node/updateMode/{id}", "POST", controller.EnterUpdateMode)
 }
 
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
@@ -678,4 +680,109 @@ func (controller *NodeController) TriggerRestart(writer http.ResponseWriter, req
 	}
 
 	writeResponse(writer, []byte("Trigger restart successful"))
+}
+
+func (controller *NodeController) UpdateNodeIp(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Update node IP request made")
+
+	decoder := json.NewDecoder(request.Body)
+	var item models.Node
+
+	err := decoder.Decode(&item)
+	if err != nil {
+		log.Printf("Error decoding the node data for IP update: %v", err)
+		http.Error(writer, "Error decoding the request", http.StatusBadRequest)
+		return
+	}
+
+	err = item.IsIpAddressValid()
+
+	if err != nil {
+		vError := fmt.Sprintf("Node IP Validation error: %v", err)
+		log.Println(vError)
+		http.Error(writer, vError, http.StatusBadRequest)
+		return
+	}
+
+	isNew, err := data.VerifyNodeIdIsNew(item.Id, controller.DB)
+
+	if err != nil {
+		log.Printf("Error checking node id for IP update: %v", err)
+		http.Error(writer, "Error checking id", http.StatusInternalServerError)
+		return
+	}
+
+	if isNew {
+		log.Printf("IP update: Node for id %d doesn't exist", item.Id)
+		http.Error(writer, "Node not found", http.StatusNotFound)
+		return
+	}
+
+	err = data.UpdateNodeIp(&item, controller.DB)
+
+	if err != nil {
+		log.Printf("Error updating a node IP address: %v", err)
+		http.Error(writer, "There was an error updating the record", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (controller *NodeController) EnterUpdateMode(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Update mode request initiated")
+
+	vars := mux.Vars(request)
+	id, err := strconv.Atoi(vars["id"])
+
+	if err != nil {
+		log.Println("Could not get node id")
+		http.Error(writer, "Could not resolve node id", http.StatusBadRequest)
+		return
+	}
+
+	decoder := json.NewDecoder(request.Body)
+	var pinRequest models.PinRequest
+
+	err = decoder.Decode(&pinRequest)
+
+	if err != nil {
+		log.Println("Could not decode pin for toggle request")
+		http.Error(writer, "Could not decode pin for toggle request", http.StatusBadRequest)
+		return
+	}
+
+	if !Config.ValidatePin(pinRequest.PinCode) {
+		log.Println("Invalid PIN used in toggle request")
+		http.Error(writer, "Invalid PIN given", http.StatusBadRequest)
+		return
+	}
+
+	node, err := data.FetchNode(id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get node")
+		http.Error(writer, "Could not resolve node", http.StatusBadRequest)
+		return
+	}
+
+	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+
+	if err != nil {
+		log.Println("Could not get control point by node")
+		http.Error(writer, "Could not resolve control point for node", http.StatusBadRequest)
+		return
+	}
+
+	url := fmt.Sprintf("http://%s/nodeUpdateMode?mac=%s",
+		nodeControlPoint.IpAddress, node.Mac)
+	log.Println(url)
+
+	_, err = http.Get(url)
+
+	if err != nil {
+		log.Println("Could not complete the update mode request." + err.Error())
+		http.Error(writer, "There was a error making the update mode request.", http.StatusInternalServerError)
+		return
+	}
+
+	writeResponse(writer, []byte("Update mode successful"))
 }

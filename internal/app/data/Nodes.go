@@ -24,6 +24,7 @@ func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
 	n.id,
 	n.name,
 	n.mac,
+	n.ipaddress,
 	cp.id AS controlpointid,
 	cp.ipaddress AS controlpointip,
 	cp.name AS controlpointname
@@ -50,6 +51,7 @@ func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
 		rows.Scan(&node.Id,
 			&node.Name,
 			&node.Mac,
+			&node.IpAddress,
 			&node.ControlPointId,
 			&node.ControlPointIP,
 			&node.ControlPointName)
@@ -78,6 +80,7 @@ func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 	n.id,
 	n.name,
 	n.mac,
+	n.ipaddress,
 	cp.id AS cpid,
 	cp.ipaddress AS ipaddress,
 	cp.name AS cpname
@@ -85,7 +88,7 @@ func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 	LEFT JOIN controlpointnodes AS cpn ON cpn.nodeid = n.id
 	LEFT JOIN controlpoint AS cp ON cp.id = cpn.controlpointid
 	WHERE n.id = $1`)
-	log.Println("fetching node")
+
 	setup.CheckErr(err)
 	defer stmt.Close()
 
@@ -94,6 +97,7 @@ func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 	err = stmt.QueryRow(nodeId).Scan(&node.Id,
 		&node.Name,
 		&node.Mac,
+		&node.IpAddress,
 		&node.ControlPointId,
 		&node.ControlPointIP,
 		&node.ControlPointName)
@@ -223,8 +227,8 @@ func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error
 
 func CreateNode(item *models.Node, db *sql.DB) error {
 	stmt, err := db.Prepare(`INSERT INTO node
-	(name, mac)
-	VALUES ($1, $2) RETURNING id`)
+	(name, mac, ipaddress)
+	VALUES ($1, $2, $3) RETURNING id`)
 
 	if err != nil {
 		log.Println("Error preparing create node sql")
@@ -234,7 +238,8 @@ func CreateNode(item *models.Node, db *sql.DB) error {
 	lastInsertId := 0
 
 	err = stmt.QueryRow(&item.Name,
-		&item.Mac).Scan(&lastInsertId)
+		&item.Mac,
+		&item.IpAddress).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating node")
@@ -265,6 +270,29 @@ func UpdateNode(node *models.Node, db *sql.DB) error {
 
 	_, err = stmt.Exec(&node.Name,
 		&node.Mac,
+		&node.Id)
+
+	if err != nil {
+		log.Println("Error updating node")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func UpdateNodeIp(node *models.Node, db *sql.DB) error {
+	stmt, err := db.Prepare(`UPDATE node
+	set ipaddress = $1
+	WHERE id = $2`)
+
+	if err != nil {
+		log.Println("Error preparing update node sql")
+		return err
+	}
+
+	_, err = stmt.Exec(&node.IpAddress,
 		&node.Id)
 
 	if err != nil {

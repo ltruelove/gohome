@@ -15,6 +15,30 @@ type Node struct {
 	Name string `json:"Name"`
 	// The MAC address of the Node
 	Mac string `json:"Mac"`
+	// The IP address of the Node
+	IpAddress string `json:"IpAddress"`
+}
+
+func (item *Node) IsIpAddressValid() error {
+	var isValid = true
+	var validationMessage = ""
+	var err error = nil
+
+	if strings.TrimSpace(item.IpAddress) == "" {
+		if len(validationMessage) > 0 {
+			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "IpAddress cannot be empty")
+		} else {
+			validationMessage = fmt.Sprintf("%s", "IpAddress cannot be empty")
+		}
+		isValid = false
+	}
+
+	if !isValid {
+		log.Println(validationMessage)
+		err = errors.New(validationMessage)
+	}
+
+	return err
 }
 
 func (item *Node) IsValid(checkId bool) error {
