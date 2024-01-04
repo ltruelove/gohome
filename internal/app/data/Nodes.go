@@ -75,6 +75,34 @@ func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
 	return nodes, nil
 }
 
+func FetchIndividualNode(nodeId int, db *sql.DB) (models.Node, error) {
+	stmt, err := db.Prepare(`SELECT
+	n.id,
+	n.name,
+	n.mac,
+	n.ipaddress
+	FROM node AS n
+	WHERE n.id = $1`)
+
+	setup.CheckErr(err)
+	defer stmt.Close()
+
+	var node models.Node
+
+	err = stmt.QueryRow(nodeId).Scan(&node.Id,
+		&node.Name,
+		&node.Mac,
+		&node.IpAddress)
+
+	if err != nil {
+		log.Println(err)
+		return node, err
+	}
+	log.Println("node found")
+
+	return node, nil
+}
+
 func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
 	stmt, err := db.Prepare(`SELECT
 	n.id,
@@ -305,40 +333,126 @@ func UpdateNodeIp(node *models.Node, db *sql.DB) error {
 	return nil
 }
 
-func DeleteNode(nodeId int, db *sql.DB) error {
-	err := DeleteControlPointNodeByNodeId(nodeId, db)
+func DeleteNodeTempLogs(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM templog
+		WHERE nodesensorlogid IN (
+			SELECT id from nodesensorlog WHERE nodeid = $1
+		)`)
 
 	if err != nil {
-		log.Printf("Error deleting the control point node: %v", err)
-	}
-
-	err = DeleteAllNodeSensors(nodeId, db)
-
-	if err != nil {
-		log.Printf("Error deleting the node sensors: %v", err)
-	}
-
-	err = DeleteAllNodeSwitches(nodeId, db)
-
-	if err != nil {
-		log.Printf("Error deleting the node switches: %v", err)
-	}
-
-	stmt, err := db.Prepare(`DELETE FROM Node WHERE id = ?;`)
-
-	if err != nil {
-		log.Println("Error preparing delete node sql")
+		log.Println("Error preparing delete node tempLog data sql")
 		return err
 	}
 
 	_, err = stmt.Exec(nodeId)
 
 	if err != nil {
-		log.Println("Error deleting node")
+		log.Println("Error removing the node temp logs")
 		return err
 	}
 
 	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteNodeResistorLogs(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM resistorlog
+		WHERE nodesensorlogid IN (
+			SELECT id from nodesensorlog WHERE nodeid = $1
+		)`)
+
+	if err != nil {
+		log.Println("Error preparing delete node resistor log data sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error removing the node resistor logs")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteNodeMoistureLogs(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM moisturelog
+		WHERE nodesensorlogid IN (
+			SELECT id from nodesensorlog WHERE nodeid = $1
+		)`)
+
+	if err != nil {
+		log.Println("Error preparing delete node moisture log data sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error removing the node moisture logs")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteNodeMagneticLogs(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM magneticlog
+		WHERE nodesensorlogid IN (
+			SELECT id from nodesensorlog WHERE nodeid = $1
+		)`)
+
+	if err != nil {
+		log.Println("Error preparing delete node magnetic log data sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error removing the node magnetic logs")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteNodeLogs(nodeId int, db *sql.DB) error {
+	stmt, err := db.Prepare(`DELETE FROM nodesensorlog
+	WHERE nodeid = $1`)
+
+	if err != nil {
+		log.Println("Error preparing delete node sensor log data sql")
+		return err
+	}
+
+	_, err = stmt.Exec(nodeId)
+
+	if err != nil {
+		log.Println("Error removing the node logs")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func DeleteNode(nodeId int, db *sql.DB) error {
+	_, err := db.Exec(`CALL deletenode($1)`, nodeId)
+
+	if err != nil {
+		log.Println("Error deleting node")
+		return err
+	}
 
 	return nil
 }
