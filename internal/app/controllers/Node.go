@@ -203,7 +203,7 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 	}
 
 	// need to fetch the record before deleting it so it can be used later
-	node, err := data.FetchNode(id, controller.DB)
+	node, err := data.FetchIndividualNode(id, controller.DB)
 
 	if err != nil {
 		log.Println("Could not find node")

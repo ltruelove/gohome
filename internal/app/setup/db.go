@@ -19,11 +19,19 @@ func InitDb(config config.Configuration) *sql.DB {
 	CheckErr(sqlErr)
 
 	db.Exec(`set search_path='public'`)
+	createProcs(db)
 	//checkTables(db)
 	// TODO make sure data is not duped
 	//populateStaticData(db)
 
 	return db
+}
+
+func createProcs(db *sql.DB) {
+	log.Println("Creating db stored procedures if they don't exist")
+	_, err := db.Exec(CreateProcs)
+
+	CheckErr(err)
 }
 
 func checkTables(db *sql.DB) {
@@ -43,6 +51,6 @@ func populateStaticData(db *sql.DB) {
 func CheckErr(err error) {
 	if err != nil {
 		log.Println(err)
-		//panic(err)
+		panic(err)
 	}
 }

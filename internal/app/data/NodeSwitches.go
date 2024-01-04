@@ -113,16 +113,20 @@ func CreateNodeSwitch(item *models.NodeSwitch, db *sql.DB) error {
 	}
 
 	lastInsertId := 0
+	isClosedOnInt := 0
+	if item.IsClosedOn {
+		isClosedOnInt = 1
+	}
 
 	err = stmt.QueryRow(&item.NodeId,
 		&item.SwitchTypeId,
 		&item.Name,
 		&item.Pin,
 		&item.MomentaryPressDuration,
-		&item.IsClosedOn).Scan(&lastInsertId)
+		&isClosedOnInt).Scan(&lastInsertId)
 
 	if err != nil {
-		log.Println("Error creating node sensor")
+		log.Println("Error creating node switch")
 		return err
 	}
 
