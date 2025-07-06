@@ -14,8 +14,9 @@ import (
 )
 
 type SensorTypeController struct {
-	DB       *sql.DB
-	AllTypes []models.SensorType
+	DB             *sql.DB
+	SensorTypeData data.SensorTypeData
+	AllTypes       []models.SensorType
 }
 
 func (controller *SensorTypeController) RegisterSensorTypeEndpoints() {
@@ -31,7 +32,7 @@ func (controller *SensorTypeController) GetAll(writer http.ResponseWriter, reque
 
 	if len(controller.AllTypes) == 0 {
 		var fetchErr error
-		controller.AllTypes, fetchErr = data.FetchAllSensorTypes(controller.DB)
+		controller.AllTypes, fetchErr = controller.SensorTypeData.FetchAllSensorTypes(controller.DB)
 
 		if fetchErr != nil {
 			log.Printf("Error fetching sensor types from the db: %v", fetchErr)
@@ -64,7 +65,7 @@ func (controller *SensorTypeController) GetById(writer http.ResponseWriter, requ
 
 	log.Printf("Fetch sensor type by id: %d", id)
 
-	item, err := data.FetchSensorType(id, controller.DB)
+	item, err := controller.SensorTypeData.FetchSensorType(id, controller.DB)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting sensor type: %v", err)
@@ -99,7 +100,7 @@ func (controller *SensorTypeController) DataById(writer http.ResponseWriter, req
 
 	log.Printf("Fetch all sensor type data for a sensor with the id: %d", id)
 
-	item, err := data.FetchSensorTypeData(id, controller.DB)
+	item, err := controller.SensorTypeData.FetchSensorTypeData(id, controller.DB)
 
 	if err != nil {
 		if err != sql.ErrNoRows {

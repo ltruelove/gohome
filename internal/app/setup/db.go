@@ -11,7 +11,7 @@ import (
 
 // Creates the database if it doesn't exist and then opens it. Checks if tables exist, and if not
 // creates them. Adds static data if it doesn't exist.
-func InitDb(config config.Configuration) *sql.DB {
+func InitPostgresDb(config config.Configuration) *sql.DB {
 	//open/create db
 	//psqlconn := fmt.Sprintf("postgres://%s:%s@%s/gohome?sslmode=disable", config.DbUser, config.DbPass, config.DbHost)
 	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.DbHost, config.DbPort, config.DbUser, config.DbPass, config.DbName)
@@ -46,11 +46,4 @@ func populateStaticData(db *sql.DB) {
 	_, err := db.Exec(StaticData)
 
 	CheckErr(err)
-}
-
-func CheckErr(err error) {
-	if err != nil {
-		log.Println(err)
-		panic(err)
-	}
 }

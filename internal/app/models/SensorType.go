@@ -1,6 +1,6 @@
 package models
 
 type SensorType struct {
-	Id   int    `json:"Id"`
-	Name string `json:"Name"`
+	Id       int    `json:"Id"`
+	TypeName string `json:"TypeName"`
 }

@@ -7,9 +7,12 @@ import (
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
-func FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
-	stmt, err := db.Prepare(`SELECT Id, Name
-	FROM SensorType`)
+type SensorTypeData struct {
+	Statements Statements
+}
+
+func (sensorTypes *SensorTypeData) FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
+	stmt, err := db.Prepare(sensorTypes.Statements.SelectAllSensorTypes())
 	if err != nil {
 		log.Println("Error preparing all sensor types sql")
 		return nil, err
@@ -26,7 +29,7 @@ func FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
 	for rows.Next() {
 		var sensor models.SensorType
 		rows.Scan(&sensor.Id,
-			&sensor.Name)
+			&sensor.TypeName)
 		sensors = append(sensors, sensor)
 	}
 	defer stmt.Close()
@@ -34,10 +37,10 @@ func FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
 	return sensors, nil
 }
 
-func FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
+func (sensorTypes *SensorTypeData) FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
 	var sensor models.SensorType
 
-	stmt, err := db.Prepare("SELECT id, name FROM sensortype WHERE id = $1")
+	stmt, err := db.Prepare(sensorTypes.Statements.SelectSensorTypeById())
 	if err != nil {
 		log.Println("Error preparing the fetch sensor type sql")
 		return sensor, err
@@ -45,7 +48,7 @@ func FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
 	defer stmt.Close()
 
 	err = stmt.QueryRow(sensorTypeId).Scan(&sensor.Id,
-		&sensor.Name)
+		&sensor.TypeName)
 
 	if err != nil {
 		log.Println("Error querying for the sensor type")
@@ -55,13 +58,8 @@ func FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
 	return sensor, nil
 }
 
-func FetchSensorTypeData(sensorTypeId int, db *sql.DB) ([]models.SensorTypeData, error) {
-	stmt, err := db.Prepare(`SELECT
-		id, 
-		name, 
-		valuetype 
-		FROM sensortypedata 
-		WHERE sensortypeid = $1`)
+func (sensorTypes *SensorTypeData) FetchSensorTypeData(sensorTypeId int, db *sql.DB) ([]models.SensorTypeData, error) {
+	stmt, err := db.Prepare(sensorTypes.Statements.SelectSensorTypeData())
 	if err != nil {
 		log.Println("Error preparing the fetch sensor type data sql")
 		return nil, err

@@ -14,6 +14,7 @@ type Configuration struct {
 	DbUser  string `json:"dbuser"`
 	DbPass  string `json:"dbpass"`
 	DbName  string `json:"dbname"`
+	DbType  string `json:"dbtype"`
 }
 
 func (c Configuration) ValidatePin(pin string) bool {
