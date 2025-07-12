@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
@@ -17,6 +18,13 @@ type SensorTypeController struct {
 	DB             *sql.DB
 	SensorTypeData data.SensorTypeData
 	AllTypes       []models.SensorType
+}
+
+func NewSensorTypeController(db *sql.DB, config *config.Configuration) *SensorTypeController {
+	return &SensorTypeController{
+		SensorTypeData: *data.NewSensorTypeData(config),
+	}
+
 }
 
 func (controller *SensorTypeController) RegisterSensorTypeEndpoints() {

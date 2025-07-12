@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/controllers"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/setup"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -59,7 +58,8 @@ func main() {
 	db := setup.InitDb(Config)
 
 	viewController := controllers.ViewController{DB: db}
-	sensorTypeController := controllers.SensorTypeController{DB: db, SensorTypeData: data.SensorTypeData{Statements: data.Statements{DbType: Config.DbType}}}
+	sensorTypeController := controllers.NewSensorTypeController(db, &Config)
+	//sensorTypeController := controllers.SensorTypeController{DB: db, SensorTypeData: data.SensorTypeData{Statements: data.Statements{DbType: Config.DbType}}}
 	switchTypeController := controllers.SwitchTypeController{DB: db}
 	nodeController := controllers.NodeController{DB: db}
 	controlPointController := controllers.ControlPointController{DB: db}

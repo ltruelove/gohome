@@ -1,10 +1,16 @@
 package data
 
-type Statements struct {
+import "github.com/ltruelove/gohome/config"
+
+type SensorTypeStatements struct {
 	DbType string
 }
 
-func (statements *Statements) SelectAllSensorTypes() string {
+func NewSensorTypeStatements(config *config.Configuration) *SensorTypeStatements {
+	return &SensorTypeStatements{DbType: config.DbType}
+}
+
+func (statements *SensorTypeStatements) SelectAllSensorTypes() string {
 	if statements.DbType == "mysql" {
 		return "SELECT Id, TypeName FROM SensorType"
 	} else {
@@ -13,7 +19,7 @@ func (statements *Statements) SelectAllSensorTypes() string {
 
 }
 
-func (statements *Statements) SelectSensorTypeById() string {
+func (statements *SensorTypeStatements) SelectSensorTypeById() string {
 	if statements.DbType == "mysql" {
 		return "SELECT Id, TypeName FROM SensorType WHERE Id = ?"
 	} else {
@@ -21,7 +27,7 @@ func (statements *Statements) SelectSensorTypeById() string {
 	}
 }
 
-func (statements *Statements) SelectSensorTypeData() string {
+func (statements *SensorTypeStatements) SelectSensorTypeData() string {
 	if statements.DbType == "mysql" {
 		return `SELECT
 		Id, 

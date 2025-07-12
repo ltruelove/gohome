@@ -4,11 +4,18 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
 type SensorTypeData struct {
-	Statements Statements
+	Statements SensorTypeStatements
+}
+
+func NewSensorTypeData(config *config.Configuration) *SensorTypeData {
+	return &SensorTypeData{
+		Statements: *NewSensorTypeStatements(config),
+	}
 }
 
 func (sensorTypes *SensorTypeData) FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
