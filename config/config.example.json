@@ -7,5 +7,6 @@
     "dbport" : 5432,
     "dbuser" : "username",
     "dbpass" : "password",
-    "dbname" : "gohome"
+    "dbname" : "gohome",
+    "dbtype" : "mysql"
 }
