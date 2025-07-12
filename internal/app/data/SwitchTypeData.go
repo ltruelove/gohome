@@ -4,12 +4,24 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
-func FetchAllSwitchTypes(db *sql.DB) ([]models.SwitchType, error) {
-	stmt, err := db.Prepare(`SELECT id, name
-	FROM switchtype`)
+type SwitchTypeData struct {
+	DB         *sql.DB
+	Statements *SwitchTypeStatements
+}
+
+func NewSwitchTypeData(db *sql.DB, config *config.Configuration) *SwitchTypeData {
+	return &SwitchTypeData{
+		DB:         db,
+		Statements: NewSwitchTypeStatements(config),
+	}
+}
+
+func (switchType *SwitchTypeData) FetchAllSwitchTypes() ([]models.SwitchType, error) {
+	stmt, err := switchType.DB.Prepare(switchType.Statements.SelectAllSwitchTypes())
 	if err != nil {
 		log.Println("Error preparing fetch all switch types sql")
 		return nil, err
@@ -34,10 +46,10 @@ func FetchAllSwitchTypes(db *sql.DB) ([]models.SwitchType, error) {
 	return nodeSwitches, nil
 }
 
-func FetchSwitchType(nodeSwitchTypeId int, db *sql.DB) (models.SwitchType, error) {
+func (switchType *SwitchTypeData) FetchSwitchType(nodeSwitchTypeId int) (models.SwitchType, error) {
 	var nodeSwitch models.SwitchType
 
-	stmt, err := db.Prepare("SELECT id, name FROM switchtype WHERE id = $1")
+	stmt, err := switchType.DB.Prepare(switchType.Statements.SelectSwitchTypeById())
 	if err != nil {
 		log.Println("Error preparing fetch switch type sql")
 		return nodeSwitch, err

@@ -8,14 +8,19 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
-	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type SwitchTypeController struct {
-	DB       *sql.DB
-	AllTypes []models.SwitchType
+	SwitchTypeData *data.SwitchTypeData
+}
+
+func NewSwitchTypeController(db *sql.DB, config *config.Configuration) *SwitchTypeController {
+	return &SwitchTypeController{
+		SwitchTypeData: data.NewSwitchTypeData(db, config),
+	}
 }
 
 func (controller *SwitchTypeController) RegisterSwitchTypeEndpoints() {
@@ -28,25 +33,22 @@ func (controller *SwitchTypeController) GetAll(writer http.ResponseWriter, reque
 
 	log.Println("Fetch all switch types")
 
-	if len(controller.AllTypes) == 0 {
-		var fetchErr error
-		controller.AllTypes, fetchErr = data.FetchAllSwitchTypes(controller.DB)
+	allTypes, fetchErr := controller.SwitchTypeData.FetchAllSwitchTypes()
 
-		if fetchErr != nil {
-			log.Printf("Error fetching switch types from the db: %v", fetchErr)
-			http.Error(writer, "Data error", http.StatusInternalServerError)
-			return
-		}
+	if fetchErr != nil {
+		log.Printf("Error fetching switch types from the db: %v", fetchErr)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
 	}
 
-	result, err := json.Marshal(controller.AllTypes)
+	result, err := json.Marshal(allTypes)
 	if err != nil {
 		log.Printf("An error occurred marshalling switch data: %v", err)
 		http.Error(writer, "Data error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("%d switch types found", len(controller.AllTypes))
+	log.Printf("%d switch types found", len(allTypes))
 	writeResponse(writer, result)
 }
 
@@ -63,7 +65,7 @@ func (controller *SwitchTypeController) GetById(writer http.ResponseWriter, requ
 
 	log.Printf("Fetch switch type by id: %d", id)
 
-	item, err := data.FetchSwitchType(id, controller.DB)
+	item, err := controller.SwitchTypeData.FetchSwitchType(id)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting switch type: %v", err)

@@ -9,17 +9,19 @@ import (
 )
 
 type SensorTypeData struct {
-	Statements SensorTypeStatements
+	DB         *sql.DB
+	Statements *SensorTypeStatements
 }
 
-func NewSensorTypeData(config *config.Configuration) *SensorTypeData {
+func NewSensorTypeData(db *sql.DB, config *config.Configuration) *SensorTypeData {
 	return &SensorTypeData{
-		Statements: *NewSensorTypeStatements(config),
+		DB:         db,
+		Statements: NewSensorTypeStatements(config),
 	}
 }
 
-func (sensorTypes *SensorTypeData) FetchAllSensorTypes(db *sql.DB) ([]models.SensorType, error) {
-	stmt, err := db.Prepare(sensorTypes.Statements.SelectAllSensorTypes())
+func (sensorTypes *SensorTypeData) FetchAllSensorTypes() ([]models.SensorType, error) {
+	stmt, err := sensorTypes.DB.Prepare(sensorTypes.Statements.SelectAllSensorTypes())
 	if err != nil {
 		log.Println("Error preparing all sensor types sql")
 		return nil, err
@@ -44,10 +46,10 @@ func (sensorTypes *SensorTypeData) FetchAllSensorTypes(db *sql.DB) ([]models.Sen
 	return sensors, nil
 }
 
-func (sensorTypes *SensorTypeData) FetchSensorType(sensorTypeId int, db *sql.DB) (models.SensorType, error) {
+func (sensorTypes *SensorTypeData) FetchSensorType(sensorTypeId int) (models.SensorType, error) {
 	var sensor models.SensorType
 
-	stmt, err := db.Prepare(sensorTypes.Statements.SelectSensorTypeById())
+	stmt, err := sensorTypes.DB.Prepare(sensorTypes.Statements.SelectSensorTypeById())
 	if err != nil {
 		log.Println("Error preparing the fetch sensor type sql")
 		return sensor, err
@@ -65,8 +67,8 @@ func (sensorTypes *SensorTypeData) FetchSensorType(sensorTypeId int, db *sql.DB)
 	return sensor, nil
 }
 
-func (sensorTypes *SensorTypeData) FetchSensorTypeData(sensorTypeId int, db *sql.DB) ([]models.SensorTypeData, error) {
-	stmt, err := db.Prepare(sensorTypes.Statements.SelectSensorTypeData())
+func (sensorTypes *SensorTypeData) FetchSensorTypeData(sensorTypeId int) ([]models.SensorTypeData, error) {
+	stmt, err := sensorTypes.DB.Prepare(sensorTypes.Statements.SelectSensorTypeData())
 	if err != nil {
 		log.Println("Error preparing the fetch sensor type data sql")
 		return nil, err

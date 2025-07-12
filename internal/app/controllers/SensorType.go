@@ -10,19 +10,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
-	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type SensorTypeController struct {
-	DB             *sql.DB
-	SensorTypeData data.SensorTypeData
-	AllTypes       []models.SensorType
+	SensorTypeData *data.SensorTypeData
 }
 
 func NewSensorTypeController(db *sql.DB, config *config.Configuration) *SensorTypeController {
 	return &SensorTypeController{
-		SensorTypeData: *data.NewSensorTypeData(config),
+		SensorTypeData: data.NewSensorTypeData(db, config),
 	}
 
 }
@@ -38,25 +35,22 @@ func (controller *SensorTypeController) GetAll(writer http.ResponseWriter, reque
 
 	log.Println("Fetch all sensor types")
 
-	if len(controller.AllTypes) == 0 {
-		var fetchErr error
-		controller.AllTypes, fetchErr = controller.SensorTypeData.FetchAllSensorTypes(controller.DB)
+	allTypes, fetchErr := controller.SensorTypeData.FetchAllSensorTypes()
 
-		if fetchErr != nil {
-			log.Printf("Error fetching sensor types from the db: %v", fetchErr)
-			http.Error(writer, "Data error", http.StatusInternalServerError)
-			return
-		}
+	if fetchErr != nil {
+		log.Printf("Error fetching sensor types from the db: %v", fetchErr)
+		http.Error(writer, "Data error", http.StatusInternalServerError)
+		return
 	}
 
-	result, err := json.Marshal(controller.AllTypes)
+	result, err := json.Marshal(allTypes)
 	if err != nil {
 		log.Printf("An error occurred marshalling sensor data: %v", err)
 		http.Error(writer, "Data error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("%d sensor types found", len(controller.AllTypes))
+	log.Printf("%d sensor types found", len(allTypes))
 	writeResponse(writer, result)
 }
 
@@ -73,7 +67,7 @@ func (controller *SensorTypeController) GetById(writer http.ResponseWriter, requ
 
 	log.Printf("Fetch sensor type by id: %d", id)
 
-	item, err := controller.SensorTypeData.FetchSensorType(id, controller.DB)
+	item, err := controller.SensorTypeData.FetchSensorType(id)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting sensor type: %v", err)
@@ -108,7 +102,7 @@ func (controller *SensorTypeController) DataById(writer http.ResponseWriter, req
 
 	log.Printf("Fetch all sensor type data for a sensor with the id: %d", id)
 
-	item, err := controller.SensorTypeData.FetchSensorTypeData(id, controller.DB)
+	item, err := controller.SensorTypeData.FetchSensorTypeData(id)
 
 	if err != nil {
 		if err != sql.ErrNoRows {

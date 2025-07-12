@@ -59,8 +59,7 @@ func main() {
 
 	viewController := controllers.ViewController{DB: db}
 	sensorTypeController := controllers.NewSensorTypeController(db, &Config)
-	//sensorTypeController := controllers.SensorTypeController{DB: db, SensorTypeData: data.SensorTypeData{Statements: data.Statements{DbType: Config.DbType}}}
-	switchTypeController := controllers.SwitchTypeController{DB: db}
+	switchTypeController := controllers.NewSwitchTypeController(db, &Config)
 	nodeController := controllers.NodeController{DB: db}
 	controlPointController := controllers.ControlPointController{DB: db}
 	switchController := controllers.NodeSwitchController{DB: db}
