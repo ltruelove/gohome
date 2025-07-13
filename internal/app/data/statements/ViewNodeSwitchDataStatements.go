@@ -118,7 +118,7 @@ func (statements *ViewNodeSwitchDataStatements) Insert() string {
 	if statements.DbType == "mysql" {
 		return `INSERT INTO ViewNodeSwitchData
 			(NodeId, ViewId, NodeSwitchId, Name)
-			VALUES (?, ?, ?, ?) RETURNING Id`
+			VALUES (?, ?, ?, ?); SELECT LAST_INSERT_ID();`
 	} else {
 		return `INSERT INTO viewnodesensordata
 			(nodeid, viewid, nodesensorid, name)
@@ -163,5 +163,15 @@ func (statements *ViewNodeSwitchDataStatements) DeleteAll() string {
 		return `DELETE FROM ViewNodeSwitchData`
 	} else {
 		return `DELETE FROM viewnodesensordata`
+	}
+}
+
+func (statements *ViewNodeSwitchDataStatements) DeleteBySecondParentId() string {
+	if statements.DbType == "mysql" {
+		return `DELETE FROM ViewNodeSwitchData
+			WHERE ViewId = ?`
+	} else {
+		return `DELETE FROM viewnodesensordata
+			WHERE viewid = $1`
 	}
 }

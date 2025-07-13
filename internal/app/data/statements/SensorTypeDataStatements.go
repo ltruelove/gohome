@@ -40,9 +40,9 @@ func (statements *SensorTypeDataStatements) SelectBySecondParentId() string {
 
 func (statements *SensorTypeDataStatements) Insert() string {
 	if statements.DbType == "mysql" {
-		return `INSERT INTO SensorTypeData (SensorTypeId, TypeName, ValueType) VALUES (?, ?, ?)`
+		return `INSERT INTO SensorTypeData (SensorTypeId, TypeName, ValueType) VALUES (?, ?, ?); SELECT LAST_INSERT_ID();`
 	} else {
-		return `INSERT INTO sensortypedata (sensortypeid, name, valuetype) VALUES ($1, $2, $3)`
+		return `INSERT INTO sensortypedata (sensortypeid, name, valuetype) VALUES ($1, $2, $3) RETURNING id`
 	}
 }
 
@@ -76,4 +76,8 @@ func (statements *SensorTypeDataStatements) DeleteAll() string {
 	} else {
 		return `DELETE FROM sensortypedata`
 	}
+}
+
+func (statements *SensorTypeDataStatements) DeleteBySecondParentId() string {
+	return "SensorType does not support second parent ID deletion"
 }

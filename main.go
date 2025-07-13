@@ -57,7 +57,7 @@ func main() {
 	log.Printf("setting up db for %s", Config.DbType)
 	db := setup.InitDb(Config)
 
-	viewController := controllers.ViewController{DB: db}
+	viewController := controllers.NewViewController(db, &Config)
 	sensorTypeController := controllers.NewSensorTypeController(db, &Config)
 	switchTypeController := controllers.NewSwitchTypeController(db, &Config)
 	nodeController := controllers.NodeController{DB: db}

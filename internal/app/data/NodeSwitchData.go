@@ -95,6 +95,7 @@ func (d NodeSwitchData) SelectById(id int) (models.Model, error) {
 	return nodeSwitch, nil
 }
 
+// SelectByParentId retrieves NodeSwitch records by NodeId
 func (d NodeSwitchData) SelectByParentId(id int) ([]models.Model, error) {
 	stmt, err := d.DB().Prepare(d.Stmt().SelectByParentId())
 	if err != nil {
@@ -107,6 +108,45 @@ func (d NodeSwitchData) SelectByParentId(id int) ([]models.Model, error) {
 	rows, err := stmt.Query(id)
 	if err != nil {
 		log.Println("Error querying for node switches by parent id")
+		return nil, err
+	}
+	defer stmt.Close()
+
+	for rows.Next() {
+		var nodeSwitch models.NodeSwitch
+
+		err := rows.Scan(&nodeSwitch.Id,
+			&nodeSwitch.NodeId,
+			&nodeSwitch.SwitchTypeId,
+			&nodeSwitch.Name,
+			&nodeSwitch.Pin,
+			&nodeSwitch.MomentaryPressDuration,
+			&nodeSwitch.IsClosedOn)
+
+		if err != nil {
+			log.Println("Error scanning node switch")
+			return nil, err
+		}
+
+		nodeSwitches = append(nodeSwitches, nodeSwitch)
+	}
+
+	return nodeSwitches, nil
+}
+
+// SelectBySecondParentId retrieves NodeSwitch records by SwitchTypeId
+func (d NodeSwitchData) SelectBySecondParentId(id int) ([]models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectBySecondParentId())
+	if err != nil {
+		log.Println("Error preparing fetch node switches by second parent id sql")
+		return nil, err
+	}
+
+	var nodeSwitches []models.Model
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Println("Error querying for node switches by second parent id")
 		return nil, err
 	}
 	defer stmt.Close()
@@ -248,6 +288,24 @@ func (d NodeSwitchData) DeleteByParentId(id int) error {
 	_, err = stmt.Exec(id)
 	if err != nil {
 		log.Println("Error deleting node switches by parent id")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func (d NodeSwitchData) DeleteBySecondParentId(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteBySecondParentId())
+	if err != nil {
+		log.Println("Error preparing delete node switches by second parent id sql")
+		return err
+	}
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println("Error deleting node switches by second parent id")
 		return err
 	}
 

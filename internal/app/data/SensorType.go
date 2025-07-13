@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/ltruelove/gohome/config"
@@ -77,10 +78,11 @@ func (d *SensorType) SelectById(id int) (models.Model, error) {
 }
 
 func (d *SensorType) SelectByParentId(id int) ([]models.Model, error) {
-	log.Println("No parent exists for sensor types, returning empty slice")
-	var sensorData []models.Model
+	return nil, errors.New("no parent exists for sensor types")
+}
 
-	return sensorData, nil
+func (d *SensorType) SelectBySecondParentId(id int) ([]models.Model, error) {
+	return nil, errors.New("no second parent exists for sensor types")
 }
 
 func (d *SensorType) Insert(data models.Model) (models.Model, error) {
@@ -172,5 +174,10 @@ func (d *SensorType) DeleteAll() error {
 
 func (d *SensorType) DeleteByParentId(id int) error {
 	log.Println("No parent exists for sensor types, nothing to delete")
+	return nil
+}
+
+func (d *SensorType) DeleteBySecondParentId(id int) error {
+	log.Println("No second parent exists for sensor types, nothing to delete")
 	return nil
 }

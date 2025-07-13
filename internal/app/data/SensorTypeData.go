@@ -15,7 +15,7 @@ type SensorTypeData struct {
 	stmt statements.CrudStatement
 }
 
-func NewSensorTypeData(db *sql.DB, config *config.Configuration) *SensorTypeData {
+func NewSensorTypeData(db *sql.DB, config *config.Configuration) CrudDataInterface {
 	return &SensorTypeData{
 		db:   db,
 		stmt: statements.NewSensorTypeDataStatements(config),
@@ -86,32 +86,37 @@ func (d *SensorTypeData) SelectById(id int) (models.Model, error) {
 func (d *SensorTypeData) SelectByParentId(id int) ([]models.Model, error) {
 	stmt, err := d.DB().Prepare(d.Stmt().SelectByParentId())
 	if err != nil {
-		log.Printf("Error preparing SelectByParentId statement: %v", err)
+		log.Println("Error preparing SelectByParentId statement")
 		return nil, err
 	}
 	defer stmt.Close()
 
+	var sensorTypes []models.Model
 	rows, err := stmt.Query(id)
 	if err != nil {
-		log.Printf("Error executing SelectByParentId query: %v", err)
+		log.Println("Error querying for sensor types by parent ID")
 		return nil, err
 	}
 	defer rows.Close()
 
-	var sensorData []models.Model
 	for rows.Next() {
-		var sensor models.SensorTypeData
-		sensor.SensorTypeId = id
-
-		err := rows.Scan(&sensor.Id, &sensor.SensorTypeId, &sensor.Name, &sensor.ValueType)
+		var sensorType models.SensorTypeData
+		err = rows.Scan(&sensorType.Id,
+			&sensorType.SensorTypeId,
+			&sensorType.Name,
+			&sensorType.ValueType)
 		if err != nil {
-			log.Printf("Error scanning row: %v", err)
-			continue
+			log.Println("Error scanning row for sensor type data")
+			return nil, err
 		}
-		sensorData = append(sensorData, sensor)
+		sensorTypes = append(sensorTypes, sensorType)
 	}
 
-	return sensorData, nil
+	return sensorTypes, nil
+}
+
+func (d *SensorTypeData) SelectBySecondParentId(id int) ([]models.Model, error) {
+	return nil, errors.New("SelectBySecondParentId not implemented for SensorTypeData")
 }
 
 func (d *SensorTypeData) Insert(data models.Model) (models.Model, error) {
@@ -216,4 +221,8 @@ func (d *SensorTypeData) DeleteAll() error {
 	}
 
 	return nil
+}
+
+func (d *SensorTypeData) DeleteBySecondParentId(id int) error {
+	return errors.New("no second parent exists for sensor types, nothing to delete")
 }

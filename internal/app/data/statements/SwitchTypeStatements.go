@@ -51,9 +51,9 @@ func (statements *SwitchTypeStatements) SelectBySecondParentId() string {
 
 func (statements *SwitchTypeStatements) Insert() string {
 	if statements.DbType == "mysql" {
-		return "INSERT INTO SwitchType (TypeName) VALUES (?)"
+		return "INSERT INTO SwitchType (TypeName) VALUES (?); SELECT LAST_INSERT_ID();"
 	} else {
-		return "INSERT INTO switchtype (name) VALUES ($1)"
+		return "INSERT INTO switchtype (name) VALUES ($1) RETURNING id"
 	}
 }
 
@@ -87,4 +87,8 @@ func (statements *SwitchTypeStatements) DeleteAll() string {
 	} else {
 		return "DELETE FROM switchtype"
 	}
+}
+
+func (statements *SwitchTypeStatements) DeleteBySecondParentId() string {
+	return "Not implemented for SwitchTypeStatements"
 }

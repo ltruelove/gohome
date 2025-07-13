@@ -139,7 +139,7 @@ func (statements *NodeSwitchDataStatements) Insert() string {
 			Pin,
 			MomentaryPressDuration,
 			IsClosedOn
-		) VALUES (?, ?, ?, ?, ?, ?)`
+		) VALUES (?, ?, ?, ?, ?, ?); SELECT LAST_INSERT_ID();`
 	} else {
 		return `INSERT INTO nodeswitch (
 			nodeid,
@@ -148,7 +148,7 @@ func (statements *NodeSwitchDataStatements) Insert() string {
 			pin,
 			momentarypressduration,
 			isclosedon
-		) VALUES ($1, $2, $3, $4, $5, $6)`
+		) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 	}
 }
 
@@ -185,5 +185,13 @@ func (statements *NodeSwitchDataStatements) DeleteByParentId() string {
 		return `DELETE FROM NodeSwitch WHERE NodeId = ?`
 	} else {
 		return `DELETE FROM nodeswitch WHERE nodeid = $1`
+	}
+}
+
+func (statements *NodeSwitchDataStatements) DeleteBySecondParentId() string {
+	if statements.DbType == "mysql" {
+		return `DELETE FROM NodeSwitch WHERE SwitchTypeId = ?`
+	} else {
+		return `DELETE FROM nodeswitch WHERE switchtypeid = $1`
 	}
 }

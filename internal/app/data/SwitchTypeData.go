@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/ltruelove/gohome/config"
@@ -14,7 +15,7 @@ type SwitchTypeData struct {
 	stmt statements.CrudStatement
 }
 
-func NewSwitchTypeData(db *sql.DB, config *config.Configuration) *SwitchTypeData {
+func NewSwitchTypeData(db *sql.DB, config *config.Configuration) CrudDataInterface {
 	return &SwitchTypeData{
 		db:   db,
 		stmt: statements.NewSwitchTypeStatements(config),
@@ -78,56 +79,44 @@ func (d *SwitchTypeData) SelectById(id int) (models.Model, error) {
 }
 
 func (d *SwitchTypeData) SelectByParentId(parentId int) ([]models.Model, error) {
-	stmt, err := d.DB().Prepare(d.Stmt().SelectByParentId())
-	if err != nil {
-		log.Println("Error preparing fetch switch types by parent id sql")
-		return nil, err
-	}
-
-	var nodeSwitches []models.Model
-
-	rows, err := stmt.Query(parentId)
-	if err != nil {
-		log.Println("Error querying for switch types by parent id")
-		return nil, err
-	}
-	defer stmt.Close()
-
-	for rows.Next() {
-		var nodeSwitch models.SwitchType
-		rows.Scan(&nodeSwitch.Id,
-			&nodeSwitch.Name)
-		nodeSwitches = append(nodeSwitches, nodeSwitch)
-	}
-
-	return nodeSwitches, nil
+	return nil, errors.New("SelectByParentId not implemented for SwitchTypeData")
 }
 
-func (d *SwitchTypeData) Insert(switchType models.SwitchType) (int64, error) {
+func (d *SwitchTypeData) SelectBySecondParentId(parentId int) ([]models.Model, error) {
+	return nil, errors.New("SelectBySecondParentId not implemented for SwitchTypeData")
+}
+
+func (d *SwitchTypeData) Insert(data models.Model) (models.Model, error) {
+	switchType, ok := data.(models.SwitchType)
+	if !ok {
+		log.Println("Error asserting data to SwitchType")
+		return nil, errors.New("invalid data type for Insert")
+	}
 	stmt, err := d.DB().Prepare(d.Stmt().Insert())
 	if err != nil {
 		log.Println("Error preparing insert switch type sql")
-		return 0, err
+		return nil, err
 	}
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(switchType.Name)
+	lastInsertId := 0
+	err = stmt.QueryRow(switchType.Name).Scan(&lastInsertId)
 	if err != nil {
 		log.Println("Error inserting switch type")
-		return 0, err
+		return nil, err
 	}
+	switchType.Id = lastInsertId
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		log.Println("Error getting last insert id for switch type")
-		return 0, err
-	}
-
-	return id, nil
+	return switchType, nil
 }
 
-func (d *SwitchTypeData) Update(switchType models.SwitchType) error {
+func (d *SwitchTypeData) Update(data models.Model) error {
+	switchType, ok := data.(models.SwitchType)
+	if !ok {
+		log.Println("Error asserting data to SwitchType")
+		return errors.New("invalid data type for Update")
+	}
 	stmt, err := d.DB().Prepare(d.Stmt().Update())
 	if err != nil {
 		log.Println("Error preparing update switch type sql")
@@ -182,19 +171,9 @@ func (d *SwitchTypeData) DeleteAll() error {
 }
 
 func (d *SwitchTypeData) DeleteByParentId(parentId int) error {
-	stmt, err := d.DB().Prepare(d.Stmt().DeleteByParentId())
-	if err != nil {
-		log.Println("Error preparing delete switch types by parent id sql")
-		return err
-	}
+	return errors.New("DeleteByParentId not implemented for SwitchTypeData")
+}
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(parentId)
-	if err != nil {
-		log.Println("Error deleting switch types by parent id")
-		return err
-	}
-
-	return nil
+func (d *SwitchTypeData) DeleteBySecondParentId(secondParentId int) error {
+	return errors.New("DeleteBySecondParentId not implemented for SwitchTypeData")
 }

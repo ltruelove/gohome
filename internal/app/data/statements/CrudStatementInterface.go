@@ -10,4 +10,5 @@ type CrudStatement interface {
 	Delete() string
 	DeleteAll() string
 	DeleteByParentId() string
+	DeleteBySecondParentId() string
 }

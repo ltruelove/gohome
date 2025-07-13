@@ -91,6 +91,7 @@ func (d *NodeSensorData) SelectById(id int) (models.Model, error) {
 	return sensor, nil
 }
 
+// SelectByParentId retrieves NodeSensor records by NodeId
 func (d *NodeSensorData) SelectByParentId(id int) ([]models.Model, error) {
 	stmt, err := d.DB().Prepare(d.Stmt().SelectByParentId())
 	if err != nil {
@@ -103,6 +104,44 @@ func (d *NodeSensorData) SelectByParentId(id int) ([]models.Model, error) {
 	rows, err := stmt.Query(id)
 	if err != nil {
 		log.Println("Error querying for all node sensors by parent id")
+		return nil, err
+	}
+	defer stmt.Close()
+
+	for rows.Next() {
+		var sensor models.NodeSensor
+
+		err := rows.Scan(&sensor.Id,
+			&sensor.NodeId,
+			&sensor.SensorTypeId,
+			&sensor.Name,
+			&sensor.Pin,
+			&sensor.DHTType)
+
+		if err != nil {
+			log.Println("Error scanning node sensor")
+			return nil, err
+		}
+
+		sensors = append(sensors, sensor)
+	}
+
+	return sensors, nil
+}
+
+// SelectBySecondParentId retrieves NodeSensor records by SensorTypeId
+func (d *NodeSensorData) SelectBySecondParentId(id int) ([]models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectBySecondParentId())
+	if err != nil {
+		log.Println("Error preparing fetch node sensors by second parent id sql")
+		return nil, err
+	}
+
+	var sensors []models.Model
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Println("Error querying for node sensors by second parent id")
 		return nil, err
 	}
 	defer stmt.Close()
@@ -245,5 +284,23 @@ func (d *NodeSensorData) DeleteByParentId(id int) error {
 
 	defer stmt.Close()
 
+	return nil
+}
+
+func (d *NodeSensorData) DeleteBySecondParentId(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteBySecondParentId())
+	if err != nil {
+		log.Println("Error preparing delete node sensor by second parent id sql")
+		return err
+	}
+
+	_, err = stmt.Exec(id)
+
+	if err != nil {
+		log.Println("Error deleting node sensor by second parent id")
+		return err
+	}
+
+	defer stmt.Close()
 	return nil
 }

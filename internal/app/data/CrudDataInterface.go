@@ -17,6 +17,7 @@ type CrudDataInterface interface {
 	Insert(data models.Model) (models.Model, error)
 	Update(data models.Model) error
 	Delete(id int) error
-	DeleteByParentId(id int) error
 	DeleteAll() error
+	DeleteByParentId(id int) error
+	DeleteBySecondParentId(id int) error
 }

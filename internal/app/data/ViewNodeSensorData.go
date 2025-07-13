@@ -278,3 +278,23 @@ func (d *ViewNodeSensorData) DeleteAll() error {
 	log.Println("Deleted all node sensor data")
 	return nil
 }
+
+func (d *ViewNodeSensorData) DeleteBySecondParentId(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteBySecondParentId())
+	if err != nil {
+		log.Println("Error preparing delete node sensor data by second parent id sql")
+		return err
+	}
+
+	_, err = stmt.Exec(id)
+
+	if err != nil {
+		log.Println("Error deleting node sensor data by second parent id")
+		return err
+	}
+
+	defer stmt.Close()
+
+	log.Printf("Deleted node sensor data for view id: %d", id)
+	return nil
+}

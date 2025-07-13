@@ -14,7 +14,7 @@ import (
 )
 
 type SwitchTypeController struct {
-	SwitchTypeData *data.SwitchTypeData
+	SwitchTypeData data.CrudDataInterface
 }
 
 func NewSwitchTypeController(db *sql.DB, config *config.Configuration) *SwitchTypeController {

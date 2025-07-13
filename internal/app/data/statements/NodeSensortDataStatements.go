@@ -110,11 +110,11 @@ func (statements *NodeSensorDataStatements) Insert() string {
 	if statements.DbType == "mysql" {
 		return `INSERT INTO NodeSensor
 		(NodeId, SensorTypeId, SensorName, Pin, DHTType)
-		VALUES (?, ?, ?, ?, ?)`
+		VALUES (?, ?, ?, ?, ?); SELECT LAST_INSERT_ID();`
 	} else {
 		return `INSERT INTO nodesensor
 		(nodeid, sensortypeid, name, pin, dhttype)
-		VALUES ($1, $2, $3, $4, $5)`
+		VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	}
 }
 
@@ -151,5 +151,13 @@ func (statements *NodeSensorDataStatements) DeleteByParentId() string {
 		return `DELETE FROM NodeSensor WHERE NodeId = ?`
 	} else {
 		return `DELETE FROM nodesensor WHERE nodeid = $1`
+	}
+}
+
+func (statements *NodeSensorDataStatements) DeleteBySecondParentId() string {
+	if statements.DbType == "mysql" {
+		return `DELETE FROM NodeSensor WHERE SensorTypeId = ?`
+	} else {
+		return `DELETE FROM nodesensor WHERE sensortypeid = $1`
 	}
 }

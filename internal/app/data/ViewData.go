@@ -2,6 +2,7 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/ltruelove/gohome/config"
@@ -9,40 +10,37 @@ import (
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
+// ViewData is a struct that holds the database connection and statements for view data operations
+// It implements the CrudData interface for managing views in the database.
 type ViewData struct {
-	DB         *sql.DB
-	Statements *statements.ViewDataStatements
+	db   *sql.DB
+	stmt statements.CrudStatement
 }
 
-func NewViewData(db *sql.DB, config *config.Configuration) *ViewData {
+func NewViewData(db *sql.DB, config *config.Configuration) CrudDataInterface {
 	return &ViewData{
-		DB:         db,
-		Statements: statements.NewViewDataStatements(config),
+		db:   db,
+		stmt: statements.NewViewDataStatements(config),
 	}
 }
 
-func (viewData *ViewData) VerifyViewIdIsNew(viewId int) (bool, error) {
-	view, err := viewData.FetchView(viewId)
-
-	log.Printf("view found with id: %d, and name: %s", view.Id, view.Name)
-
-	if err != nil {
-		log.Println("Error fetching view")
-		return false, err
-	}
-
-	return view.Id < 1, nil
+func (d *ViewData) DB() *sql.DB {
+	return d.db
 }
 
-func (viewData *ViewData) FetchAllViews() ([]models.View, error) {
-	stmt, err := viewData.DB.Prepare(viewData.Statements.SelectAll())
+func (d *ViewData) Stmt() statements.CrudStatement {
+	return d.stmt
+}
+
+func (d *ViewData) SelectAll() ([]models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectAll())
 
 	if err != nil {
 		log.Println("Error preparing all views sql")
 		return nil, err
 	}
 
-	var views []models.View
+	var views []models.Model
 
 	rows, err := stmt.Query()
 	if err != nil {
@@ -68,17 +66,17 @@ func (viewData *ViewData) FetchAllViews() ([]models.View, error) {
 	return views, nil
 }
 
-func (viewData *ViewData) FetchView(viewId int) (models.View, error) {
+func (d *ViewData) SelectById(id int) (models.Model, error) {
 	var item models.View
-	log.Printf("Fetching view for id: %d", viewId)
-	stmt, err := viewData.DB.Prepare(viewData.Statements.SelectById())
+	log.Printf("Fetching view for id: %d", id)
+	stmt, err := d.DB().Prepare(d.Stmt().SelectById())
 
 	if err != nil {
 		log.Println("Error preparing fetch view sql")
 		return item, err
 	}
 
-	err = stmt.QueryRow(viewId).Scan(&item.Id,
+	err = stmt.QueryRow(id).Scan(&item.Id,
 		&item.Name)
 
 	if err != nil {
@@ -91,12 +89,26 @@ func (viewData *ViewData) FetchView(viewId int) (models.View, error) {
 	return item, nil
 }
 
-func (viewData *ViewData) CreateView(view *models.View) error {
-	stmt, err := viewData.DB.Prepare(viewData.Statements.Insert())
+func (d *ViewData) SelectByParentId(id int) ([]models.Model, error) {
+	return nil, errors.New("SelectByParentId not implemented for ViewData")
+}
+
+func (d *ViewData) SelectBySecondParentId(id int) ([]models.Model, error) {
+	return nil, errors.New("SelectBySecondParentId not implemented for ViewData")
+}
+
+func (d *ViewData) Insert(data models.Model) (models.Model, error) {
+	view, ok := data.(*models.View)
+	if !ok {
+		log.Println("Error: data is not of type *models.View")
+		return nil, errors.New("data is not of type *models.View")
+	}
+
+	stmt, err := d.DB().Prepare(d.Stmt().Insert())
 
 	if err != nil {
 		log.Println("Error preparing create view sql")
-		return err
+		return nil, err
 	}
 
 	lastInsertId := 0
@@ -105,18 +117,23 @@ func (viewData *ViewData) CreateView(view *models.View) error {
 
 	if err != nil {
 		log.Println("Error creating view")
-		return err
+		return nil, err
 	}
 
 	view.Id = int(lastInsertId)
 	log.Printf("Created a view with the id: %d", view.Id)
 	defer stmt.Close()
 
-	return nil
+	return view, nil
 }
 
-func (viewData *ViewData) UpdateView(view *models.View) error {
-	stmt, err := viewData.DB.Prepare(viewData.Statements.Update())
+func (d *ViewData) Update(data models.Model) error {
+	view, ok := data.(*models.View)
+	if !ok {
+		log.Println("Error: data is not of type *models.View")
+		return errors.New("data is not of type *models.View")
+	}
+	stmt, err := d.DB().Prepare(d.Stmt().Update())
 
 	if err != nil {
 		log.Println("Error preparing update view sql")
@@ -136,15 +153,15 @@ func (viewData *ViewData) UpdateView(view *models.View) error {
 	return nil
 }
 
-func (viewData *ViewData) DeleteView(viewId int) error {
-	stmt, err := viewData.DB.Prepare(viewData.Statements.Delete())
+func (d *ViewData) Delete(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().Delete())
 
 	if err != nil {
 		log.Println("Error preparing delete view sql")
 		return err
 	}
 
-	_, err = stmt.Exec(viewId)
+	_, err = stmt.Exec(id)
 
 	if err != nil {
 		log.Println("Error deleting view")
@@ -154,4 +171,32 @@ func (viewData *ViewData) DeleteView(viewId int) error {
 	defer stmt.Close()
 
 	return nil
+}
+
+func (d *ViewData) DeleteAll() error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteAll())
+
+	if err != nil {
+		log.Println("Error preparing delete all views sql")
+		return err
+	}
+
+	_, err = stmt.Exec()
+
+	if err != nil {
+		log.Println("Error deleting all views")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func (d *ViewData) DeleteByParentId(id int) error {
+	return errors.New("DeleteByParentId not implemented for ViewData")
+}
+
+func (d *ViewData) DeleteBySecondParentId(id int) error {
+	return errors.New("DeleteBySecondParentId not implemented for ViewData")
 }

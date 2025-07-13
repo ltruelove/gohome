@@ -15,8 +15,8 @@ import (
 
 type NodeSwitchController struct {
 	DB             *sql.DB
-	NodeSwitchData *data.NodeSwitchData
-	SwitchTypeData *data.SwitchTypeData
+	NodeSwitchData data.CrudDataInterface
+	SwitchTypeData data.CrudDataInterface
 }
 
 func NewNodeSwitchController(db *sql.DB, config *config.Configuration) *NodeSwitchController {

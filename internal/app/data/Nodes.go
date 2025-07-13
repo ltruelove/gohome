@@ -2,303 +2,149 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 
+	"github.com/ltruelove/gohome/config"
+	"github.com/ltruelove/gohome/internal/app/data/statements"
 	"github.com/ltruelove/gohome/internal/app/models"
-	"github.com/ltruelove/gohome/internal/app/setup"
-	"github.com/ltruelove/gohome/internal/app/viewModels"
 )
 
-func VerifyNodeIdIsNew(nodeId int, db *sql.DB) (bool, error) {
-	item, err := FetchNode(nodeId, db)
-	if err != nil {
-		log.Println("Error fetching node switch")
-		return false, err
-	}
-
-	return item.Id < 1, nil
+type NodeData struct {
+	db   *sql.DB
+	stmt statements.CrudStatement
 }
 
-func FetchAllNodes(db *sql.DB) ([]viewModels.NodeVM, error) {
-	stmt, err := db.Prepare(`SELECT
-	n.id,
-	n.name,
-	n.mac,
-	n.ipaddress,
-	cp.id AS controlpointid,
-	cp.ipaddress AS controlpointip,
-	cp.name AS controlpointname
-	FROM node AS n
-	LEFT JOIN controlpointnodes AS cpn ON cpn.nodeid = n.id
-	LEFT JOIN controlpoint AS cp ON cp.id = cpn.controlpointid`)
+func NewNodeData(DB *sql.DB, config *config.Configuration) CrudDataInterface {
+	return &NodeData{
+		db:   DB,
+		stmt: statements.NewNodeDataStatements(config),
+	}
+}
 
+func (d *NodeData) DB() *sql.DB {
+	return d.db
+}
+
+func (d *NodeData) Stmt() statements.CrudStatement {
+	return d.stmt
+}
+
+func (d *NodeData) SelectAll() ([]models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectAll())
 	if err != nil {
-		log.Println(err)
+		log.Println("Error preparing fetch all nodes sql")
 		return nil, err
 	}
 
-	var nodes []viewModels.NodeVM
+	var nodes []models.Model
 
 	rows, err := stmt.Query()
-
 	if err != nil {
-		log.Println(err)
+		log.Println("Error querying for all nodes")
 		return nil, err
 	}
+	defer stmt.Close()
 
 	for rows.Next() {
-		var node viewModels.NodeVM
-		rows.Scan(&node.Id,
-			&node.Name,
+		var node models.Node
+
+		err := rows.Scan(&node.Id,
 			&node.Mac,
-			&node.IpAddress,
-			&node.ControlPointId,
-			&node.ControlPointIP,
-			&node.ControlPointName)
-
-		node.Sensors, err = FetchNodeSensors(node.Id, db)
+			&node.Name,
+			&node.IpAddress)
 
 		if err != nil {
-			log.Println(err)
-		}
-
-		node.Switches, err = FetchNodeSwitches(node.Id, db)
-
-		if err != nil {
-			log.Println(err)
+			log.Println("Error scanning node")
+			return nil, err
 		}
 
 		nodes = append(nodes, node)
 	}
-	defer stmt.Close()
 
 	return nodes, nil
+
 }
 
-func FetchIndividualNode(nodeId int, db *sql.DB) (models.Node, error) {
-	stmt, err := db.Prepare(`SELECT
-	n.id,
-	n.name,
-	n.mac,
-	n.ipaddress
-	FROM node AS n
-	WHERE n.id = $1`)
-
-	setup.CheckErr(err)
-	defer stmt.Close()
+func (d *NodeData) SelectById(id int) (models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectById())
+	if err != nil {
+		log.Println("Error preparing fetch node by id sql")
+		return nil, err
+	}
 
 	var node models.Node
 
-	err = stmt.QueryRow(nodeId).Scan(&node.Id,
-		&node.Name,
+	err = stmt.QueryRow(id).Scan(&node.Id,
 		&node.Mac,
+		&node.Name,
 		&node.IpAddress)
 
 	if err != nil {
-		log.Println(err)
-		return node, err
+		log.Println("Error querying for node by id")
+		return nil, err
 	}
-	log.Println("node found")
+
+	defer stmt.Close()
 
 	return node, nil
 }
 
-func FetchNode(nodeId int, db *sql.DB) (viewModels.NodeVM, error) {
-	stmt, err := db.Prepare(`SELECT
-	n.id,
-	n.name,
-	n.mac,
-	n.ipaddress,
-	cp.id AS cpid,
-	cp.ipaddress AS ipaddress,
-	cp.name AS cpname
-	FROM node AS n
-	LEFT JOIN controlpointnodes AS cpn ON cpn.nodeid = n.id
-	LEFT JOIN controlpoint AS cp ON cp.id = cpn.controlpointid
-	WHERE n.id = $1`)
-
-	setup.CheckErr(err)
-	defer stmt.Close()
-
-	var node viewModels.NodeVM
-
-	err = stmt.QueryRow(nodeId).Scan(&node.Id,
-		&node.Name,
-		&node.Mac,
-		&node.IpAddress,
-		&node.ControlPointId,
-		&node.ControlPointIP,
-		&node.ControlPointName)
-
-	if err != nil {
-		log.Println(err)
-		return node, err
-	}
-	log.Println("node found")
-
-	node.Sensors, err = FetchNodeSensors(node.Id, db)
-
-	if err != nil {
-		log.Println(err)
-		return node, err
-	}
-
-	node.Switches, err = FetchNodeSwitches(node.Id, db)
-
-	if err != nil {
-		log.Println(err)
-		return node, err
-	}
-
-	return node, nil
+func (d *NodeData) SelectByParentId(id int) ([]models.Model, error) {
+	return nil, errors.New("Node table has no parent ID")
 }
 
-func FetchNodeSensors(nodeId int, db *sql.DB) ([]viewModels.NodeSensorVM, error) {
-	stmt, err := db.Prepare(`SELECT
-		ns.id,
-		ns.sensortypeid,
-		ns.pin,
-		ns.name,
-		st.name AS sensortypename
-		FROM nodesensor AS ns
-		INNER JOIN sensortype AS st ON st.id = ns.sensortypeid
-		WHERE ns.nodeid = $1`)
-
-	if err != nil {
-		log.Printf("Error preparing select node sensors sql: %v", err)
-		return nil, err
-	}
-
-	var sensors []viewModels.NodeSensorVM
-
-	rows, err := stmt.Query(nodeId)
-
-	if err != nil {
-		log.Println("Error querying for node sensors")
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	for rows.Next() {
-		var sensor viewModels.NodeSensorVM
-		sensor.NodeId = nodeId
-
-		err = rows.Scan(&sensor.Id,
-			&sensor.SensorTypeId,
-			&sensor.Pin,
-			&sensor.Name,
-			&sensor.SensorTypeName)
-
-		if err != nil {
-			log.Println("Error scanning node sensor")
-			return nil, err
-		}
-
-		sensors = append(sensors, sensor)
-	}
-
-	return sensors, nil
+func (d *NodeData) SelectBySecondParentId(id int) ([]models.Model, error) {
+	return nil, errors.New("Node table has no second parent ID")
 }
 
-func FetchNodeSwitches(nodeId int, db *sql.DB) ([]viewModels.NodeSwitchVM, error) {
-	stmt, err := db.Prepare(`SELECT
-		ns.id,
-		ns.switchtypeid,
-		ns.pin,
-		ns.name,
-		ns.momentarypressduration,
-		ns.isclosedon,
-		st.name AS switchtypename
-		FROM nodeswitch AS ns
-		INNER JOIN switchtype AS st ON st.id = ns.switchtypeid
-		WHERE ns.nodeid = $1`)
-
-	if err != nil {
-		log.Printf("Error preparing select node switches sql: %v", err)
-		return nil, err
+func (d *NodeData) Insert(data models.Model) (models.Model, error) {
+	item, ok := data.(*models.Node)
+	if !ok {
+		log.Println("Error casting model to NodeSensor")
+		return nil, errors.New("Invalid model type")
 	}
 
-	var nodeSwitches []viewModels.NodeSwitchVM
-
-	rows, err := stmt.Query(nodeId)
-
+	stmt, err := d.DB().Prepare(d.Stmt().Insert())
 	if err != nil {
-		log.Println("Error querying for node switches")
-		return nil, err
-	}
-
-	defer stmt.Close()
-
-	for rows.Next() {
-		var nodeSwitch viewModels.NodeSwitchVM
-		nodeSwitch.NodeId = nodeId
-
-		err = rows.Scan(&nodeSwitch.Id,
-			&nodeSwitch.SwitchTypeId,
-			&nodeSwitch.Pin,
-			&nodeSwitch.Name,
-			&nodeSwitch.MomentaryPressDuration,
-			&nodeSwitch.IsClosedOn,
-			&nodeSwitch.SwitchTypeName)
-
-		if err != nil {
-			log.Println("Error scanning node switch")
-			return nil, err
-		}
-
-		nodeSwitches = append(nodeSwitches, nodeSwitch)
-	}
-
-	return nodeSwitches, nil
-}
-
-func CreateNode(item *models.Node, db *sql.DB) error {
-	stmt, err := db.Prepare(`INSERT INTO node
-	(name, mac, ipaddress)
-	VALUES ($1, $2, $3) RETURNING id`)
-
-	if err != nil {
-		log.Println("Error preparing create node sql")
-		return err
+		log.Println("Error preparing create node sensor sql")
+		return item, err
 	}
 
 	lastInsertId := 0
-
 	err = stmt.QueryRow(&item.Name,
 		&item.Mac,
 		&item.IpAddress).Scan(&lastInsertId)
 
 	if err != nil {
 		log.Println("Error creating node")
-		return err
+		return nil, err
 	}
 
 	defer stmt.Close()
-
-	if err != nil {
-		log.Println("Error getting the id of the inserted node")
-		return err
-	}
 
 	item.Id = int(lastInsertId)
 
-	return nil
+	return item, nil
 }
 
-func UpdateNode(node *models.Node, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE node
-	set name = $1, mac = $2
-	WHERE id = $3`)
+func (d *NodeData) Update(data models.Model) error {
+	item, ok := data.(*models.Node)
+	if !ok {
+		log.Println("Error casting model to Node")
+		return errors.New("Invalid model type")
+	}
 
+	stmt, err := d.DB().Prepare(d.Stmt().Update())
 	if err != nil {
 		log.Println("Error preparing update node sql")
 		return err
 	}
 
-	_, err = stmt.Exec(&node.Name,
-		&node.Mac,
-		&node.Id)
+	_, err = stmt.Exec(&item.Name,
+		&item.Mac,
+		&item.IpAddress,
+		&item.Id)
 
 	if err != nil {
 		log.Println("Error updating node")
@@ -310,149 +156,46 @@ func UpdateNode(node *models.Node, db *sql.DB) error {
 	return nil
 }
 
-func UpdateNodeIp(node *models.Node, db *sql.DB) error {
-	stmt, err := db.Prepare(`UPDATE node
-	set ipaddress = $1
-	WHERE id = $2`)
-
+func (d *NodeData) Delete(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().Delete())
 	if err != nil {
-		log.Println("Error preparing update node sql")
+		log.Println("Error preparing delete node sql")
 		return err
 	}
 
-	_, err = stmt.Exec(&node.IpAddress,
-		&node.Id)
-
-	if err != nil {
-		log.Println("Error updating node")
-		return err
-	}
-
-	defer stmt.Close()
-
-	return nil
-}
-
-func DeleteNodeTempLogs(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM templog
-		WHERE nodesensorlogid IN (
-			SELECT id from nodesensorlog WHERE nodeid = $1
-		)`)
-
-	if err != nil {
-		log.Println("Error preparing delete node tempLog data sql")
-		return err
-	}
-
-	_, err = stmt.Exec(nodeId)
-
-	if err != nil {
-		log.Println("Error removing the node temp logs")
-		return err
-	}
-
-	defer stmt.Close()
-
-	return nil
-}
-
-func DeleteNodeResistorLogs(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM resistorlog
-		WHERE nodesensorlogid IN (
-			SELECT id from nodesensorlog WHERE nodeid = $1
-		)`)
-
-	if err != nil {
-		log.Println("Error preparing delete node resistor log data sql")
-		return err
-	}
-
-	_, err = stmt.Exec(nodeId)
-
-	if err != nil {
-		log.Println("Error removing the node resistor logs")
-		return err
-	}
-
-	defer stmt.Close()
-
-	return nil
-}
-
-func DeleteNodeMoistureLogs(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM moisturelog
-		WHERE nodesensorlogid IN (
-			SELECT id from nodesensorlog WHERE nodeid = $1
-		)`)
-
-	if err != nil {
-		log.Println("Error preparing delete node moisture log data sql")
-		return err
-	}
-
-	_, err = stmt.Exec(nodeId)
-
-	if err != nil {
-		log.Println("Error removing the node moisture logs")
-		return err
-	}
-
-	defer stmt.Close()
-
-	return nil
-}
-
-func DeleteNodeMagneticLogs(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM magneticlog
-		WHERE nodesensorlogid IN (
-			SELECT id from nodesensorlog WHERE nodeid = $1
-		)`)
-
-	if err != nil {
-		log.Println("Error preparing delete node magnetic log data sql")
-		return err
-	}
-
-	_, err = stmt.Exec(nodeId)
-
-	if err != nil {
-		log.Println("Error removing the node magnetic logs")
-		return err
-	}
-
-	defer stmt.Close()
-
-	return nil
-}
-
-func DeleteNodeLogs(nodeId int, db *sql.DB) error {
-	stmt, err := db.Prepare(`DELETE FROM nodesensorlog
-	WHERE nodeid = $1`)
-
-	if err != nil {
-		log.Println("Error preparing delete node sensor log data sql")
-		return err
-	}
-
-	_, err = stmt.Exec(nodeId)
-
-	if err != nil {
-		log.Println("Error removing the node logs")
-		return err
-	}
-
-	defer stmt.Close()
-
-	return nil
-}
-
-func DeleteNode(nodeId int, db *sql.DB) error {
-	_, err := db.Exec(`CALL deletenode($1)`, nodeId)
-
+	_, err = stmt.Exec(id)
 	if err != nil {
 		log.Println("Error deleting node")
 		return err
 	}
 
+	defer stmt.Close()
+
 	return nil
+}
+
+func (d *NodeData) DeleteAll() error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteAll())
+	if err != nil {
+		log.Println("Error preparing delete all nodes sql")
+		return err
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Println("Error deleting all nodes")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
+
+func (d *NodeData) DeleteByParentId(id int) error {
+	return errors.New("Node table has no parent ID")
+}
+
+func (d *NodeData) DeleteBySecondParentId(id int) error {
+	return errors.New("Node table has no second parent ID")
 }

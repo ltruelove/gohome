@@ -279,3 +279,21 @@ func (d ViewNodeSwitchData) DeleteByParentId(parentId int) error {
 
 	return nil
 }
+
+func (d ViewNodeSwitchData) DeleteBySecondParentId(secondParentId int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteBySecondParentId())
+	if err != nil {
+		log.Println("Error preparing delete all view node switch data by second parent id sql")
+		return err
+	}
+
+	_, err = stmt.Exec(secondParentId)
+	if err != nil {
+		log.Println("Error deleting all view node switch data by second parent id")
+		return err
+	}
+
+	defer stmt.Close()
+
+	return nil
+}
