@@ -33,7 +33,7 @@ func (controller *SwitchTypeController) GetAll(writer http.ResponseWriter, reque
 
 	log.Println("Fetch all switch types")
 
-	allTypes, fetchErr := controller.SwitchTypeData.FetchAllSwitchTypes()
+	allTypes, fetchErr := controller.SwitchTypeData.SelectAll()
 
 	if fetchErr != nil {
 		log.Printf("Error fetching switch types from the db: %v", fetchErr)
@@ -65,7 +65,7 @@ func (controller *SwitchTypeController) GetById(writer http.ResponseWriter, requ
 
 	log.Printf("Fetch switch type by id: %d", id)
 
-	item, err := controller.SwitchTypeData.FetchSwitchType(id)
+	item, err := controller.SwitchTypeData.SelectById(id)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting switch type: %v", err)

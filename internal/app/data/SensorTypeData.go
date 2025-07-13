@@ -2,97 +2,218 @@ package data
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/ltruelove/gohome/config"
+	"github.com/ltruelove/gohome/internal/app/data/statements"
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
 type SensorTypeData struct {
-	DB         *sql.DB
-	Statements *SensorTypeStatements
+	db   *sql.DB
+	stmt statements.CrudStatement
 }
 
 func NewSensorTypeData(db *sql.DB, config *config.Configuration) *SensorTypeData {
 	return &SensorTypeData{
-		DB:         db,
-		Statements: NewSensorTypeStatements(config),
+		db:   db,
+		stmt: statements.NewSensorTypeDataStatements(config),
 	}
 }
 
-func (sensorTypes *SensorTypeData) FetchAllSensorTypes() ([]models.SensorType, error) {
-	stmt, err := sensorTypes.DB.Prepare(sensorTypes.Statements.SelectAllSensorTypes())
+func (d *SensorTypeData) DB() *sql.DB {
+	return d.db
+}
+
+func (d *SensorTypeData) Stmt() statements.CrudStatement {
+	return d.stmt
+}
+
+func (d *SensorTypeData) SelectAll() ([]models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectAll())
 	if err != nil {
-		log.Println("Error preparing all sensor types sql")
+		log.Println("Error preparing fetch all sensor types sql")
 		return nil, err
 	}
 
-	var sensors []models.SensorType
+	var sensorTypes []models.Model
 
 	rows, err := stmt.Query()
 	if err != nil {
 		log.Println("Error querying for all sensor types")
 		return nil, err
 	}
+	defer stmt.Close()
 
 	for rows.Next() {
-		var sensor models.SensorType
-		rows.Scan(&sensor.Id,
-			&sensor.TypeName)
-		sensors = append(sensors, sensor)
+		var sensorType models.SensorTypeData
+		rows.Scan(&sensorType.Id,
+			&sensorType.SensorTypeId,
+			&sensorType.Name,
+			&sensorType.ValueType)
+		sensorTypes = append(sensorTypes, sensorType)
 	}
-	defer stmt.Close()
 
-	return sensors, nil
+	return sensorTypes, nil
 }
 
-func (sensorTypes *SensorTypeData) FetchSensorType(sensorTypeId int) (models.SensorType, error) {
-	var sensor models.SensorType
+func (d *SensorTypeData) SelectById(id int) (models.Model, error) {
+	var sensorTypeData models.SensorTypeData
 
-	stmt, err := sensorTypes.DB.Prepare(sensorTypes.Statements.SelectSensorTypeById())
+	stmt, err := d.DB().Prepare(d.Stmt().SelectById())
 	if err != nil {
-		log.Println("Error preparing the fetch sensor type sql")
-		return sensor, err
-	}
-	defer stmt.Close()
-
-	err = stmt.QueryRow(sensorTypeId).Scan(&sensor.Id,
-		&sensor.TypeName)
-
-	if err != nil {
-		log.Println("Error querying for the sensor type")
-		return sensor, err
-	}
-
-	return sensor, nil
-}
-
-func (sensorTypes *SensorTypeData) FetchSensorTypeData(sensorTypeId int) ([]models.SensorTypeData, error) {
-	stmt, err := sensorTypes.DB.Prepare(sensorTypes.Statements.SelectSensorTypeData())
-	if err != nil {
-		log.Println("Error preparing the fetch sensor type data sql")
+		log.Printf("Error preparing SelectById statement: %v", err)
 		return nil, err
 	}
 	defer stmt.Close()
 
-	var sensorData []models.SensorTypeData
-
-	rows, err := stmt.Query(sensorTypeId)
+	err = stmt.QueryRow(id).Scan(&sensorTypeData.Id,
+		&sensorTypeData.SensorTypeId,
+		&sensorTypeData.Name,
+		&sensorTypeData.ValueType)
 	if err != nil {
-		log.Println("Error querying for the sensor type data")
+		if err == sql.ErrNoRows {
+			return nil, errors.New("no sensor type data record found with the given id")
+		}
+		log.Printf("Error executing SelectById query: %v", err)
 		return nil, err
 	}
 
+	return sensorTypeData, nil
+}
+
+func (d *SensorTypeData) SelectByParentId(id int) ([]models.Model, error) {
+	stmt, err := d.DB().Prepare(d.Stmt().SelectByParentId())
+	if err != nil {
+		log.Printf("Error preparing SelectByParentId statement: %v", err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Printf("Error executing SelectByParentId query: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sensorData []models.Model
 	for rows.Next() {
 		var sensor models.SensorTypeData
-		sensor.SensorTypeId = sensorTypeId
+		sensor.SensorTypeId = id
 
-		rows.Scan(&sensor.Id,
-			&sensor.Name,
-			&sensor.ValueType)
+		err := rows.Scan(&sensor.Id, &sensor.SensorTypeId, &sensor.Name, &sensor.ValueType)
+		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+			continue
+		}
 		sensorData = append(sensorData, sensor)
+	}
+
+	return sensorData, nil
+}
+
+func (d *SensorTypeData) Insert(data models.Model) (models.Model, error) {
+	sensorTypeData, ok := data.(models.SensorTypeData)
+	if !ok {
+		log.Println("Invalid data type for insert")
+		return nil, sql.ErrNoRows
+	}
+
+	stmt, err := d.DB().Prepare(d.Stmt().Insert())
+	if err != nil {
+		log.Println("Error preparing insert statement")
+		return nil, err
 	}
 	defer stmt.Close()
 
-	return sensorData, nil
+	res, err := stmt.Exec(sensorTypeData.SensorTypeId, sensorTypeData.Name, sensorTypeData.ValueType)
+	if err != nil {
+		log.Println("Error executing insert statement")
+		return nil, err
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Println("Error getting last insert id")
+		return nil, err
+	}
+
+	sensorTypeData.Id = int(id)
+	return sensorTypeData, nil
+}
+
+func (d *SensorTypeData) Update(data models.Model) error {
+	sensorTypeData, ok := data.(models.SensorTypeData)
+	if !ok {
+		log.Println("Invalid data type for update")
+		return sql.ErrNoRows
+	}
+
+	stmt, err := d.DB().Prepare(d.Stmt().Update())
+	if err != nil {
+		log.Println("Error preparing update statement")
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(sensorTypeData.SensorTypeId, sensorTypeData.Name, sensorTypeData.ValueType, sensorTypeData.Id)
+	if err != nil {
+		log.Println("Error executing update statement")
+		return err
+	}
+
+	return nil
+}
+
+func (d *SensorTypeData) Delete(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().Delete())
+	if err != nil {
+		log.Println("Error preparing delete statement")
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println("Error executing delete statement")
+		return err
+	}
+
+	return nil
+}
+
+func (d *SensorTypeData) DeleteByParentId(id int) error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteByParentId())
+	if err != nil {
+		log.Println("Error preparing delete by parent ID statement")
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		log.Println("Error executing delete by parent ID statement")
+		return err
+	}
+
+	return nil
+}
+
+func (d *SensorTypeData) DeleteAll() error {
+	stmt, err := d.DB().Prepare(d.Stmt().DeleteAll())
+	if err != nil {
+		log.Println("Error preparing delete all statement")
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec()
+	if err != nil {
+		log.Println("Error executing delete all statement")
+		return err
+	}
+
+	return nil
 }

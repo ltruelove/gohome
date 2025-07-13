@@ -1,5 +1,7 @@
 package models
 
+import "errors"
+
 // swagger:model Node
 type NodeData struct {
 	// The ID of the Node
@@ -18,4 +20,43 @@ type NodeData struct {
 	IsClosed bool `json:"IsClosed"`
 	// The magnetic reading
 	MagneticValue bool `json:"MagneticValue"`
+}
+
+func (n NodeData) IsValid(checkId bool) (bool, error) {
+	isValid := false
+	errMsg := ""
+
+	if checkId && n.NodeId <= 0 {
+		isValid = false
+		errMsg = "NodeId cannot be less than or equal to 0"
+	}
+	if n.TemperatureF < -459.67 {
+		isValid = false
+		errMsg = "TemperatureF cannot be less than absolute zero"
+	}
+	if n.TemperatureC < -273.15 {
+		isValid = false
+		errMsg = "TemperatureC cannot be less than absolute zero"
+	}
+	if n.Humidity < 0 || n.Humidity > 100 {
+		isValid = false
+		errMsg = "Humidity must be between 0 and 100"
+	}
+	if n.Moisture < 0 || n.Moisture > 100 {
+		isValid = false
+		errMsg = "Moisture must be between 0 and 100"
+	}
+	if n.ResistorValue < 0 {
+		isValid = false
+		errMsg = "ResistorValue cannot be negative"
+	}
+
+	if !isValid {
+		if errMsg != "" {
+			return false, errors.New(errMsg)
+		}
+		return false, nil
+	}
+
+	return true, nil
 }

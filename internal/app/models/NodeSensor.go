@@ -23,14 +23,14 @@ type NodeSensor struct {
 	DHTType int `json:"DHTType"`
 }
 
-func (item *NodeSensor) IsValid(checkId bool) error {
+func (item NodeSensor) IsValid(checkId bool) (bool, error) {
 	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 
 	if checkId {
 		if item.Id < 1 {
-			validationMessage = fmt.Sprintf("%s", "Id cannot be less than 1")
+			validationMessage = "Id cannot be less than 1"
 			isValid = false
 		}
 	}
@@ -39,7 +39,7 @@ func (item *NodeSensor) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "NodeId cannot be less than 1")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "NodeId cannot be less than 1")
+			validationMessage = "NodeId cannot be less than 1"
 		}
 		isValid = false
 	}
@@ -48,7 +48,7 @@ func (item *NodeSensor) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "SensorTypeId cannot be less than 1")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "SensorTypeId cannot be less than 1")
+			validationMessage = "SensorTypeId cannot be less than 1"
 		}
 		isValid = false
 	}
@@ -57,7 +57,7 @@ func (item *NodeSensor) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "Name cannot be empty")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "Name cannot be empty")
+			validationMessage = "Name cannot be empty"
 		}
 		isValid = false
 	}
@@ -66,7 +66,7 @@ func (item *NodeSensor) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "Pin cannot be empty")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "Pin cannot be empty")
+			validationMessage = "Pin cannot be empty"
 		}
 		isValid = false
 	}
@@ -76,5 +76,5 @@ func (item *NodeSensor) IsValid(checkId bool) error {
 		err = errors.New(validationMessage)
 	}
 
-	return err
+	return isValid, err
 }

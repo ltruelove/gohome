@@ -28,7 +28,7 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 	for _, item := range dto.Sensors {
 		item.NodeId = dto.Node.Id
 
-		err = item.IsValid(false)
+		_, err = item.IsValid(false)
 
 		if err != nil {
 			log.Println("Node sensor validation error")

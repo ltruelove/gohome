@@ -19,14 +19,14 @@ type ControlPoint struct {
 	Mac string `json:"Mac"`
 }
 
-func (item *ControlPoint) IsValid(checkId bool) error {
+func (item ControlPoint) IsValid(checkId bool) (bool, error) {
 	var isValid = true
 	var validationMessage = ""
 	var err error = nil
 
 	if checkId {
 		if item.Id < 1 {
-			validationMessage = fmt.Sprintf("%s", "Id cannot be less than 1")
+			validationMessage = "Id cannot be less than 1"
 			isValid = false
 		}
 	}
@@ -35,7 +35,7 @@ func (item *ControlPoint) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "Name cannot be empty")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "Name cannot be empty")
+			validationMessage = "Name cannot be empty"
 		}
 		isValid = false
 	}
@@ -44,7 +44,7 @@ func (item *ControlPoint) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "IpAddress cannot be empty")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "IpAddress cannot be empty")
+			validationMessage = "ipaddress cannot be empty"
 		}
 		isValid = false
 	}
@@ -53,7 +53,7 @@ func (item *ControlPoint) IsValid(checkId bool) error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "Mac cannot be empty")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "Mac cannot be empty")
+			validationMessage = "Mac cannot be empty"
 		}
 		isValid = false
 	}
@@ -63,7 +63,7 @@ func (item *ControlPoint) IsValid(checkId bool) error {
 		err = errors.New(validationMessage)
 	}
 
-	return err
+	return isValid, err
 }
 
 func (item *ControlPoint) IsIpAddressValid() error {
@@ -75,7 +75,7 @@ func (item *ControlPoint) IsIpAddressValid() error {
 		if len(validationMessage) > 0 {
 			validationMessage = fmt.Sprintf("%s, %s", validationMessage, "IpAddress cannot be empty")
 		} else {
-			validationMessage = fmt.Sprintf("%s", "IpAddress cannot be empty")
+			validationMessage = "IpAddress cannot be empty"
 		}
 		isValid = false
 	}

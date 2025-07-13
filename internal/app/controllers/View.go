@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
 	"github.com/ltruelove/gohome/internal/app/viewModels"
@@ -15,7 +16,12 @@ import (
 )
 
 type ViewController struct {
-	DB *sql.DB
+	ViewData       *data.ViewData
+	NodeSensorData data.CrudDataInterface
+	SensorData     *data.ViewNodeSensorData
+	NodeSwitchData data.CrudDataInterface
+	SwitchData     data.CrudDataInterface
+	CompoundData   *data.CompoundData
 }
 
 func (controller *ViewController) RegisterViewEndpoints() {
@@ -30,10 +36,21 @@ func (controller *ViewController) RegisterViewEndpoints() {
 	routing.AddRouteWithMethod("/view/node/switch/{id}", "DELETE", controller.RemoveNodeSwitchFromView)
 }
 
+func NewViewController(db *sql.DB, config *config.Configuration) *ViewController {
+	return &ViewController{
+		ViewData:       data.NewViewData(db, config),
+		NodeSensorData: data.NewNodeSensorData(db, config),
+		SensorData:     data.NewViewNodeSensorData(db, config),
+		NodeSwitchData: data.NewNodeSwitchData(db, config),
+		SwitchData:     data.NewViewNodeSwitchData(db, config),
+		CompoundData:   data.NewCompoundData(db, config),
+	}
+}
+
 func (controller *ViewController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all views request initiated")
 
-	allItems, err := data.FetchAllViews(controller.DB)
+	allItems, err := controller.ViewData.FetchAllViews()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all views: %v", err)
@@ -65,7 +82,7 @@ func (controller *ViewController) GetById(writer http.ResponseWriter, request *h
 
 	log.Printf("Fetch view by id: %d", id)
 
-	item, err := data.FetchView(id, controller.DB)
+	item, err := controller.ViewData.FetchView(id)
 
 	if err != nil {
 		log.Println("view not found")
@@ -75,7 +92,7 @@ func (controller *ViewController) GetById(writer http.ResponseWriter, request *h
 
 	var viewModel = viewModels.ViewVM{Id: item.Id, Name: item.Name}
 
-	viewModel.Sensors, err = data.FetchViewSensorData(id, controller.DB)
+	viewModel.Sensors, err = controller.CompoundData.FetchViewNodeSensorDataByViewId(id)
 
 	if err != nil {
 		log.Printf("An error occurred fetching all view sensors: %v", err)
@@ -83,7 +100,7 @@ func (controller *ViewController) GetById(writer http.ResponseWriter, request *h
 		return
 	}
 
-	viewModel.Switches, err = data.FetchViewSwitchData(id, controller.DB)
+	viewModel.Switches, err = controller.CompoundData.FetchViewNodeSwitchDataByViewId(id)
 
 	if err != nil {
 		log.Printf("An error occurred fetching all view switches: %v", err)
@@ -113,7 +130,7 @@ func (controller *ViewController) Create(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	err = data.CreateView(&item, controller.DB)
+	err = controller.ViewData.CreateView(&item)
 
 	if err != nil {
 		log.Printf("Error creating a view: %v", err)
@@ -143,7 +160,15 @@ func (controller *ViewController) Update(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	err = data.UpdateView(&item, controller.DB)
+	_, err = controller.ViewData.FetchView(item.Id)
+
+	if err != nil {
+		log.Println("view not found")
+		http.Error(writer, "view not found", http.StatusNotFound)
+		return
+	}
+
+	err = controller.ViewData.UpdateView(&item)
 
 	if err != nil {
 		log.Printf("Error updating a view: %v", err)
@@ -164,21 +189,15 @@ func (controller *ViewController) Delete(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	isNew, err := data.VerifyViewIdIsNew(id, controller.DB)
+	_, err = controller.ViewData.FetchView(id)
 
 	if err != nil {
-		log.Printf("Error checking view id: %v", err)
-		http.Error(writer, "Error checking id", http.StatusInternalServerError)
+		log.Println("view not found")
+		http.Error(writer, "view not found", http.StatusNotFound)
 		return
 	}
 
-	if isNew {
-		log.Printf("View for id %d doesn't exist", id)
-		http.Error(writer, "View not found", http.StatusNotFound)
-		return
-	}
-
-	err = data.DeleteView(id, controller.DB)
+	err = controller.ViewData.DeleteView(id)
 
 	if err != nil {
 		log.Printf("There was an error attempting to delete a view: %v", err)
@@ -197,7 +216,7 @@ func (controller *ViewController) AddNodeSensorToView(writer http.ResponseWriter
 		return
 	}
 
-	err = data.CreateViewNodeSensorData(&item, controller.DB)
+	err = controller.SensorData.CreateViewNodeSensorData(&item)
 
 	if err != nil {
 		log.Printf("Error creating a view node sensor: %v", err)
@@ -235,7 +254,8 @@ func (controller *ViewController) RemoveNodeSensorFromView(writer http.ResponseW
 		return
 	}
 
-	err = data.DeleteViewNodeSensorData(id, controller.DB)
+	err = controller.SensorData.DeleteByParent(id)
+	err = controller.NodeSensorData.Delete(id)
 
 	if err != nil {
 		log.Printf("There was an error attempting to delete a view node sensor: %v", err)
@@ -254,7 +274,7 @@ func (controller *ViewController) AddNodeSwitchToView(writer http.ResponseWriter
 		return
 	}
 
-	err = data.CreateViewNodeSwitchData(&item, controller.DB)
+	switchItem, err := controller.SwitchData.Insert(&item)
 
 	if err != nil {
 		log.Printf("Error creating a view node switch: %v", err)
@@ -262,7 +282,7 @@ func (controller *ViewController) AddNodeSwitchToView(writer http.ResponseWriter
 		return
 	}
 
-	result, err := json.Marshal(item)
+	result, err := json.Marshal(switchItem)
 
 	if err != nil {
 		log.Printf("An error occurred marshalling view node switch data: %v", err)
@@ -292,7 +312,7 @@ func (controller *ViewController) RemoveNodeSwitchFromView(writer http.ResponseW
 		return
 	}
 
-	err = data.DeleteViewNodeSwitchData(id, controller.DB)
+	err = controller.NodeSwitchData.Delete(id)
 
 	if err != nil {
 		log.Printf("There was an error attempting to delete a view node switch: %v", err)

@@ -14,11 +14,13 @@ import (
 )
 
 type SensorTypeController struct {
-	SensorTypeData *data.SensorTypeData
+	SensorType     data.CrudDataInterface
+	SensorTypeData data.CrudDataInterface
 }
 
 func NewSensorTypeController(db *sql.DB, config *config.Configuration) *SensorTypeController {
 	return &SensorTypeController{
+		SensorType:     data.NewSensorType(db, config),
 		SensorTypeData: data.NewSensorTypeData(db, config),
 	}
 
@@ -35,7 +37,7 @@ func (controller *SensorTypeController) GetAll(writer http.ResponseWriter, reque
 
 	log.Println("Fetch all sensor types")
 
-	allTypes, fetchErr := controller.SensorTypeData.FetchAllSensorTypes()
+	allTypes, fetchErr := controller.SensorType.SelectAll()
 
 	if fetchErr != nil {
 		log.Printf("Error fetching sensor types from the db: %v", fetchErr)
@@ -67,7 +69,7 @@ func (controller *SensorTypeController) GetById(writer http.ResponseWriter, requ
 
 	log.Printf("Fetch sensor type by id: %d", id)
 
-	item, err := controller.SensorTypeData.FetchSensorType(id)
+	item, err := controller.SensorType.SelectById(id)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			log.Printf("Error getting sensor type: %v", err)
@@ -89,6 +91,7 @@ func (controller *SensorTypeController) GetById(writer http.ResponseWriter, requ
 	writeResponse(writer, result)
 }
 
+// TODO Evaluate if this is needed
 func (controller *SensorTypeController) DataById(writer http.ResponseWriter, request *http.Request) {
 	writer.Header().Set("Access-Control-Allow-Origin", "*")
 
@@ -102,7 +105,7 @@ func (controller *SensorTypeController) DataById(writer http.ResponseWriter, req
 
 	log.Printf("Fetch all sensor type data for a sensor with the id: %d", id)
 
-	item, err := controller.SensorTypeData.FetchSensorTypeData(id)
+	item, err := controller.SensorTypeData.SelectByParentId(id)
 
 	if err != nil {
 		if err != sql.ErrNoRows {
