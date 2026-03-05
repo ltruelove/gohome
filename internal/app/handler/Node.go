@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	"github.com/ltruelove/gohome/internal/app/data"
@@ -10,36 +11,36 @@ import (
 )
 
 func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
-	err := dto.Node.IsValid(false)
+	isValid, err := dto.Node.IsValid(false)
 
-	if err != nil {
+	if !isValid || err != nil {
 		log.Println("Node Validation error")
-		return err
+		return fmt.Errorf("%w: %s", err, "during node validation")
 	}
 
 	err = data.CreateNode(&dto.Node, db)
 
 	if err != nil {
 		log.Println("Error creating node for register")
-		return err
+		return fmt.Errorf("%w: %s", err, "creating node in database")
 	}
 
 	updatedSensors := []models.NodeSensor{}
 	for _, item := range dto.Sensors {
 		item.NodeId = dto.Node.Id
 
-		_, err = item.IsValid(false)
+		isValid, err := item.IsValid(false)
 
-		if err != nil {
+		if !isValid || err != nil {
 			log.Println("Node sensor validation error")
-			return err
+			return fmt.Errorf("%w: %s", err, "during node sensor validation")
 		}
 
 		err = data.CreateNodeSensor(&item, db)
 
 		if err != nil {
 			log.Println("Error creating node sensor for register")
-			return err
+			return fmt.Errorf("%w: %s", err, "creating node sensor in database")
 		}
 
 		updatedSensors = append(updatedSensors, item)
@@ -51,17 +52,17 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 	for _, item := range dto.Switches {
 		item.NodeId = dto.Node.Id
 
-		err = item.IsValid(false)
+		isValid, err := item.IsValid(false)
 
-		if err != nil {
+		if !isValid || err != nil {
 			log.Println("Node switch validation error")
-			return err
+			return fmt.Errorf("%w: %s", err, "during node switch validation")
 		}
 		err = data.CreateNodeSwitch(&item, db)
 
 		if err != nil {
 			log.Println("Error creating node switch for register")
-			return err
+			return fmt.Errorf("%w: %s", err, "creating node switch in database")
 		}
 
 		updatedSwitches = append(updatedSwitches, item)

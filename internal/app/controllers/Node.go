@@ -110,9 +110,9 @@ func (controller *NodeController) Create(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	err = item.IsValid(false)
+	isValid, err := item.IsValid(false)
 
-	if err != nil {
+	if !isValid || err != nil {
 		vError := fmt.Sprintf("Validation error: %v", err)
 		log.Println(vError)
 		http.Error(writer, vError, http.StatusBadRequest)
@@ -151,9 +151,9 @@ func (controller *NodeController) Update(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	err = item.IsValid(true)
+	isValid, err := item.IsValid(true)
 
-	if err != nil {
+	if !isValid || err != nil {
 		vError := fmt.Sprintf("Validation error: %v", err)
 		log.Println(vError)
 		http.Error(writer, vError, http.StatusBadRequest)

@@ -1,11 +1,12 @@
-//  Comapany ltruelove:
-//   version: 0.0.1
-//   title: GoHome API
-//  Schemes: http
-//  Host: 127.0.0.1:8082
-//  BasePath: /
-//  Produces:
-//    - application/json
+//	Comapany ltruelove:
+//	 version: 0.0.1
+//	 title: GoHome API
+//	Schemes: http
+//	Host: 127.0.0.1:8082
+//	BasePath: /
+//	Produces:
+//	  - application/json
+//
 // swagger:meta
 package controllers
 
@@ -186,9 +187,9 @@ func (controller *ControlPointController) Create(writer http.ResponseWriter, req
 		return
 	}
 
-	err = item.IsValid(false)
+	isValid, err := item.IsValid(false)
 
-	if err != nil {
+	if !isValid || err != nil {
 		vError := fmt.Sprintf("Validation error: %v", err)
 		log.Println(vError)
 		http.Error(writer, vError, http.StatusBadRequest)
@@ -280,9 +281,9 @@ func (controller *ControlPointController) Update(writer http.ResponseWriter, req
 		return
 	}
 
-	err = item.IsValid(true)
+	isValid, err := item.IsValid(true)
 
-	if err != nil {
+	if !isValid || err != nil {
 		vError := fmt.Sprintf("Validation error: %v", err)
 		log.Println(vError)
 		http.Error(writer, vError, http.StatusBadRequest)

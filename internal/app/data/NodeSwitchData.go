@@ -313,3 +313,48 @@ func (d NodeSwitchData) DeleteBySecondParentId(id int) error {
 
 	return nil
 }
+
+func FetchNodeSwitch(id int, db *sql.DB) (models.NodeSwitch, error) {
+	var ns models.NodeSwitch
+	stmt, err := db.Prepare(`SELECT id, nodeid, switchtypeid, name, pin, momentarypressduration, isclosedon FROM nodeswitch WHERE id = $1`)
+	if err != nil {
+		log.Println("Error preparing fetch node switch sql")
+		return ns, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(id).Scan(&ns.Id, &ns.NodeId, &ns.SwitchTypeId, &ns.Name, &ns.Pin, &ns.MomentaryPressDuration, &ns.IsClosedOn)
+	if err != nil {
+		log.Println("Error querying for node switch")
+		return ns, err
+	}
+
+	return ns, nil
+}
+
+func FetchNodeSwitches(nodeId int, db *sql.DB) ([]models.NodeSwitch, error) {
+	stmt, err := db.Prepare(`SELECT id, nodeid, switchtypeid, name, pin, momentarypressduration, isclosedon FROM nodeswitch WHERE nodeid = $1`)
+	if err != nil {
+		log.Println("Error preparing fetch node switches sql")
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(nodeId)
+	if err != nil {
+		log.Println("Error querying for node switches")
+		return nil, err
+	}
+
+	var list []models.NodeSwitch
+	for rows.Next() {
+		var ns models.NodeSwitch
+		if err := rows.Scan(&ns.Id, &ns.NodeId, &ns.SwitchTypeId, &ns.Name, &ns.Pin, &ns.MomentaryPressDuration, &ns.IsClosedOn); err != nil {
+			log.Println("Error scanning node switch")
+			return nil, err
+		}
+		list = append(list, ns)
+	}
+
+	return list, nil
+}
