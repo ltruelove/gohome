@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/ltruelove/gohome/config"
+	"github.com/ltruelove/gohome/internal/app/data"
 )
 
 // NewNodeSensorCrudRepository returns a CrudRepository for node sensors.
