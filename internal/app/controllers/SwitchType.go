@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -17,9 +16,13 @@ type SwitchTypeController struct {
 	SwitchTypeData data.CrudDataInterface
 }
 
-func NewSwitchTypeController(db *sql.DB, config *config.Configuration) *SwitchTypeController {
+// convenience wrapper removed — use NewSwitchTypeControllerWithDeps for DI
+
+// NewSwitchTypeControllerWithDeps constructs a SwitchTypeController using an
+// already-instantiated data layer dependency to allow DI and testing.
+func NewSwitchTypeControllerWithDeps(switchTypeData data.CrudDataInterface) *SwitchTypeController {
 	return &SwitchTypeController{
-		SwitchTypeData: data.NewSwitchTypeData(db, config),
+		SwitchTypeData: switchTypeData,
 	}
 }
 

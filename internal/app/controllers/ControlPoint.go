@@ -11,7 +11,6 @@
 package controllers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -19,13 +18,17 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type ControlPointController struct {
-	DB *sql.DB
+	Repo repository.ControlPointRepository
+}
+
+func NewControlPointControllerWithDeps(repo repository.ControlPointRepository) *ControlPointController {
+	return &ControlPointController{Repo: repo}
 }
 
 func (controller *ControlPointController) RegisterControlPointEndpoints() {
@@ -56,7 +59,7 @@ func (controller *ControlPointController) GetAll(writer http.ResponseWriter, req
 
 	log.Println("Fetch all controlPoints request initiated")
 
-	allItems, err := data.FetchAllControlPoints(controller.DB)
+	allItems, err := controller.Repo.FetchAll()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all controlPoints: %v", err)
@@ -91,7 +94,7 @@ func (controller *ControlPointController) GetAllAvailable(writer http.ResponseWr
 	//		500: internaServerError
 	log.Println("Fetch all controlPoints request initiated")
 
-	allItems, err := data.FetchAllAvailableControlPoints(controller.DB)
+	allItems, err := controller.Repo.FetchAllAvailable()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all controlPoints: %v", err)
@@ -123,7 +126,7 @@ func (controller *ControlPointController) GetAllNodes(writer http.ResponseWriter
 
 	log.Println("Fetch all controlPoint nodes request initiated")
 
-	allItems, err := data.FetchAllControlPointNodes(id, controller.DB)
+	allItems, err := controller.Repo.FetchAllNodes(id)
 
 	if err != nil {
 		log.Printf("An error occurred fetching all controlPoint nodes: %v", err)
@@ -155,7 +158,7 @@ func (controller *ControlPointController) GetById(writer http.ResponseWriter, re
 
 	log.Printf("Fetch controlPoint by id: %d", id)
 
-	item, err := data.FetchControlPoint(id, controller.DB)
+	item, err := controller.Repo.FetchById(id)
 
 	if err != nil {
 		log.Println("controlPoint not found")
@@ -196,7 +199,7 @@ func (controller *ControlPointController) Create(writer http.ResponseWriter, req
 		return
 	}
 
-	existingControlPoint, err := data.FetchControlPointByMac(item.Mac, controller.DB)
+	existingControlPoint, err := controller.Repo.FetchByMac(item.Mac)
 
 	if err == nil && existingControlPoint.Mac == "" {
 		log.Printf("Error creating a control point: %v", err)
@@ -204,7 +207,7 @@ func (controller *ControlPointController) Create(writer http.ResponseWriter, req
 		return
 	}
 
-	err = data.CreateControlPoint(&item, controller.DB)
+	err = controller.Repo.Create(&item)
 
 	if err != nil {
 		log.Printf("Error creating a controlPoint: %v", err)
@@ -245,7 +248,7 @@ func (controller *ControlPointController) UpdateControlPointIp(writer http.Respo
 		return
 	}
 
-	isNew, err := data.VerifyControlPointIdIsNew(item.Id, controller.DB)
+	isNew, err := controller.Repo.VerifyIdIsNew(item.Id)
 
 	if err != nil {
 		log.Printf("Error checking controlPoint id: %v", err)
@@ -259,7 +262,7 @@ func (controller *ControlPointController) UpdateControlPointIp(writer http.Respo
 		return
 	}
 
-	err = data.UpdateControlPointIp(&item, controller.DB)
+	err = controller.Repo.UpdateIp(&item)
 
 	if err != nil {
 		log.Printf("Error updating a controlPoint: %v", err)
@@ -290,7 +293,7 @@ func (controller *ControlPointController) Update(writer http.ResponseWriter, req
 		return
 	}
 
-	isNew, err := data.VerifyControlPointIdIsNew(item.Id, controller.DB)
+	isNew, err := controller.Repo.VerifyIdIsNew(item.Id)
 
 	if err != nil {
 		log.Printf("Error checking controlPoint id: %v", err)
@@ -304,7 +307,7 @@ func (controller *ControlPointController) Update(writer http.ResponseWriter, req
 		return
 	}
 
-	err = data.UpdateControlPoint(&item, controller.DB)
+	err = controller.Repo.Update(&item)
 
 	if err != nil {
 		log.Printf("Error updating a controlPoint: %v", err)
@@ -325,7 +328,7 @@ func (controller *ControlPointController) Delete(writer http.ResponseWriter, req
 		return
 	}
 
-	isNew, err := data.VerifyControlPointIdIsNew(id, controller.DB)
+	isNew, err := controller.Repo.VerifyIdIsNew(id)
 
 	if err != nil {
 		log.Printf("Error checking controlPoint id: %v", err)
@@ -339,7 +342,7 @@ func (controller *ControlPointController) Delete(writer http.ResponseWriter, req
 		return
 	}
 
-	err = data.DeleteControlPoint(id, controller.DB)
+	err = controller.Repo.Delete(id)
 
 	if err != nil {
 		log.Printf("There was an error attempting to delete a controlPoint: %v", err)

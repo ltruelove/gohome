@@ -1,16 +1,15 @@
 package handler
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/dto"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/repository"
 )
 
-func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
+func RegisterNode(dto *dto.RegsiterNode, nodeRepo repository.NodeRepository) error {
 	isValid, err := dto.Node.IsValid(false)
 
 	if !isValid || err != nil {
@@ -18,9 +17,8 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 		return fmt.Errorf("%w: %s", err, "during node validation")
 	}
 
-	err = data.CreateNode(&dto.Node, db)
-
-	if err != nil {
+	// create the node using repository
+	if err := nodeRepo.Create(&dto.Node); err != nil {
 		log.Println("Error creating node for register")
 		return fmt.Errorf("%w: %s", err, "creating node in database")
 	}
@@ -36,9 +34,7 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 			return fmt.Errorf("%w: %s", err, "during node sensor validation")
 		}
 
-		err = data.CreateNodeSensor(&item, db)
-
-		if err != nil {
+		if err := nodeRepo.CreateNodeSensor(&item); err != nil {
 			log.Println("Error creating node sensor for register")
 			return fmt.Errorf("%w: %s", err, "creating node sensor in database")
 		}
@@ -58,9 +54,7 @@ func RegisterNode(dto *dto.RegsiterNode, db *sql.DB) error {
 			log.Println("Node switch validation error")
 			return fmt.Errorf("%w: %s", err, "during node switch validation")
 		}
-		err = data.CreateNodeSwitch(&item, db)
-
-		if err != nil {
+		if err := nodeRepo.CreateNodeSwitch(&item); err != nil {
 			log.Println("Error creating node switch for register")
 			return fmt.Errorf("%w: %s", err, "creating node switch in database")
 		}

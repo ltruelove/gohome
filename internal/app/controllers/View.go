@@ -1,27 +1,25 @@
 package controllers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/app/viewModels"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type ViewController struct {
-	ViewData           data.CrudDataInterface
-	NodeSensorData     data.CrudDataInterface
-	ViewNodeSensorData data.CrudDataInterface
-	NodeSwitchData     data.CrudDataInterface
-	ViewNodeSwitchData data.CrudDataInterface
-	CompoundData       *data.CompoundData
+	ViewData           repository.CrudRepository
+	NodeSensorData     repository.CrudRepository
+	ViewNodeSensorData repository.CrudRepository
+	NodeSwitchData     repository.CrudRepository
+	ViewNodeSwitchData repository.CrudRepository
+	CompoundData       repository.CompoundRepository
 }
 
 func (controller *ViewController) RegisterViewEndpoints() {
@@ -36,14 +34,17 @@ func (controller *ViewController) RegisterViewEndpoints() {
 	routing.AddRouteWithMethod("/view/node/switch/{id}", "DELETE", controller.RemoveNodeSwitchFromView)
 }
 
-func NewViewController(db *sql.DB, config *config.Configuration) *ViewController {
+// convenience wrapper removed — use NewViewControllerWithDeps for DI
+
+// NewViewControllerWithDeps constructs a ViewController with pre-built repositories.
+func NewViewControllerWithDeps(viewRepo repository.CrudRepository, nodeSensorRepo repository.CrudRepository, viewNodeSensorRepo repository.CrudRepository, nodeSwitchRepo repository.CrudRepository, viewNodeSwitchRepo repository.CrudRepository, compoundRepo repository.CompoundRepository) *ViewController {
 	return &ViewController{
-		ViewData:           data.NewViewData(db, config),
-		NodeSensorData:     data.NewNodeSensorData(db, config),
-		ViewNodeSensorData: data.NewViewNodeSensorData(db, config),
-		NodeSwitchData:     data.NewNodeSwitchData(db, config),
-		ViewNodeSwitchData: data.NewViewNodeSwitchData(db, config),
-		CompoundData:       data.NewCompoundData(db, config),
+		ViewData:           viewRepo,
+		NodeSensorData:     nodeSensorRepo,
+		ViewNodeSensorData: viewNodeSensorRepo,
+		NodeSwitchData:     nodeSwitchRepo,
+		ViewNodeSwitchData: viewNodeSwitchRepo,
+		CompoundData:       compoundRepo,
 	}
 }
 
@@ -83,13 +84,12 @@ func (controller *ViewController) GetById(writer http.ResponseWriter, request *h
 	log.Printf("Fetch view by id: %d", id)
 
 	model, err := controller.ViewData.SelectById(id)
-	item := model.(*models.View)
-
 	if err != nil {
 		log.Println("view not found")
 		http.Error(writer, "view not found", http.StatusNotFound)
 		return
 	}
+	item := model.(*models.View)
 
 	var viewModel = viewModels.ViewVM{Id: item.Id, Name: item.Name}
 

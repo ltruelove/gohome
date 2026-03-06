@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -18,12 +17,15 @@ type SensorTypeController struct {
 	SensorTypeData data.CrudDataInterface
 }
 
-func NewSensorTypeController(db *sql.DB, config *config.Configuration) *SensorTypeController {
-	return &SensorTypeController{
-		SensorType:     data.NewSensorType(db, config),
-		SensorTypeData: data.NewSensorTypeData(db, config),
-	}
+// convenience wrapper removed — use NewSensorTypeControllerWithDeps for DI
 
+// NewSensorTypeControllerWithDeps constructs a SensorTypeController using
+// already-instantiated data layer dependencies (improves testability).
+func NewSensorTypeControllerWithDeps(sensorType data.CrudDataInterface, sensorTypeData data.CrudDataInterface) *SensorTypeController {
+	return &SensorTypeController{
+		SensorType:     sensorType,
+		SensorTypeData: sensorTypeData,
+	}
 }
 
 func (controller *SensorTypeController) RegisterSensorTypeEndpoints() {

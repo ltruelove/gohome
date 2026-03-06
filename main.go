@@ -11,6 +11,8 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/controllers"
+	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/app/setup"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
@@ -57,13 +59,20 @@ func main() {
 	log.Printf("setting up db for %s", Config.DbType)
 	db := setup.InitDb(Config)
 
-	viewController := controllers.NewViewController(db, &Config)
-	sensorTypeController := controllers.NewSensorTypeController(db, &Config)
-	switchTypeController := controllers.NewSwitchTypeController(db, &Config)
-	nodeController := controllers.NodeController{DB: db}
-	controlPointController := controllers.ControlPointController{DB: db}
-	switchController := controllers.NodeSwitchController{DB: db}
-	sensorController := controllers.NodeSensorController{DB: db}
+	viewController := controllers.NewViewControllerWithDeps(
+		repository.NewCrudRepositoryFromData(data.NewViewData(db, &Config)),
+		repository.NewCrudRepositoryFromData(data.NewNodeSensorData(db, &Config)),
+		repository.NewCrudRepositoryFromData(data.NewViewNodeSensorData(db, &Config)),
+		repository.NewCrudRepositoryFromData(data.NewNodeSwitchData(db, &Config)),
+		repository.NewCrudRepositoryFromData(data.NewViewNodeSwitchData(db, &Config)),
+		repository.NewCompoundRepositoryFromData(data.NewCompoundData(db, &Config)),
+	)
+	sensorTypeController := controllers.NewSensorTypeControllerWithDeps(data.NewSensorType(db, &Config), data.NewSensorTypeData(db, &Config))
+	switchTypeController := controllers.NewSwitchTypeControllerWithDeps(data.NewSwitchTypeData(db, &Config))
+	nodeController := controllers.NewNodeControllerWithDeps(repository.NewNodeRepository(db, Config.DbType), repository.NewControlPointRepository(db, Config.DbType))
+	controlPointController := controllers.NewControlPointControllerWithDeps(repository.NewControlPointRepository(db, Config.DbType))
+	switchController := controllers.NewNodeSwitchControllerWithDeps(repository.NewCrudRepositoryFromData(data.NewNodeSwitchData(db, &Config)), repository.NewCrudRepositoryFromData(data.NewSwitchTypeData(db, &Config)))
+	sensorController := controllers.NewNodeSensorControllerWithDeps(repository.NewCrudRepositoryFromData(data.NewNodeSensorData(db, &Config)), repository.NewCrudRepositoryFromData(data.NewSensorType(db, &Config)))
 
 	//register application routes
 	//each app section should have its own handlers to register with the

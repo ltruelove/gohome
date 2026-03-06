@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,15 +10,20 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/dto"
 	"github.com/ltruelove/gohome/internal/app/handler"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type NodeController struct {
-	DB *sql.DB
+	Repo             repository.NodeRepository
+	ControlPointRepo repository.ControlPointRepository
+}
+
+func NewNodeControllerWithDeps(repo repository.NodeRepository, cpRepo repository.ControlPointRepository) *NodeController {
+	return &NodeController{Repo: repo, ControlPointRepo: cpRepo}
 }
 
 func (controller *NodeController) RegisterNodeEndpoints() {
@@ -44,7 +48,7 @@ func (controller *NodeController) RegisterNodeEndpoints() {
 func (controller *NodeController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all nodes request initiated")
 
-	allItems, err := data.FetchAllNodes(controller.DB)
+	allItems, err := controller.Repo.FetchAll()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all nodes: %v", err)
@@ -76,7 +80,7 @@ func (controller *NodeController) GetById(writer http.ResponseWriter, request *h
 
 	log.Printf("Fetch node by id: %d", id)
 
-	item, err := data.FetchNode(id, controller.DB)
+	item, err := controller.Repo.FetchById(id)
 
 	if err != nil {
 		log.Println("Node not found")
@@ -119,7 +123,7 @@ func (controller *NodeController) Create(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	err = data.CreateNode(&item, controller.DB)
+	err = controller.Repo.Create(&item)
 
 	if err != nil {
 		log.Printf("Error creating a node: %v", err)
@@ -160,7 +164,7 @@ func (controller *NodeController) Update(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	isNew, err := data.VerifyNodeIdIsNew(item.Id, controller.DB)
+	isNew, err := controller.Repo.VerifyIdIsNew(item.Id)
 
 	if err != nil {
 		log.Printf("Error checking node id: %v", err)
@@ -174,7 +178,7 @@ func (controller *NodeController) Update(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	err = data.UpdateNode(&item, controller.DB)
+	err = controller.Repo.Update(&item)
 
 	if err != nil {
 		log.Printf("Error updating a node: %v", err)
@@ -203,7 +207,7 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 	}
 
 	// need to fetch the record before deleting it so it can be used later
-	node, err := data.FetchIndividualNode(id, controller.DB)
+	node, err := controller.Repo.FetchIndividual(id)
 
 	if err != nil {
 		log.Println("Could not find node")
@@ -211,13 +215,13 @@ func (controller *NodeController) Delete(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(id)
 
 	if err != nil {
 		log.Println("Node not attached to a control point.")
 	}
 
-	err = data.DeleteNode(id, controller.DB)
+	err = controller.Repo.Delete(id)
 
 	if err != nil {
 		log.Printf("There was an error attempting to delete a node: %v", err)
@@ -250,7 +254,7 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 		return
 	}
 
-	controlPoint, err := data.FetchControlPoint(item.ControlPoint.Id, controller.DB)
+	controlPoint, err := controller.ControlPointRepo.FetchById(item.ControlPoint.Id)
 
 	if err != nil {
 		log.Printf("Could not find requested control point: %v", err)
@@ -260,7 +264,7 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 
 	item.ControlPoint = controlPoint
 
-	err = handler.RegisterNode(&item, controller.DB)
+	err = handler.RegisterNode(&item, controller.Repo)
 
 	if err != nil {
 		log.Printf("Error registering a node: %v", err)
@@ -272,7 +276,7 @@ func (controller *NodeController) Register(writer http.ResponseWriter, request *
 	controlPointNode.ControlPointId = item.ControlPoint.Id
 	controlPointNode.NodeId = item.Node.Id
 
-	err = data.AddNodeToControlPoint(&controlPointNode, controller.DB)
+	err = controller.ControlPointRepo.AddNodeToControlPoint(&controlPointNode)
 
 	if err != nil {
 		log.Printf("An error occurred adding the node to the control point: %v", err)
@@ -302,7 +306,7 @@ func (controller *NodeController) GetAllNodeSwitches(writer http.ResponseWriter,
 		return
 	}
 
-	allItems, err := data.FetchNodeSwitches(id, controller.DB)
+	allItems, err := controller.Repo.FetchNodeSwitches(id)
 
 	if err != nil {
 		log.Printf("An error occurred fetching all node switches: %v", err)
@@ -351,7 +355,7 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 		return
 	}
 
-	nodeSwitch, err := data.FetchNodeSwitch(id, controller.DB)
+	nodeSwitch, err := controller.Repo.FetchNodeSwitch(id)
 
 	if err != nil {
 		log.Println("Could not get node switch")
@@ -359,7 +363,7 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 		return
 	}
 
-	node, err := data.FetchNode(nodeSwitch.NodeId, controller.DB)
+	node, err := controller.Repo.FetchById(nodeSwitch.NodeId)
 
 	if err != nil {
 		log.Println("Could not get node")
@@ -367,7 +371,7 @@ func (controller *NodeController) ToggleNodeSwitch(writer http.ResponseWriter, r
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(node.Id)
 
 	if err != nil {
 		log.Println("Could not get control point by node")
@@ -416,7 +420,7 @@ func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, re
 		return
 	}
 
-	nodeSwitch, err := data.FetchNodeSwitch(id, controller.DB)
+	nodeSwitch, err := controller.Repo.FetchNodeSwitch(id)
 
 	if err != nil {
 		log.Println("Could not get node switch")
@@ -424,7 +428,7 @@ func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, re
 		return
 	}
 
-	node, err := data.FetchNode(nodeSwitch.NodeId, controller.DB)
+	node, err := controller.Repo.FetchById(nodeSwitch.NodeId)
 
 	if err != nil {
 		log.Println("Could not get node")
@@ -432,7 +436,7 @@ func (controller *NodeController) PressNodeSwitch(writer http.ResponseWriter, re
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(node.Id)
 
 	if err != nil {
 		log.Println("Could not get control point by node")
@@ -467,7 +471,7 @@ func (controller *NodeController) TriggerUpdate(writer http.ResponseWriter, requ
 		return
 	}
 
-	node, err := data.FetchNode(id, controller.DB)
+	node, err := controller.Repo.FetchById(id)
 
 	if err != nil {
 		log.Println("Could not get node")
@@ -475,7 +479,7 @@ func (controller *NodeController) TriggerUpdate(writer http.ResponseWriter, requ
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(node.Id)
 
 	if err != nil {
 		log.Println("Could not get control point by node")
@@ -512,7 +516,7 @@ func (controller *NodeController) GetNodeData(writer http.ResponseWriter, reques
 		return
 	}
 
-	node, err := data.FetchNode(id, controller.DB)
+	node, err := controller.Repo.FetchById(id)
 
 	log.Println("Node fetched")
 
@@ -522,7 +526,7 @@ func (controller *NodeController) GetNodeData(writer http.ResponseWriter, reques
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(node.Id)
 
 	log.Println("Found control point")
 
@@ -569,7 +573,7 @@ func (controller *NodeController) LogNodeReading(writer http.ResponseWriter, req
 		return
 	}
 
-	err = data.CreateNewLog(item, controller.DB)
+	err = controller.Repo.CreateNewLog(item)
 
 	if err != nil {
 		log.Println("Could not create log entry")
@@ -590,7 +594,7 @@ func (controller *NodeController) GetNodeLogData(writer http.ResponseWriter, req
 		return
 	}
 
-	node, err := data.FetchNode(id, controller.DB)
+	node, err := controller.Repo.FetchById(id)
 
 	if err != nil {
 		log.Println("Could not get node")
@@ -601,7 +605,7 @@ func (controller *NodeController) GetNodeLogData(writer http.ResponseWriter, req
 	start := time.Now().Add(time.Duration(-8) * time.Hour).UTC()
 	end := time.Now().UTC()
 
-	logs, err := data.GetSensorLogData(node.Id, controller.DB, start, end)
+	logs, err := controller.Repo.GetSensorLogData(node.Id, start, end)
 
 	log.Println(fmt.Sprintf("%d logs found in range", len(logs)))
 
@@ -614,10 +618,10 @@ func (controller *NodeController) GetNodeLogData(writer http.ResponseWriter, req
 	var returnLogs []models.NodeSensorLog
 	for _, element := range logs {
 
-		element.TemperatureEntries, err = data.GetTempLogDataByLogId(element.Id, controller.DB)
-		element.MoistureEntries, err = data.GetMoistureLogDataByLogId(element.Id, controller.DB)
-		element.ResistorEntries, err = data.GetResistorLogDataByLogId(element.Id, controller.DB)
-		element.MagneticEntries, err = data.GetMagneticLogDataByLogId(element.Id, controller.DB)
+		element.TemperatureEntries, err = controller.Repo.GetTempLogDataByLogId(element.Id)
+		element.MoistureEntries, err = controller.Repo.GetMoistureLogDataByLogId(element.Id)
+		element.ResistorEntries, err = controller.Repo.GetResistorLogDataByLogId(element.Id)
+		element.MagneticEntries, err = controller.Repo.GetMagneticLogDataByLogId(element.Id)
 
 		if err != nil {
 			log.Println("Could not get node log sensor data")
@@ -651,7 +655,7 @@ func (controller *NodeController) TriggerRestart(writer http.ResponseWriter, req
 		return
 	}
 
-	node, err := data.FetchNode(id, controller.DB)
+	node, err := controller.Repo.FetchById(id)
 
 	if err != nil {
 		log.Println("Could not get node")
@@ -659,7 +663,7 @@ func (controller *NodeController) TriggerRestart(writer http.ResponseWriter, req
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(node.Id)
 
 	if err != nil {
 		log.Println("Could not get control point by node")
@@ -704,7 +708,7 @@ func (controller *NodeController) UpdateNodeIp(writer http.ResponseWriter, reque
 		return
 	}
 
-	isNew, err := data.VerifyNodeIdIsNew(item.Id, controller.DB)
+	isNew, err := controller.Repo.VerifyIdIsNew(item.Id)
 
 	if err != nil {
 		log.Printf("Error checking node id for IP update: %v", err)
@@ -718,7 +722,7 @@ func (controller *NodeController) UpdateNodeIp(writer http.ResponseWriter, reque
 		return
 	}
 
-	err = data.UpdateNodeIp(&item, controller.DB)
+	err = controller.Repo.Update(&item)
 
 	if err != nil {
 		log.Printf("Error updating a node IP address: %v", err)
@@ -756,7 +760,7 @@ func (controller *NodeController) EnterUpdateMode(writer http.ResponseWriter, re
 		return
 	}
 
-	node, err := data.FetchNode(id, controller.DB)
+	node, err := controller.Repo.FetchById(id)
 
 	if err != nil {
 		log.Println("Could not get node")
@@ -764,7 +768,7 @@ func (controller *NodeController) EnterUpdateMode(writer http.ResponseWriter, re
 		return
 	}
 
-	nodeControlPoint, err := data.FetchControlPointByNode(node.Id, controller.DB)
+	nodeControlPoint, err := controller.Repo.FetchControlPointByNode(node.Id)
 
 	if err != nil {
 		log.Println("Could not get control point by node")

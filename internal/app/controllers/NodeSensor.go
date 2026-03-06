@@ -1,33 +1,33 @@
 package controllers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 
-	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/app/viewModels"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type NodeSensorController struct {
-	DB             *sql.DB
-	NodeSensorData data.CrudDataInterface
-	SensorType     data.CrudDataInterface
+	NodeSensor repository.CrudRepository
+	SensorType repository.CrudRepository
 }
 
 func (controller *NodeSensorController) RegisterNodeSensorEndpoints() {
 	routing.AddRouteWithMethod("/sensor", "GET", controller.GetAll)
 }
 
-func NewNodeSensorController(db *sql.DB, config *config.Configuration) *NodeSensorController {
+// convenience wrapper removed — use NewNodeSensorControllerWithDeps for DI
+
+// NewNodeSensorControllerWithDeps constructs a NodeSensorController with explicit
+// data layer dependencies (allows dependency injection and easier testing).
+func NewNodeSensorControllerWithDeps(nodeSensorData repository.CrudRepository, sensorType repository.CrudRepository) *NodeSensorController {
 	return &NodeSensorController{
-		DB:             db,
-		NodeSensorData: data.NewNodeSensorData(db, config),
-		SensorType:     data.NewSensorType(db, config),
+		NodeSensor: nodeSensorData,
+		SensorType: sensorType,
 	}
 }
 
@@ -42,7 +42,7 @@ func (controller *NodeSensorController) GetAll(writer http.ResponseWriter, reque
 		return
 	}
 
-	allItems, err := controller.NodeSensorData.SelectAll()
+	allItems, err := controller.NodeSensor.SelectAll()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all nodes: %v", err)

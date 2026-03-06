@@ -1,29 +1,29 @@
 package controllers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
 
-	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/app/viewModels"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type NodeSwitchController struct {
-	DB             *sql.DB
-	NodeSwitchData data.CrudDataInterface
-	SwitchTypeData data.CrudDataInterface
+	NodeSwitch repository.CrudRepository
+	SwitchType repository.CrudRepository
 }
 
-func NewNodeSwitchController(db *sql.DB, config *config.Configuration) *NodeSwitchController {
+// convenience wrapper removed — use NewNodeSwitchControllerWithDeps for DI
+
+// NewNodeSwitchControllerWithDeps constructs a NodeSwitchController with explicit
+// data layer dependencies to enable DI and testing.
+func NewNodeSwitchControllerWithDeps(nodeSwitchData repository.CrudRepository, switchTypeData repository.CrudRepository) *NodeSwitchController {
 	return &NodeSwitchController{
-		DB:             db,
-		NodeSwitchData: data.NewNodeSwitchData(db, config),
-		SwitchTypeData: data.NewSwitchTypeData(db, config),
+		NodeSwitch: nodeSwitchData,
+		SwitchType: switchTypeData,
 	}
 }
 
@@ -34,7 +34,7 @@ func (controller *NodeSwitchController) RegisterNodeSwitchEndpoints() {
 func (controller *NodeSwitchController) GetAll(writer http.ResponseWriter, request *http.Request) {
 	log.Println("Fetch all node sensors request initiated")
 
-	allTypes, err := controller.SwitchTypeData.SelectAll()
+	allTypes, err := controller.SwitchType.SelectAll()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all sensor types: %v", err)
@@ -42,7 +42,7 @@ func (controller *NodeSwitchController) GetAll(writer http.ResponseWriter, reque
 		return
 	}
 
-	allItems, err := controller.NodeSwitchData.SelectAll()
+	allItems, err := controller.NodeSwitch.SelectAll()
 
 	if err != nil {
 		log.Printf("An error occurred fetching all nodes: %v", err)
