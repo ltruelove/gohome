@@ -8,20 +8,20 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type SensorTypeController struct {
-	SensorType     data.CrudDataInterface
-	SensorTypeData data.CrudDataInterface
+	SensorType     repository.CrudRepository
+	SensorTypeData repository.CrudRepository
 }
 
 // convenience wrapper removed — use NewSensorTypeControllerWithDeps for DI
 
 // NewSensorTypeControllerWithDeps constructs a SensorTypeController using
 // already-instantiated data layer dependencies (improves testability).
-func NewSensorTypeControllerWithDeps(sensorType data.CrudDataInterface, sensorTypeData data.CrudDataInterface) *SensorTypeController {
+func NewSensorTypeControllerWithDeps(sensorType repository.CrudRepository, sensorTypeData repository.CrudRepository) *SensorTypeController {
 	return &SensorTypeController{
 		SensorType:     sensorType,
 		SensorTypeData: sensorTypeData,

@@ -67,8 +67,8 @@ func main() {
 		repository.NewViewNodeSwitchCrudRepository(db, Config.DbType, &Config),
 		repository.NewCompoundRepository(db, Config.DbType, &Config),
 	)
-	sensorTypeController := controllers.NewSensorTypeControllerWithDeps(data.NewSensorType(db, &Config), data.NewSensorTypeData(db, &Config))
-	switchTypeController := controllers.NewSwitchTypeControllerWithDeps(data.NewSwitchTypeData(db, &Config))
+	sensorTypeController := controllers.NewSensorTypeControllerWithDeps(repository.NewSensorTypeCrudRepository(db, Config.DbType, &Config), repository.NewSensorTypeCrudRepository(db, Config.DbType, &Config))
+	switchTypeController := controllers.NewSwitchTypeControllerWithDeps(repository.NewSwitchTypeCrudRepository(db, Config.DbType, &Config))
 	nodeController := controllers.NewNodeControllerWithDeps(repository.NewNodeRepository(db, Config.DbType), repository.NewControlPointRepository(db, Config.DbType))
 	controlPointController := controllers.NewControlPointControllerWithDeps(repository.NewControlPointRepository(db, Config.DbType))
 	switchController := controllers.NewNodeSwitchControllerWithDeps(repository.NewNodeSwitchCrudRepository(db, Config.DbType, &Config), repository.NewCrudRepositoryFromData(data.NewSwitchTypeData(db, &Config)))

@@ -8,19 +8,19 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/ltruelove/gohome/internal/app/data"
+	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
 )
 
 type SwitchTypeController struct {
-	SwitchTypeData data.CrudDataInterface
+	SwitchTypeData repository.CrudRepository
 }
 
 // convenience wrapper removed — use NewSwitchTypeControllerWithDeps for DI
 
 // NewSwitchTypeControllerWithDeps constructs a SwitchTypeController using an
 // already-instantiated data layer dependency to allow DI and testing.
-func NewSwitchTypeControllerWithDeps(switchTypeData data.CrudDataInterface) *SwitchTypeController {
+func NewSwitchTypeControllerWithDeps(switchTypeData repository.CrudRepository) *SwitchTypeController {
 	return &SwitchTypeController{
 		SwitchTypeData: switchTypeData,
 	}
