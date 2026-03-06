@@ -5,7 +5,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
@@ -120,28 +119,167 @@ func (r *mysqlNodeRepository) FetchNodeSwitch(id int) (models.NodeSwitch, error)
 }
 
 func (r *mysqlNodeRepository) GetSensorLogData(nodeId int, start time.Time, end time.Time) ([]models.NodeSensorLog, error) {
-	// delegate to existing data helper (currently returns empty stub)
-	return []models.NodeSensorLog{}, nil
+	rows, err := r.db.Query("SELECT Id, NodeId, DateLogged FROM NodeSensorLog WHERE NodeId = ? AND DateLogged BETWEEN ? AND ? ORDER BY DateLogged DESC", nodeId, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var logs []models.NodeSensorLog
+	for rows.Next() {
+		var l models.NodeSensorLog
+		if err := rows.Scan(&l.Id, &l.NodeId, &l.DateLogged); err != nil {
+			return nil, err
+		}
+
+		// populate children
+		temps, err := r.GetTempLogDataByLogId(l.Id)
+		if err != nil {
+			return nil, err
+		}
+		moist, err := r.GetMoistureLogDataByLogId(l.Id)
+		if err != nil {
+			return nil, err
+		}
+		resis, err := r.GetResistorLogDataByLogId(l.Id)
+		if err != nil {
+			return nil, err
+		}
+		mags, err := r.GetMagneticLogDataByLogId(l.Id)
+		if err != nil {
+			return nil, err
+		}
+
+		l.TemperatureEntries = temps
+		l.MoistureEntries = moist
+		l.ResistorEntries = resis
+		l.MagneticEntries = mags
+
+		logs = append(logs, l)
+	}
+
+	return logs, nil
 }
 
 func (r *mysqlNodeRepository) GetTempLogDataByLogId(logId int) ([]models.TempLogData, error) {
-	return data.GetTempLogDataByLogId(logId, r.db)
+	rows, err := r.db.Query("SELECT Id, NodeSensorLogId, TemperatureF, TemperatureC, Humidity FROM TempLog WHERE NodeSensorLogId = ?", logId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.TempLogData
+	for rows.Next() {
+		var t models.TempLogData
+		if err := rows.Scan(&t.Id, &t.NodeSensorLogId, &t.TemperatureF, &t.TemperatureC, &t.Humidity); err != nil {
+			return nil, err
+		}
+		list = append(list, t)
+	}
+	return list, nil
 }
 
 func (r *mysqlNodeRepository) CreateNewLog(item models.NodeData) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	res, err := tx.Exec("INSERT INTO NodeSensorLog (NodeId, DateLogged) VALUES (?, ?)", item.NodeId, time.Now())
+	if err != nil {
+		return err
+	}
+	lid, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+	logId := int(lid)
+
+	// temp
+	if _, err = tx.Exec("INSERT INTO TempLog (NodeSensorLogId, TemperatureF, TemperatureC, Humidity) VALUES (?, ?, ?, ?)", logId, item.TemperatureF, item.TemperatureC, item.Humidity); err != nil {
+		return err
+	}
+	// moisture
+	if _, err = tx.Exec("INSERT INTO MoistureLog (NodeSensorLogId, Moisture) VALUES (?, ?)", logId, item.Moisture); err != nil {
+		return err
+	}
+	// resistor
+	if _, err = tx.Exec("INSERT INTO ResistorLog (NodeSensorLogId, ResistorValue) VALUES (?, ?)", logId, item.ResistorValue); err != nil {
+		return err
+	}
+	// magnetic
+	isClosed := 0
+	if item.IsClosed {
+		isClosed = 1
+	}
+	if _, err = tx.Exec("INSERT INTO MagneticLog (NodeSensorLogId, IsClosed) VALUES (?, ?)", logId, isClosed); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (r *mysqlNodeRepository) GetMoistureLogDataByLogId(logId int) ([]models.MoistureLogData, error) {
-	return data.GetMoistureLogDataByLogId(logId, r.db)
+	rows, err := r.db.Query("SELECT Id, NodeSensorLogId, Moisture FROM MoistureLog WHERE NodeSensorLogId = ?", logId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.MoistureLogData
+	for rows.Next() {
+		var m models.MoistureLogData
+		if err := rows.Scan(&m.Id, &m.NodeSensorLogId, &m.Moisture); err != nil {
+			return nil, err
+		}
+		list = append(list, m)
+	}
+	return list, nil
 }
 
 func (r *mysqlNodeRepository) GetResistorLogDataByLogId(logId int) ([]models.ResistorLogData, error) {
-	return data.GetResistorLogDataByLogId(logId, r.db)
+	rows, err := r.db.Query("SELECT Id, NodeSensorLogId, ResistorValue FROM ResistorLog WHERE NodeSensorLogId = ?", logId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.ResistorLogData
+	for rows.Next() {
+		var rld models.ResistorLogData
+		if err := rows.Scan(&rld.Id, &rld.NodeSensorLogId, &rld.ResistorValue); err != nil {
+			return nil, err
+		}
+		list = append(list, rld)
+	}
+	return list, nil
 }
 
 func (r *mysqlNodeRepository) GetMagneticLogDataByLogId(logId int) ([]models.MagneticLogData, error) {
-	return data.GetMagneticLogDataByLogId(logId, r.db)
+	rows, err := r.db.Query("SELECT Id, NodeSensorLogId, IsClosed FROM MagneticLog WHERE NodeSensorLogId = ?", logId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []models.MagneticLogData
+	for rows.Next() {
+		var m models.MagneticLogData
+		var isClosedInt int
+		if err := rows.Scan(&m.Id, &m.NodeSensorLogId, &isClosedInt); err != nil {
+			return nil, err
+		}
+		m.IsClosed = isClosedInt != 0
+		list = append(list, m)
+	}
+	return list, nil
 }
 
 func (r *mysqlNodeRepository) CreateNodeSensor(sensor *models.NodeSensor) error {

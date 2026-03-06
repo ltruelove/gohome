@@ -65,14 +65,14 @@ func main() {
 		repository.NewCrudRepositoryFromData(data.NewViewNodeSensorData(db, &Config)),
 		repository.NewCrudRepositoryFromData(data.NewNodeSwitchData(db, &Config)),
 		repository.NewCrudRepositoryFromData(data.NewViewNodeSwitchData(db, &Config)),
-		repository.NewCompoundRepositoryFromData(data.NewCompoundData(db, &Config)),
+		repository.NewCompoundRepository(db, Config.DbType, &Config),
 	)
 	sensorTypeController := controllers.NewSensorTypeControllerWithDeps(data.NewSensorType(db, &Config), data.NewSensorTypeData(db, &Config))
 	switchTypeController := controllers.NewSwitchTypeControllerWithDeps(data.NewSwitchTypeData(db, &Config))
 	nodeController := controllers.NewNodeControllerWithDeps(repository.NewNodeRepository(db, Config.DbType), repository.NewControlPointRepository(db, Config.DbType))
 	controlPointController := controllers.NewControlPointControllerWithDeps(repository.NewControlPointRepository(db, Config.DbType))
-	switchController := controllers.NewNodeSwitchControllerWithDeps(repository.NewCrudRepositoryFromData(data.NewNodeSwitchData(db, &Config)), repository.NewCrudRepositoryFromData(data.NewSwitchTypeData(db, &Config)))
-	sensorController := controllers.NewNodeSensorControllerWithDeps(repository.NewCrudRepositoryFromData(data.NewNodeSensorData(db, &Config)), repository.NewCrudRepositoryFromData(data.NewSensorType(db, &Config)))
+	switchController := controllers.NewNodeSwitchControllerWithDeps(repository.NewNodeSwitchCrudRepository(db, Config.DbType, &Config), repository.NewCrudRepositoryFromData(data.NewSwitchTypeData(db, &Config)))
+	sensorController := controllers.NewNodeSensorControllerWithDeps(repository.NewNodeSensorCrudRepository(db, Config.DbType, &Config), repository.NewCrudRepositoryFromData(data.NewSensorType(db, &Config)))
 
 	//register application routes
 	//each app section should have its own handlers to register with the
