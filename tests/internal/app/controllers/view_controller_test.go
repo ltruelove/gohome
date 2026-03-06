@@ -120,12 +120,29 @@ func TestViewController_GetAllAndGetById(t *testing.T) {
 
 func TestViewController_Create_Update_Delete(t *testing.T) {
 	created := &models.View{Id: 10, Name: "created"}
-	viewRepo := &fakeCrudRepo{InsertFunc: func(data models.Model) (models.Model, error) { v := data.(*models.View); v.Id = 10; return v, nil }, SelectByIdFunc: func(id int) (models.Model, error) {
-		if id == 10 {
-			return created, nil
-		}
-		return nil, nil
-	}, UpdateFunc: func(data models.Model) error { return nil }, DeleteFunc: func(id int) error { return nil }}
+	viewRepo := &fakeCrudRepo{
+		InsertFunc: func(data models.Model) (models.Model, error) {
+			switch v := data.(type) {
+			case *models.View:
+				v.Id = 10
+				return v, nil
+			case models.View:
+				vv := v
+				vv.Id = 10
+				return &vv, nil
+			default:
+				return nil, nil
+			}
+		},
+		SelectByIdFunc: func(id int) (models.Model, error) {
+			if id == 10 {
+				return created, nil
+			}
+			return nil, nil
+		},
+		UpdateFunc: func(data models.Model) error { return nil },
+		DeleteFunc: func(id int) error { return nil },
+	}
 	ctrl := controllers.NewViewControllerWithDeps(viewRepo, nil, nil, nil, nil, nil)
 
 	// Create
@@ -157,11 +174,21 @@ func TestViewController_Create_Update_Delete(t *testing.T) {
 
 func TestViewController_AddAndRemoveNodeSensor(t *testing.T) {
 	// Add
-	viewNodeSensorRepo := &fakeCrudRepo{InsertFunc: func(data models.Model) (models.Model, error) {
-		item := data.(*models.ViewNodeSensorData)
-		item.Id = 99
-		return item, nil
-	}}
+	viewNodeSensorRepo := &fakeCrudRepo{
+		InsertFunc: func(data models.Model) (models.Model, error) {
+			switch v := data.(type) {
+			case *models.ViewNodeSensorData:
+				v.Id = 99
+				return v, nil
+			case models.ViewNodeSensorData:
+				vv := v
+				vv.Id = 99
+				return &vv, nil
+			default:
+				return nil, nil
+			}
+		},
+	}
 	nodeSensorRepo := &fakeCrudRepo{DeleteFunc: func(id int) error { return nil }}
 	ctrl := controllers.NewViewControllerWithDeps(nil, nodeSensorRepo, viewNodeSensorRepo, nil, nil, nil)
 
@@ -184,11 +211,21 @@ func TestViewController_AddAndRemoveNodeSensor(t *testing.T) {
 
 func TestViewController_AddAndRemoveNodeSwitch(t *testing.T) {
 	// Add
-	vnswRepo := &fakeCrudRepo{InsertFunc: func(data models.Model) (models.Model, error) {
-		item := data.(*models.ViewNodeSwitchData)
-		item.Id = 77
-		return item, nil
-	}}
+	vnswRepo := &fakeCrudRepo{
+		InsertFunc: func(data models.Model) (models.Model, error) {
+			switch v := data.(type) {
+			case *models.ViewNodeSwitchData:
+				v.Id = 77
+				return v, nil
+			case models.ViewNodeSwitchData:
+				vv := v
+				vv.Id = 77
+				return &vv, nil
+			default:
+				return nil, nil
+			}
+		},
+	}
 	nodeSwitchRepo := &fakeCrudRepo{DeleteFunc: func(id int) error { return nil }}
 	ctrl := controllers.NewViewControllerWithDeps(nil, nil, nil, nodeSwitchRepo, vnswRepo, nil)
 
