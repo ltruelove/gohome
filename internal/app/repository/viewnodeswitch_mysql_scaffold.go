@@ -10,7 +10,7 @@ import (
 
 type mysqlViewNodeSwitchRepository struct {
 	db   *sql.DB
-	stmt *statements.ViewNodeSwitchDataStatements
+	stmt statements.CrudStatement
 }
 
 func NewMySQLViewNodeSwitchRepository(db *sql.DB, cfg *config.Configuration) CrudRepository {

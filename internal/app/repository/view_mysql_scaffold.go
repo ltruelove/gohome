@@ -10,7 +10,7 @@ import (
 
 type mysqlViewRepository struct {
 	db   *sql.DB
-	stmt *statements.ViewDataStatements
+	stmt statements.CrudStatement
 }
 
 func NewMySQLViewRepository(db *sql.DB, cfg *config.Configuration) CrudRepository {

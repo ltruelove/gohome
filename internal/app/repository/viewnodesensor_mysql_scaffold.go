@@ -10,7 +10,7 @@ import (
 
 type mysqlViewNodeSensorRepository struct {
 	db   *sql.DB
-	stmt *statements.ViewNodeSensorDataStatements
+	stmt statements.CrudStatement
 }
 
 func NewMySQLViewNodeSensorRepository(db *sql.DB, cfg *config.Configuration) CrudRepository {
