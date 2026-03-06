@@ -10,11 +10,17 @@ import (
 // NewNodeSensorCrudRepository returns a CrudRepository for node sensors.
 // Currently it wraps the data implementation; can be replaced with a MySQL scaffold later.
 func NewNodeSensorCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration) CrudRepository {
+	if dbType == "mysql" {
+		return NewMySQLNodeSensorRepository(db, cfg)
+	}
 	return NewCrudRepositoryFromData(data.NewNodeSensorData(db, cfg))
 }
 
 // NewNodeSwitchCrudRepository returns a CrudRepository for node switches.
 func NewNodeSwitchCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration) CrudRepository {
+	if dbType == "mysql" {
+		return NewMySQLNodeSwitchRepository(db, cfg)
+	}
 	return NewCrudRepositoryFromData(data.NewNodeSwitchData(db, cfg))
 }
 
