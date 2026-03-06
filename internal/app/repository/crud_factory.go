@@ -17,3 +17,27 @@ func NewNodeSensorCrudRepository(db *sql.DB, dbType string, cfg *config.Configur
 func NewNodeSwitchCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration) CrudRepository {
 	return NewCrudRepositoryFromData(data.NewNodeSwitchData(db, cfg))
 }
+
+// NewViewCrudRepository returns a CrudRepository for views, using a MySQL scaffold when available.
+func NewViewCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration) CrudRepository {
+	if dbType == "mysql" {
+		return NewMySQLViewRepository(db, cfg)
+	}
+	return NewCrudRepositoryFromData(data.NewViewData(db, cfg))
+}
+
+// NewViewNodeSensorCrudRepository returns a CrudRepository for view node sensor data.
+func NewViewNodeSensorCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration) CrudRepository {
+	if dbType == "mysql" {
+		return NewMySQLViewNodeSensorRepository(db, cfg)
+	}
+	return NewCrudRepositoryFromData(data.NewViewNodeSensorData(db, cfg))
+}
+
+// NewViewNodeSwitchCrudRepository returns a CrudRepository for view node switch data.
+func NewViewNodeSwitchCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration) CrudRepository {
+	if dbType == "mysql" {
+		return NewMySQLViewNodeSwitchRepository(db, cfg)
+	}
+	return NewCrudRepositoryFromData(data.NewViewNodeSwitchData(db, cfg))
+}

@@ -60,11 +60,11 @@ func main() {
 	db := setup.InitDb(Config)
 
 	viewController := controllers.NewViewControllerWithDeps(
-		repository.NewCrudRepositoryFromData(data.NewViewData(db, &Config)),
-		repository.NewCrudRepositoryFromData(data.NewNodeSensorData(db, &Config)),
-		repository.NewCrudRepositoryFromData(data.NewViewNodeSensorData(db, &Config)),
-		repository.NewCrudRepositoryFromData(data.NewNodeSwitchData(db, &Config)),
-		repository.NewCrudRepositoryFromData(data.NewViewNodeSwitchData(db, &Config)),
+		repository.NewViewCrudRepository(db, Config.DbType, &Config),
+		repository.NewNodeSensorCrudRepository(db, Config.DbType, &Config),
+		repository.NewViewNodeSensorCrudRepository(db, Config.DbType, &Config),
+		repository.NewNodeSwitchCrudRepository(db, Config.DbType, &Config),
+		repository.NewViewNodeSwitchCrudRepository(db, Config.DbType, &Config),
 		repository.NewCompoundRepository(db, Config.DbType, &Config),
 	)
 	sensorTypeController := controllers.NewSensorTypeControllerWithDeps(data.NewSensorType(db, &Config), data.NewSensorTypeData(db, &Config))
