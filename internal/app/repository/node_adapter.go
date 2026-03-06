@@ -4,19 +4,19 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/models"
 )
 
 type nodeRepositoryAdapter struct {
-	db *sql.DB
+	db     *sql.DB
+	cpRepo ControlPointRepository
 }
 
 func NewNodeRepository(db *sql.DB, dbType string) NodeRepository {
 	if dbType == "mysql" {
 		return NewMySQLNodeRepository(db)
 	}
-	return &nodeRepositoryAdapter{db: db}
+	return &nodeRepositoryAdapter{db: db, cpRepo: NewControlPointRepository(db, dbType)}
 }
 
 func (r *nodeRepositoryAdapter) FetchAll() ([]models.Node, error) {
@@ -48,7 +48,7 @@ func (r *nodeRepositoryAdapter) FetchIndividual(id int) (models.Node, error) {
 }
 
 func (r *nodeRepositoryAdapter) FetchControlPointByNode(nodeId int) (models.ControlPoint, error) {
-	return data.FetchControlPointByNode(nodeId, r.db)
+	return r.cpRepo.FetchControlPointByNode(nodeId)
 }
 
 func (r *nodeRepositoryAdapter) FetchNodeSwitches(nodeId int) ([]models.NodeSwitch, error) {

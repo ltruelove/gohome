@@ -130,3 +130,12 @@ func (r *mysqlControlPointRepository) AddNodeToControlPoint(cpnode *models.Contr
 	_, err := r.db.Exec("INSERT INTO controlpointnodes (controlpointid, nodeid) VALUES (?, ?)", cpnode.ControlPointId, cpnode.NodeId)
 	return err
 }
+
+func (r *mysqlControlPointRepository) FetchControlPointByNode(nodeId int) (models.ControlPoint, error) {
+	var cp models.ControlPoint
+	err := r.db.QueryRow(`SELECT cp.id, cp.name, cp.ipaddress, cp.mac FROM controlpointnodes AS cpn INNER JOIN controlpoint AS cp ON cp.id = cpn.controlpointid WHERE cpn.nodeid = ?`, nodeId).Scan(&cp.Id, &cp.Name, &cp.IpAddress, &cp.Mac)
+	if err != nil {
+		return cp, err
+	}
+	return cp, nil
+}

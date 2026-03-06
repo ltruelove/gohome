@@ -17,4 +17,5 @@ type ControlPointRepository interface {
 	Update(cp *models.ControlPoint) error
 	Delete(id int) error
 	AddNodeToControlPoint(cpnode *models.ControlPointNode) error
+	FetchControlPointByNode(nodeId int) (models.ControlPoint, error)
 }
