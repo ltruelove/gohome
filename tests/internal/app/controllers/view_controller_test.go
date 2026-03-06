@@ -157,7 +157,6 @@ func TestViewController_Create_Update_Delete(t *testing.T) {
 
 func TestViewController_AddAndRemoveNodeSensor(t *testing.T) {
 	// Add
-	vns := &models.ViewNodeSensorData{Id: 99, NodeId: 7, ViewId: 4, NodeSensorId: 6, Name: "nsv"}
 	viewNodeSensorRepo := &fakeCrudRepo{InsertFunc: func(data models.Model) (models.Model, error) {
 		item := data.(*models.ViewNodeSensorData)
 		item.Id = 99
