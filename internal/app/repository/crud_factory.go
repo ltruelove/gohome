@@ -38,7 +38,8 @@ func NewViewNodeSensorCrudRepository(db *sql.DB, dbType string, cfg *config.Conf
 	if dbType == "mysql" {
 		return NewMySQLViewNodeSensorRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewViewNodeSensorData(db, cfg))
+	// Fallback to MySQL scaffold until legacy data is fully removed.
+	return NewMySQLViewNodeSensorRepository(db, cfg)
 }
 
 // NewViewNodeSwitchCrudRepository returns a CrudRepository for view node switch data.
@@ -46,7 +47,8 @@ func NewViewNodeSwitchCrudRepository(db *sql.DB, dbType string, cfg *config.Conf
 	if dbType == "mysql" {
 		return NewMySQLViewNodeSwitchRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewViewNodeSwitchData(db, cfg))
+	// Fallback to MySQL scaffold until legacy data is fully removed.
+	return NewMySQLViewNodeSwitchRepository(db, cfg)
 }
 
 // NewSensorTypeCrudRepository returns a CrudRepository for sensor types.
