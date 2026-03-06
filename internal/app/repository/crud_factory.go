@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
 )
 
 // NewNodeSensorCrudRepository returns a CrudRepository for node sensors.
@@ -13,7 +12,7 @@ func NewNodeSensorCrudRepository(db *sql.DB, dbType string, cfg *config.Configur
 	if dbType == "mysql" {
 		return NewMySQLNodeSensorRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewNodeSensorData(db, cfg))
+	return NewMySQLNodeSensorRepository(db, cfg)
 }
 
 // NewNodeSwitchCrudRepository returns a CrudRepository for node switches.
@@ -21,7 +20,7 @@ func NewNodeSwitchCrudRepository(db *sql.DB, dbType string, cfg *config.Configur
 	if dbType == "mysql" {
 		return NewMySQLNodeSwitchRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewNodeSwitchData(db, cfg))
+	return NewMySQLNodeSwitchRepository(db, cfg)
 }
 
 // NewViewCrudRepository returns a CrudRepository for views, using a MySQL scaffold when available.
@@ -56,7 +55,7 @@ func NewSensorTypeCrudRepository(db *sql.DB, dbType string, cfg *config.Configur
 	if dbType == "mysql" {
 		return NewMySQLSensorTypeRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewSensorType(db, cfg))
+	return NewMySQLSensorTypeRepository(db, cfg)
 }
 
 // NewSwitchTypeCrudRepository returns a CrudRepository for switch types.
@@ -64,5 +63,5 @@ func NewSwitchTypeCrudRepository(db *sql.DB, dbType string, cfg *config.Configur
 	if dbType == "mysql" {
 		return NewMySQLSwitchTypeRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewSwitchTypeData(db, cfg))
+	return NewMySQLSwitchTypeRepository(db, cfg)
 }

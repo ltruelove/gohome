@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/viewModels"
 )
 
@@ -18,6 +17,6 @@ func NewCompoundRepository(db *sql.DB, dbType string, config *config.Configurati
 	if dbType == "mysql" {
 		return NewMySQLCompoundRepository(db, config)
 	}
-	// fallback to data-backed adapter
-	return NewCompoundRepositoryFromData(data.NewCompoundData(db, config))
+	// fallback to MySQL scaffold until legacy data is removed
+	return NewMySQLCompoundRepository(db, config)
 }
