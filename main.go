@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/ltruelove/gohome/config"
 	"github.com/ltruelove/gohome/internal/app/controllers"
-	"github.com/ltruelove/gohome/internal/app/data"
 	"github.com/ltruelove/gohome/internal/app/repository"
 	"github.com/ltruelove/gohome/internal/app/setup"
 	"github.com/ltruelove/gohome/internal/pkg/routing"
@@ -71,8 +70,14 @@ func main() {
 	switchTypeController := controllers.NewSwitchTypeControllerWithDeps(repository.NewSwitchTypeCrudRepository(db, Config.DbType, &Config))
 	nodeController := controllers.NewNodeControllerWithDeps(repository.NewNodeRepository(db, Config.DbType), repository.NewControlPointRepository(db, Config.DbType))
 	controlPointController := controllers.NewControlPointControllerWithDeps(repository.NewControlPointRepository(db, Config.DbType))
-	switchController := controllers.NewNodeSwitchControllerWithDeps(repository.NewNodeSwitchCrudRepository(db, Config.DbType, &Config), repository.NewCrudRepositoryFromData(data.NewSwitchTypeData(db, &Config)))
-	sensorController := controllers.NewNodeSensorControllerWithDeps(repository.NewNodeSensorCrudRepository(db, Config.DbType, &Config), repository.NewCrudRepositoryFromData(data.NewSensorType(db, &Config)))
+	switchController := controllers.NewNodeSwitchControllerWithDeps(
+		repository.NewNodeSwitchCrudRepository(db, Config.DbType, &Config),
+		repository.NewSwitchTypeCrudRepository(db, Config.DbType, &Config),
+	)
+	sensorController := controllers.NewNodeSensorControllerWithDeps(
+		repository.NewNodeSensorCrudRepository(db, Config.DbType, &Config),
+		repository.NewSensorTypeCrudRepository(db, Config.DbType, &Config),
+	)
 
 	//register application routes
 	//each app section should have its own handlers to register with the
