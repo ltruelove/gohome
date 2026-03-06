@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/ltruelove/gohome/config"
-	"github.com/ltruelove/gohome/internal/app/data"
 )
 
 // NewNodeSensorCrudRepository returns a CrudRepository for node sensors.
@@ -29,7 +28,8 @@ func NewViewCrudRepository(db *sql.DB, dbType string, cfg *config.Configuration)
 	if dbType == "mysql" {
 		return NewMySQLViewRepository(db, cfg)
 	}
-	return NewCrudRepositoryFromData(data.NewViewData(db, cfg))
+	// Fallback to the MySQL repository when legacy `data` implementation is removed.
+	return NewMySQLViewRepository(db, cfg)
 }
 
 // NewViewNodeSensorCrudRepository returns a CrudRepository for view node sensor data.
