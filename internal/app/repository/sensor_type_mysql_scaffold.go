@@ -26,7 +26,7 @@ func (r *mysqlSensorTypeRepository) SelectAll() ([]models.Model, error) {
 	var list []models.Model
 	for rows.Next() {
 		var s models.SensorType
-		if err := rows.Scan(&s.Id, &s.SensorTypeId, &s.Name, &s.ValueType); err != nil {
+		if err := rows.Scan(&s.Id, &s.TypeName); err != nil {
 			return nil, err
 		}
 		list = append(list, s)
@@ -38,7 +38,7 @@ func (r *mysqlSensorTypeRepository) SelectByParentId(id int) ([]models.Model, er
 
 func (r *mysqlSensorTypeRepository) SelectById(id int) (models.Model, error) {
 	var s models.SensorType
-	err := r.db.QueryRow(r.stmt.SelectById(), id).Scan(&s.Id, &s.SensorTypeId, &s.Name, &s.ValueType)
+	err := r.db.QueryRow(r.stmt.SelectById(), id).Scan(&s.Id, &s.TypeName)
 	return s, err
 }
 
@@ -48,7 +48,7 @@ func (r *mysqlSensorTypeRepository) Insert(data models.Model) (models.Model, err
 		return nil, nil
 	}
 	var last int
-	err := r.db.QueryRow(r.stmt.Insert(), s.SensorTypeId, s.Name, s.ValueType).Scan(&last)
+	err := r.db.QueryRow(r.stmt.Insert(), s.TypeName).Scan(&last)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (r *mysqlSensorTypeRepository) Update(data models.Model) error {
 	if !ok {
 		return nil
 	}
-	_, err := r.db.Exec(r.stmt.Update(), s.SensorTypeId, s.Name, s.ValueType, s.Id)
+	_, err := r.db.Exec(r.stmt.Update(), s.TypeName, s.Id)
 	return err
 }
 
