@@ -38,7 +38,7 @@ func TestMySQLNodeRepository_CreateNewLog(t *testing.T) {
 		TemperatureF:  72.0,
 		TemperatureC:  22.2,
 		Humidity:      45.0,
-		Moisture:      55.5,
+		Moisture:      55,
 		ResistorValue: 330,
 		IsClosed:      false,
 	}
