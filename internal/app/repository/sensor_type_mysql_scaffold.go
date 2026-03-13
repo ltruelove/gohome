@@ -39,6 +39,10 @@ func (r *mysqlSensorTypeRepository) SelectByParentId(id int) ([]models.Model, er
 func (r *mysqlSensorTypeRepository) SelectById(id int) (models.Model, error) {
 	var s models.SensorType
 	err := r.db.QueryRow(r.stmt.SelectById(), id).Scan(&s.Id, &s.TypeName)
+
+	if s.Id == 0 {
+		return nil, sql.ErrNoRows
+	}
 	return s, err
 }
 

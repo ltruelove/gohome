@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -17,20 +18,32 @@ type NodeSensorLog struct {
 }
 
 func (n NodeSensorLog) IsValid(checkId bool) (bool, error) {
-	isValid := false
+	isValid := true
 	errMsg := ""
 
 	if checkId && n.Id <= 0 {
 		isValid = false
-		errMsg = "Id cannot be less than or equal to 0"
+		if errMsg != "" {
+			errMsg = fmt.Sprintf("%s, %s", errMsg, "Id cannot be less than or equal to 0")
+		} else {
+			errMsg = "Id cannot be less than or equal to 0"
+		}
 	}
 	if n.NodeId <= 0 {
 		isValid = false
-		errMsg = "NodeId cannot be less than or equal to 0"
+		if errMsg != "" {
+			errMsg = fmt.Sprintf("%s, %s", errMsg, "NodeId cannot be less than or equal to 0")
+		} else {
+			errMsg = "NodeId cannot be less than or equal to 0"
+		}
 	}
 	if n.DateLogged.IsZero() {
 		isValid = false
-		errMsg = "DateLogged cannot be zero"
+		if errMsg != "" {
+			errMsg = fmt.Sprintf("%s, %s", errMsg, "DateLogged cannot be zero")
+		} else {
+			errMsg = "DateLogged cannot be zero"
+		}
 	}
 
 	if !isValid {
